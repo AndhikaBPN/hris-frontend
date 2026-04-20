@@ -1,11 +1,42 @@
+var PAGE_TRANSITION_DURATION = 220;
+
+function applyPageEnterAnimation() {
+  var page = document.querySelector('.page.active');
+  var direction = sessionStorage.getItem('hris_page_transition');
+  sessionStorage.removeItem('hris_page_transition');
+
+  if (!page || direction !== 'reverse') return;
+  page.classList.add('page-enter-reverse');
+}
+
+function navigateWithAnimation(url, direction) {
+  var page = document.querySelector('.page.active');
+  sessionStorage.setItem('hris_page_transition', direction || 'forward');
+
+  if (!page || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    window.location.href = url;
+    return;
+  }
+
+  page.classList.add('page-exit');
+  if (direction === 'reverse') {
+    page.classList.add('page-exit-reverse');
+  }
+  setTimeout(function() {
+    window.location.href = url;
+  }, PAGE_TRANSITION_DURATION);
+}
+
+applyPageEnterAnimation();
+
 /* ── Navigation ── */
 function showReset() {
-  window.location.href = 'reset-access.html';
+  navigateWithAnimation('reset-access.html', 'forward');
 }
 
 function showLogin() {
   clearTimer();
-  window.location.href = 'login.html';
+  navigateWithAnimation('login.html', 'reverse');
 }
 
 /* ── LOGIN ── */
@@ -135,7 +166,7 @@ function handleReset() {
   msg.className = 'msg success';
   clearTimer();
   setTimeout(function() {
-    window.location.href = 'login.html';
+    navigateWithAnimation('login.html', 'reverse');
   }, 2000);
 }
 
@@ -143,8 +174,11 @@ function handleReset() {
 var _timer = null;
 function startCountdown(seconds) {
   clearTimer();
-  document.getElementById('resend-btn').style.display = 'none';
+  var resendButton = document.getElementById('resend-btn');
   var el = document.getElementById('resend-timer');
+  if (!resendButton || !el) return;
+
+  resendButton.style.display = 'none';
   el.textContent = 'Kirim ulang dalam ' + seconds + 's';
   _timer = setInterval(function() {
     seconds--;
@@ -153,17 +187,26 @@ function startCountdown(seconds) {
     } else {
       clearTimer();
       el.textContent = '';
-      document.getElementById('resend-btn').style.display = 'inline';
+      resendButton.style.display = 'inline';
     }
   }, 1000);
 }
 
 function startResend() {
-  document.getElementById('resend-btn').style.display = 'none';
+  var resendButton = document.getElementById('resend-btn');
+  if (resendButton) {
+    resendButton.style.display = 'none';
+  }
   clearOTP();
-  document.getElementById('reset-msg').className = 'msg';
+  var resetMsg = document.getElementById('reset-msg');
+  if (resetMsg) {
+    resetMsg.className = 'msg';
+  }
   startCountdown(60);
-  document.querySelectorAll('.otp-box')[0].focus();
+  var firstOtpBox = document.querySelectorAll('.otp-box')[0];
+  if (firstOtpBox) {
+    firstOtpBox.focus();
+  }
 }
 
 function clearTimer() {
