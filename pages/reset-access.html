@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Access</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<div class="page active" id="page-reset">
+  <div class="reset-overlay">
+    <div class="reset-card">
+      <div class="reset-header">
+        <h2>Reset Access</h2>
+        <button class="close-btn" onclick="showLogin()" title="Close">&#x2715;</button>
+      </div>
+      <p class="reset-sub">Enter the 6-digit code sent to your device.</p>
+
+      <div class="otp-label">SECURE OTP</div>
+      <div class="otp-row" id="otp-row">
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+      </div>
+
+      <div class="field">
+        <label for="new-password">New Password</label>
+        <div class="input-wrap">
+          <i data-lucide="key-round"></i>
+          <input type="password" id="new-password" placeholder="••••••••••" autocomplete="new-password">
+        </div>
+      </div>
+
+      <div id="reset-msg" class="msg"></div>
+
+      <button class="btn btn--reset" onclick="handleReset()">
+        Confirm &amp; Proceed
+        <i data-lucide="arrow-right"></i>
+      </button>
+
+      <div class="resend-row">
+        <button class="resend-link" id="resend-btn" onclick="startResend()">Resend code</button>
+        <span class="resend-timer" id="resend-timer"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+  startCountdown(60);
+  document.querySelectorAll('.otp-box')[0].focus();
+  lucide.createIcons();
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<div class="page active" id="page-login">
+  <div class="brand">
+    <img class="brand-logo" src="">
+    <h1 class="brand-name">Nama Perusahaan</h1>
+    <p class="brand-tagline">TAGLINE / DESKRIPSI</p>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label for="email">Email Address</label>
+      <div class="input-wrap">
+        <i data-lucide="mail"></i>
+        <input type="email" id="email" placeholder="operative@sanctuary.io" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <i data-lucide="lock"></i>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="forgot"><a onclick="showReset()">Forgot Password?</a></div>
+    </div>
+
+    <div id="login-msg" class="msg"></div>
+
+    <button class="btn" onclick="handleLogin()">
+      Authenticate
+      <i data-lucide="arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>
