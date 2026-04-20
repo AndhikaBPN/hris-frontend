@@ -70,28 +70,10 @@ http://localhost:5500/index.html
 `index.html` akan otomatis mengarah ke:
 
 ```text
-http://localhost:5500/pages/login.html
-```
-
-Backend API harus berjalan terpisah di:
-
-```text
-http://localhost:8000
-```
-
-Endpoint login yang dipakai frontend:
-
-```text
-POST http://localhost:8000/api/login
+pages/login.html
 ```
 
 ## Konfigurasi API
-
-File `.env` berisi:
-
-```env
-URL_LOCAL=http://localhost:8000/api
-```
 
 Karena frontend ini masih HTML/JS biasa tanpa bundler, `.env` dibaca oleh
 `assets/js/config.js` lewat request ke `/.env` saat aplikasi berjalan di static
@@ -118,12 +100,6 @@ saat static server berjalan.
    - data user disimpan ke `localStorage` sebagai `hris_user`
    - user diarahkan ke `pages/dashboard.html`
 5. Jika gagal, pesan error ditampilkan di halaman login.
-
-Reset access berada di:
-
-```text
-http://localhost:5500/pages/reset-access.html
-```
 
 Expected response backend:
 
@@ -204,42 +180,6 @@ Aturan cuti:
 - Staff dan team leader membutuhkan approval HRD Manager.
 - HRD Manager dan Technical Manager membutuhkan approval C-Level.
 - Izin sakit wajib melampirkan surat dokter.
-
-## Endpoint Backend Referensi
-
-Endpoint utama yang menjadi target integrasi frontend:
-
-| Endpoint | Method | Keterangan |
-| --- | --- | --- |
-| `/api/login` | POST | Login dan pembuatan JWT |
-| `/api/logout` | POST | Logout |
-| `/api/users` | GET, POST | Manajemen user |
-| `/api/shifts` | GET | Jadwal shift |
-| `/api/shifts/generate` | POST | Generate rotasi shift |
-| `/api/shifts/override` | POST | Override shift manual |
-| `/api/attendance` | POST | Absensi sesi |
-| `/api/leave` | GET, POST | Pengajuan dan riwayat cuti |
-| `/api/leave/{id}/approve` | PUT | Approval cuti |
-| `/api/dashboard/staff` | GET | Dashboard staff/team leader |
-| `/api/dashboard/admin` | GET | Dashboard admin/manager |
-| `/api/profile` | GET, PUT | Profil user |
-
-## Catatan CORS
-
-Jika frontend dibuka dari:
-
-```text
-http://localhost:5500
-```
-
-Backend harus mengizinkan origin tersebut. Minimal header backend perlu
-mengakomodasi:
-
-```http
-Access-Control-Allow-Origin: http://localhost:5500
-Access-Control-Allow-Headers: Content-Type, Authorization
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
-```
 
 ## Dokumen Referensi
 
