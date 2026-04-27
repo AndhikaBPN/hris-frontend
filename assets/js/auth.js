@@ -48,20 +48,20 @@ async function handleLogin() {
   msg.textContent = '';
 
   if (!email || !password) {
-    msg.textContent = 'Harap isi email dan password.';
+    msg.textContent = 'Please enter email and password.';
     msg.className = 'msg error'; return;
   }
   var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRe.test(email)) {
-    msg.textContent = 'Format email tidak valid.';
+    msg.textContent = 'Invalid email format.';
     msg.className = 'msg error'; return;
   }
   if (password.length < 6) {
-    msg.textContent = 'Password minimal 6 karakter.';
+    msg.textContent = 'Password must be at least 6 characters.';
     msg.className = 'msg error'; return;
   }
 
-  msg.textContent = 'Sedang memproses...';
+  msg.textContent = 'Processing...';
   msg.className = 'msg';
 
   try {
@@ -78,15 +78,15 @@ async function handleLogin() {
       if (payload.user) {
         localStorage.setItem('hris_user', JSON.stringify(payload.user));
       }
-      msg.textContent = 'Autentikasi berhasil! Selamat datang, ' + (payload.user?.name || '') + '.';
+      msg.textContent = 'Authentication successful! Welcome, ' + (payload.user?.name || '') + '.';
       msg.className = 'msg success';
       window.location.href = 'dashboard.html';
     } else {
-      msg.textContent = data.message || 'Email atau password salah.';
+      msg.textContent = data.message || 'Invalid email or password.';
       msg.className = 'msg error';
     }
   } catch (err) {
-    msg.textContent = err.message || 'Gagal terhubung ke server. Pastikan server berjalan.';
+    msg.textContent = err.message || 'Failed to connect to server. Make sure the server is running.';
     msg.className = 'msg error';
     console.error('Login error:', err);
   }
@@ -155,14 +155,14 @@ function handleReset() {
   msg.textContent = '';
 
   if (otp.length < 6) {
-    msg.textContent = 'Masukkan 6 digit kode OTP.';
+    msg.textContent = 'Enter 6-digit OTP code.';
     msg.className = 'msg error'; return;
   }
   if (!newPass || newPass.length < 6) {
-    msg.textContent = 'Password baru minimal 6 karakter.';
+    msg.textContent = 'New password must be at least 6 characters.';
     msg.className = 'msg error'; return;
   }
-  msg.textContent = 'Password berhasil diubah! Mengarahkan ke login...';
+  msg.textContent = 'Password changed successfully! Redirecting to login...';
   msg.className = 'msg success';
   clearTimer();
   setTimeout(function() {
@@ -179,11 +179,11 @@ function startCountdown(seconds) {
   if (!resendButton || !el) return;
 
   resendButton.style.display = 'none';
-  el.textContent = 'Kirim ulang dalam ' + seconds + 's';
+  el.textContent = 'Resend in ' + seconds + 's';
   _timer = setInterval(function() {
     seconds--;
     if (seconds > 0) {
-      el.textContent = 'Kirim ulang dalam ' + seconds + 's';
+      el.textContent = 'Resend in ' + seconds + 's';
     } else {
       clearTimer();
       el.textContent = '';

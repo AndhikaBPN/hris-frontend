@@ -1,34 +1,34 @@
 # HRIS Frontend
 
-Frontend web statis untuk HRIS Attendance System pada operasional Gaming House.
-Project ini dibuat dengan HTML, CSS, dan Vanilla JavaScript, lalu berkomunikasi
-dengan backend REST API lokal.
+Static web frontend for HRIS Attendance System for Gaming House operations.
+This project is built with HTML, CSS, and Vanilla JavaScript, communicating
+with a local REST API backend.
 
 ## Overview
 
-Sistem HRIS ini berfokus pada absensi karyawan dengan validasi identitas dan
-lokasi:
+This HRIS system focuses on employee attendance with identity and
+location validation:
 
-- Face recognition untuk verifikasi biometrik.
-- Geo-tagging untuk validasi lokasi absensi.
-- JWT authentication untuk sesi login.
-- Role-Based Access Control sesuai struktur Gaming House.
-- Flow absensi berbasis sesi, bukan clock-out konvensional.
+- Face recognition for biometric verification.
+- Geo-tagging for attendance location validation.
+- JWT authentication for login sessions.
+- Role-Based Access Control according to the Gaming House structure.
+- Session-based attendance flow, instead of conventional clock-out.
 
-Frontend saat ini menyediakan halaman login, reset access mock flow, dan halaman
-dashboard sederhana setelah login berhasil. Halaman login dan reset access sudah
-dipisah ke file HTML masing-masing.
+The frontend currently provides a login page, a mock reset access flow, and a
+simple dashboard page after a successful login. The login and reset access pages
+are separated into their respective HTML files.
 
 ## Tech Stack
 
 - HTML
 - CSS
 - Vanilla JavaScript
-- Browser desktop
+- Desktop browser
 - Lucide icon CDN
-- Backend target: PHP Native REST API + MySQL
+- Target backend: Native PHP REST API + MySQL
 
-## Struktur File
+## File Structure
 
 ```text
 .
@@ -51,33 +51,33 @@ dipisah ke file HTML masing-masing.
 └── README.md
 ```
 
-## Cara Menjalankan Frontend
+## How to Run Frontend
 
-Karena project ini adalah static frontend, tidak perlu install dependency.
-Jalankan static server dari root project:
+As this project is a static frontend, no dependency installation is required.
+Run a static server from the project root:
 
 ```bash
 cd /Users/apple/Documents/kuliah/hris-frontend
 python3 -m http.server 5500
 ```
 
-Buka browser:
+Open browser:
 
 ```text
 http://localhost:5500/index.html
 ```
 
-`index.html` akan otomatis mengarah ke:
+`index.html` will automatically redirect to:
 
 ```text
 pages/login.html
 ```
 
-## Konfigurasi API
+## API Configuration
 
-Karena frontend ini masih HTML/JS biasa tanpa bundler, `.env` dibaca oleh
-`assets/js/config.js` lewat request ke `/.env` saat aplikasi berjalan di static
-server.
+Since this frontend is plain HTML/JS without a bundler, the `.env` is read by
+`assets/js/config.js` through a request to `/.env` when the application runs on a
+static server.
 
 ```js
 var data = await apiRequest('/login', {
@@ -86,20 +86,20 @@ var data = await apiRequest('/login', {
 });
 ```
 
-Jika port atau host backend berubah, cukup update nilai `URL_LOCAL` di `.env`.
-Jangan simpan secret di `.env` frontend karena file ini bisa diakses browser
-saat static server berjalan.
+If the backend port or host changes, simply update the `URL_LOCAL` value in `.env`.
+Do not store secrets in the frontend `.env` because this file is accessible by
+the browser when the static server is running.
 
 ## Login Flow
 
-1. User membuka `index.html` atau langsung `pages/login.html`.
-2. User mengisi email dan password.
-3. Frontend mengirim request ke `POST /api/login`.
-4. Jika response sukses dan memiliki token:
-   - token disimpan ke `localStorage` sebagai `hris_token`
-   - data user disimpan ke `localStorage` sebagai `hris_user`
-   - user diarahkan ke `pages/dashboard.html`
-5. Jika gagal, pesan error ditampilkan di halaman login.
+1. User opens `index.html` or directly `pages/login.html`.
+2. User enters email and password.
+3. Frontend sends a request to `POST /api/login`.
+4. If the response is successful and contains a token:
+   - token is saved to `localStorage` as `hris_token`
+   - user data is saved to `localStorage` as `hris_user`
+   - user is redirected to `pages/dashboard.html`
+5. If failed, an error message is displayed on the login page.
 
 Expected response backend:
 
@@ -119,79 +119,79 @@ Expected response backend:
 }
 ```
 
-## Role Sistem
+## System Roles
 
-Role bisnis yang digunakan pada versi Gaming House:
+Business roles used in the Gaming House version:
 
-- `c_level`: akses tertinggi, melihat report dan approve cuti manager, tidak wajib absensi.
-- `hrd_manager`: mengelola user, shift, report, dan approve cuti staff/team leader.
-- `technical_manager`: manager teknis dengan jam kerja tetap dan akses dashboard summary.
-- `team_leader`: mengikuti rotasi shift dan memantau tim.
-- `staff`: role umum untuk talent/streamer dan karyawan operasional.
+- `c_level`: highest access, viewing reports and approving manager leave, attendance not mandatory.
+- `hrd_manager`: managing users, shifts, reports, and approving staff/team leader leave.
+- `technical_manager`: technical manager with fixed working hours and summary dashboard access.
+- `team_leader`: follows shift rotation and monitors the team.
+- `staff`: general role for talents/streamers and operational employees.
 
-## Flow Shift
+## Shift Flow
 
-Staff dan team leader menggunakan rotasi otomatis:
+Staff and team leaders use automatic rotation:
 
 ```text
-2 hari shift pagi -> 2 hari shift siang -> 2 hari shift malam -> 2 hari libur
+2 days morning shift -> 2 days afternoon shift -> 2 days night shift -> 2 days off
 ```
 
-Detail shift:
+Shift details:
 
-| Shift | Jam Kerja | Jam Istirahat |
+| Shift | Working Hours | Break Time |
 | --- | --- | --- |
-| Pagi | 06:00 - 14:00 | 09:30 - 10:30 |
-| Siang | 14:00 - 22:00 | 17:30 - 18:30 |
-| Malam | 22:00 - 06:00 | 01:30 - 02:30 |
+| Morning | 06:00 - 14:00 | 09:30 - 10:30 |
+| Afternoon | 14:00 - 22:00 | 17:30 - 18:30 |
+| Night | 22:00 - 06:00 | 01:30 - 02:30 |
 
-Manager menggunakan jadwal tetap:
+Managers use a fixed schedule:
 
-| Role | Jam Kerja | Hari Kerja |
+| Role | Working Hours | Working Days |
 | --- | --- | --- |
-| HRD Manager | 10:00 - 18:00 | Senin - Jumat |
-| Technical Manager | 13:00 - 21:00 | Senin - Jumat |
+| HRD Manager | 10:00 - 18:00 | Monday - Friday |
+| Technical Manager | 13:00 - 21:00 | Monday - Friday |
 
-## Flow Absensi
+## Attendance Flow
 
-Absensi Gaming House tidak memakai clock-out. Setiap shift memakai dua sesi:
+Gaming House attendance does not use clock-out. Each shift uses two sessions:
 
-1. Session 1: absensi awal shift.
-2. Session 2: absensi saat mulai sesi kerja/stream kedua.
+1. Session 1: initial shift attendance.
+2. Session 2: attendance at the start of the second work/stream session.
 
-Validasi absensi:
+Attendance validation:
 
-- Face recognition menggunakan face-api.js di client-side.
-- Face embedding dibandingkan memakai Euclidean Distance.
-- Match jika distance kurang dari `0.5`.
-- Lokasi divalidasi dengan `navigator.geolocation`.
-- Jarak dihitung menggunakan Haversine Formula.
-- Radius valid maksimal `50 meter`.
-- Toleransi keterlambatan maksimal `15 menit` untuk setiap sesi.
+- Face recognition using `face-api.js` on the client-side.
+- Face embeddings compared using Euclidean Distance.
+- Match if distance is less than `0.5`.
+- Location validated with `navigator.geolocation`.
+- Distance calculated using the Haversine Formula.
+- Maximum valid radius of `50 meters`.
+- Maximum lateness tolerance of `15 minutes` for each session.
 
-Kegagalan face atau lokasi tetap perlu tercatat di backend sebagai audit log
-untuk kebutuhan monitoring fraud.
+Face or location failures still need to be recorded in the backend as an audit log
+for fraud monitoring purposes.
 
-## Flow Cuti
+## Leave Flow
 
-Aturan cuti:
+Leave rules:
 
-- Setiap karyawan mendapat 1 hari cuti per bulan.
-- Staff dan team leader membutuhkan approval HRD Manager.
-- HRD Manager dan Technical Manager membutuhkan approval C-Level.
-- Izin sakit wajib melampirkan surat dokter.
+- Each employee gets 1 day of leave per month.
+- Staff and team leaders require HRD Manager approval.
+- HRD Manager and Technical Manager require C-Level approval.
+- Sick leave must attach a doctor's note.
 
-## Dokumen Referensi
+## Reference Documents
 
-- `docs/flow.md`: meeting notes dan aturan bisnis Gaming House.
-- `docs/hris.md`: technical specification awal HRIS attendance.
-- `docs/hris_architecture_v2.md`: arsitektur backend dan flow terbaru untuk Gaming House.
+- `docs/flow.md`: meeting notes and Gaming House business rules.
+- `docs/hris.md`: initial technical specification for HRIS attendance.
+- `docs/hris_architecture_v2.md`: latest backend architecture and flow for Gaming House.
 
 ## Development Notes
 
-- Jangan gunakan Laravel, React, atau backend Python untuk scope versi ini.
-- Frontend tetap ringan dengan HTML/CSS/Vanilla JS.
-- Backend menggunakan PHP Native, PDO, MySQL, dan JWT.
-- Face recognition menggunakan pretrained model melalui face-api.js.
-- Tidak ada training ML di backend.
-- Gunakan prepared statements pada backend untuk akses database.
+- Do not use Laravel, React, or Python backends for this version scope.
+- Frontend remains lightweight with HTML/CSS/Vanilla JS.
+- Backend uses Native PHP, PDO, MySQL, and JWT.
+- Face recognition uses pretrained models via `face-api.js`.
+- No ML training on the backend.
+- Use prepared statements on the backend for database access.

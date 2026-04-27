@@ -16,7 +16,7 @@ async function apiRequest(path, options) {
   });
 
   if (!response.ok) {
-    throw new Error(data.message || 'Request gagal.');
+    throw new Error(data.message || 'Request failed.');
   }
 
   return data;
