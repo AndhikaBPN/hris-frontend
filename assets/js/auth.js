@@ -31,12 +31,12 @@ applyPageEnterAnimation();
 
 /* ── Navigation ── */
 function showReset() {
-  navigateWithAnimation('reset-access.html', 'forward');
+  navigateWithAnimation('reset-access.html', 'reverse');
 }
 
 function showLogin() {
   clearTimer();
-  navigateWithAnimation('login.html', 'reverse');
+  navigateWithAnimation('login.html', 'forward');
 }
 
 /* ── LOGIN ── */

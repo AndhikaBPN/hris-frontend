@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reset Access</title>
   <link rel="stylesheet" href="../assets/css/style.css">
-
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -14,40 +13,74 @@
   <div class="reset-overlay">
     <div class="reset-card">
       <div class="reset-header">
-        <h2>Reset Access</h2>
+        <h2 id="reset-title">Reset Access</h2>
         <button class="close-btn" onclick="showLogin()" title="Close">&#x2715;</button>
       </div>
-      <p class="reset-sub">Enter the 6-digit code sent to your device.</p>
 
-      <div class="otp-label">SECURE OTP</div>
-      <div class="otp-row" id="otp-row">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
-        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+      <!-- Step 1: Send OTP -->
+      <div id="step-email" class="reset-step active">
+        <p class="reset-sub">Enter your email to receive a verification code.</p>
+        <div class="field">
+          <label for="reset-email">Email Address</label>
+          <div class="input-wrap">
+            <i data-lucide="mail"></i>
+            <input type="email" id="reset-email" placeholder="name@company.com">
+          </div>
+        </div>
+        <div id="email-msg" class="msg"></div>
+        <button class="btn btn--reset" onclick="sendOTP()">
+          Send OTP
+          <i data-lucide="send"></i>
+        </button>
       </div>
 
-      <div class="field">
-        <label for="new-password">New Password</label>
-        <div class="input-wrap">
-          <i data-lucide="key-round"></i>
-          <input type="password" id="new-password" placeholder="••••••••••" autocomplete="new-password">
+      <!-- Step 2: Verify OTP -->
+      <div id="step-otp" class="reset-step">
+        <p class="reset-sub">Enter the 6-digit code sent to your email.</p>
+        <div class="otp-label">SECURE OTP</div>
+        <div class="otp-row" id="otp-row">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric">
+          <input class="otp-box" type="text" maxlength="1" inputmode="numeric">
+        </div>
+        <div id="otp-msg" class="msg"></div>
+        <button class="btn btn--reset" onclick="verifyOTP()">
+          Verify OTP
+          <i data-lucide="shield-check"></i>
+        </button>
+        <div class="resend-row">
+          <button class="resend-link" id="resend-btn" onclick="sendOTP()">Resend code</button>
+          <span class="resend-timer" id="resend-timer"></span>
         </div>
       </div>
 
-      <div id="reset-msg" class="msg"></div>
-
-      <button class="btn btn--reset" onclick="handleReset()">
-        Confirm &amp; Proceed
-        <i data-lucide="arrow-right"></i>
-      </button>
-
-      <div class="resend-row">
-        <button class="resend-link" id="resend-btn" onclick="startResend()">Resend code</button>
-        <span class="resend-timer" id="resend-timer"></span>
+      <!-- Step 3: New Password -->
+      <div id="step-password" class="reset-step">
+        <p class="reset-sub">Create a new secure password for your account.</p>
+        <div class="field">
+          <label for="new-password">New Password</label>
+          <div class="input-wrap">
+            <i data-lucide="lock"></i>
+            <input type="password" id="new-password" placeholder="••••••••••">
+          </div>
+        </div>
+        <div class="field">
+          <label for="confirm-password">Confirm Password</label>
+          <div class="input-wrap">
+            <i data-lucide="lock"></i>
+            <input type="password" id="confirm-password" placeholder="••••••••••">
+          </div>
+        </div>
+        <div id="password-msg" class="msg"></div>
+        <button class="btn btn--reset" onclick="handleReset()">
+          Reset Password
+          <i data-lucide="check-circle"></i>
+        </button>
       </div>
+
     </div>
   </div>
 </div>
@@ -56,9 +89,101 @@
 <script src="../assets/js/api.js"></script>
 <script src="../assets/js/auth.js"></script>
 <script>
-  startCountdown(60);
-  document.querySelectorAll('.otp-box')[0].focus();
   lucide.createIcons();
+
+  function showLogin() {
+    const page = document.getElementById('page-reset');
+    page.classList.add('page-exit');
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 220); // matching 220ms exit animation in style.css
+  }
+
+  function goToStep(stepId) {
+    document.querySelectorAll('.reset-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+    
+    if (stepId === 'step-otp') {
+      setupOTPInputs();
+      startCountdown(60);
+    }
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = `msg ${type}`;
+    el.style.display = 'block';
+  }
+
+  async function sendOTP() {
+    const email = document.getElementById('reset-email').value;
+    if (!email) return showMsg('email-msg', 'Please enter your email', 'error');
+    
+    showMsg('email-msg', 'Sending OTP...', 'success');
+    // Simulated delay
+    setTimeout(() => {
+      goToStep('step-otp');
+    }, 1000);
+  }
+
+  function verifyOTP() {
+    const otp = Array.from(document.querySelectorAll('.otp-box')).map(i => i.value).join('');
+    if (otp.length < 6) return showMsg('otp-msg', 'Please enter complete OTP', 'error');
+    
+    // Simulating validation (use '123456' as success for testing)
+    if (otp === '123456') {
+      goToStep('step-password');
+    } else {
+      showMsg('otp-msg', 'otp salah atau otp expired', 'error');
+    }
+  }
+
+  function handleReset() {
+    const pass = document.getElementById('new-password').value;
+    const confirm = document.getElementById('confirm-password').value;
+    
+    if (!pass || pass.length < 6) return showMsg('password-msg', 'Password must be at least 6 characters', 'error');
+    if (pass !== confirm) return showMsg('password-msg', 'Passwords do not match', 'error');
+    
+    showMsg('password-msg', 'Password successfully reset!', 'success');
+    setTimeout(() => showLogin(), 2000);
+  }
+
+  function setupOTPInputs() {
+    const inputs = document.querySelectorAll('.otp-box');
+    inputs.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        if (e.target.value.length === 1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
+    inputs[0].focus();
+  }
+
+  function startCountdown(seconds) {
+    const btn = document.getElementById('resend-btn');
+    const timer = document.getElementById('resend-timer');
+    btn.style.display = 'none';
+    timer.style.display = 'inline';
+    
+    let count = seconds;
+    const interval = setInterval(() => {
+      timer.textContent = `Resend in ${count}s`;
+      if (count <= 0) {
+        clearInterval(interval);
+        timer.style.display = 'none';
+        btn.style.display = 'inline';
+      }
+      count--;
+    }, 1000);
+  }
 </script>
 </body>
 </html>
