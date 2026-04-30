@@ -145,29 +145,132 @@ if (otpRow) {
   });
 }
 
-/* ── RESET SUBMIT ── */
-function handleReset() {
-  var boxes   = document.querySelectorAll('.otp-box');
-  var otp     = Array.from(boxes).map(function(b) { return b.value; }).join('');
-  var newPass = document.getElementById('new-password').value;
-  var msg     = document.getElementById('reset-msg');
-  msg.className = 'msg';
-  msg.textContent = '';
+/* ── RESET ACCESS FLOW ── */
+async function sendOTP() {
+  var email = document.getElementById('reset-email').value.trim();
+  var msg   = document.getElementById('email-msg');
+  if (!msg) return;
+
+  if (!email) {
+    showMsg('email-msg', 'Please enter your email.', 'error');
+    return;
+  }
+
+  showMsg('email-msg', 'Sending OTP...', 'success');
+  
+  try {
+    var data = await apiRequest('/otp/send', {
+      method: 'POST',
+      body: JSON.stringify({ email: email })
+    });
+
+    if (data.success) {
+      showMsg('otp-msg', 'OTP sent successfully!', 'success');
+      goToStep('step-otp');
+    } else {
+      showMsg('email-msg', data.message || 'Failed to send OTP.', 'error');
+    }
+  } catch (err) {
+    showMsg('email-msg', err.message || 'Connection error.', 'error');
+  }
+}
+
+async function verifyOTP() {
+  var email = document.getElementById('reset-email').value.trim();
+  var boxes = document.querySelectorAll('.otp-box');
+  var otp   = Array.from(boxes).map(function(b) { return b.value; }).join('');
+  var msg   = document.getElementById('otp-msg');
 
   if (otp.length < 6) {
-    msg.textContent = 'Enter 6-digit OTP code.';
-    msg.className = 'msg error'; return;
+    showMsg('otp-msg', 'Please enter complete 6-digit OTP.', 'error');
+    return;
   }
-  if (!newPass || newPass.length < 6) {
-    msg.textContent = 'New password must be at least 6 characters.';
-    msg.className = 'msg error'; return;
+
+  showMsg('otp-msg', 'Verifying...', 'success');
+
+  try {
+    var data = await apiRequest('/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ email: email, otp_code: otp })
+    });
+
+    if (data.success) {
+      showMsg('password-msg', 'OTP verified!', 'success');
+      goToStep('step-password');
+    } else {
+      showMsg('otp-msg', data.message || 'Invalid OTP.', 'error');
+    }
+  } catch (err) {
+    showMsg('otp-msg', err.message || 'Verification failed.', 'error');
   }
-  msg.textContent = 'Password changed successfully! Redirecting to login...';
-  msg.className = 'msg success';
-  clearTimer();
-  setTimeout(function() {
-    navigateWithAnimation('login.html', 'reverse');
-  }, 2000);
+}
+
+async function handleReset() {
+  var email     = document.getElementById('reset-email').value.trim();
+  var boxes     = document.querySelectorAll('.otp-box');
+  var otp       = Array.from(boxes).map(function(b) { return b.value; }).join('');
+  var pass      = document.getElementById('new-password').value;
+  var confirm   = document.getElementById('confirm-password').value;
+  var msg       = document.getElementById('password-msg');
+
+  // Password validation
+  var passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^$*])[A-Za-z\d@$!%*?&#^$*]{8,}$/;
+  if (!passRegex.test(pass)) {
+    showMsg('password-msg', 'Password must be min 8 chars, 1 upper, 1 lower, 1 number, and 1 special char.', 'error');
+    return;
+  }
+
+  if (pass !== confirm) {
+    showMsg('password-msg', 'Passwords do not match.', 'error');
+    return;
+  }
+
+  showMsg('password-msg', 'Resetting password...', 'success');
+
+  try {
+    var data = await apiRequest('/password/reset', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: email,
+        otp_code: otp,
+        new_password: pass,
+        new_password_confirmation: confirm
+      })
+    });
+
+    if (data.success) {
+      showMsg('password-msg', 'Password successfully reset! Redirecting to login...', 'success');
+      setTimeout(function() {
+        showLogin();
+      }, 2000);
+    } else {
+      showMsg('password-msg', data.message || 'Reset failed.', 'error');
+    }
+  } catch (err) {
+    showMsg('password-msg', err.message || 'Error occurred.', 'error');
+  }
+}
+
+function showMsg(id, text, type) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  el.style.display = 'block';
+}
+
+function goToStep(stepId) {
+  document.querySelectorAll('.reset-step').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  var step = document.getElementById(stepId);
+  if (step) step.classList.add('active');
+
+  if (stepId === 'step-otp') {
+    startCountdown(60);
+    var firstBox = document.querySelectorAll('.otp-box')[0];
+    if (firstBox) firstBox.focus();
+  }
 }
 
 /* ── COUNTDOWN TIMER ── */
@@ -206,6 +309,22 @@ function startResend() {
   var firstOtpBox = document.querySelectorAll('.otp-box')[0];
   if (firstOtpBox) {
     firstOtpBox.focus();
+  }
+}
+
+function togglePassword(btn, inputId) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  
+  var isPass = input.type === 'password';
+  input.type = isPass ? 'text' : 'password';
+  
+  // Update icon
+  var icon = btn.querySelector('i') || btn.querySelector('svg');
+  if (icon) {
+    var newIcon = isPass ? 'eye-off' : 'eye';
+    icon.setAttribute('data-lucide', newIcon);
+    lucide.createIcons();
   }
 }
 

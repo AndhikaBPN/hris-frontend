@@ -65,6 +65,9 @@
           <div class="input-wrap">
             <i data-lucide="lock"></i>
             <input type="password" id="new-password" placeholder="••••••••••">
+            <button type="button" class="toggle-pass" onclick="togglePassword(this, 'new-password')">
+              <i data-lucide="eye"></i>
+            </button>
           </div>
         </div>
         <div class="field">
@@ -72,6 +75,9 @@
           <div class="input-wrap">
             <i data-lucide="lock"></i>
             <input type="password" id="confirm-password" placeholder="••••••••••">
+            <button type="button" class="toggle-pass" onclick="togglePassword(this, 'confirm-password')">
+              <i data-lucide="eye"></i>
+            </button>
           </div>
         </div>
         <div id="password-msg" class="msg"></div>
@@ -90,100 +96,9 @@
 <script src="../assets/js/auth.js"></script>
 <script>
   lucide.createIcons();
-
-  function showLogin() {
-    const page = document.getElementById('page-reset');
-    page.classList.add('page-exit');
-    setTimeout(() => {
-      window.location.href = 'login.html';
-    }, 220); // matching 220ms exit animation in style.css
-  }
-
-  function goToStep(stepId) {
-    document.querySelectorAll('.reset-step').forEach(s => s.classList.remove('active'));
-    document.getElementById(stepId).classList.add('active');
-    
-    if (stepId === 'step-otp') {
-      setupOTPInputs();
-      startCountdown(60);
-    }
-  }
-
-  function showMsg(id, text, type) {
-    const el = document.getElementById(id);
-    el.textContent = text;
-    el.className = `msg ${type}`;
-    el.style.display = 'block';
-  }
-
-  async function sendOTP() {
-    const email = document.getElementById('reset-email').value;
-    if (!email) return showMsg('email-msg', 'Please enter your email', 'error');
-    
-    showMsg('email-msg', 'Sending OTP...', 'success');
-    // Simulated delay
-    setTimeout(() => {
-      goToStep('step-otp');
-    }, 1000);
-  }
-
-  function verifyOTP() {
-    const otp = Array.from(document.querySelectorAll('.otp-box')).map(i => i.value).join('');
-    if (otp.length < 6) return showMsg('otp-msg', 'Please enter complete OTP', 'error');
-    
-    // Simulating validation (use '123456' as success for testing)
-    if (otp === '123456') {
-      goToStep('step-password');
-    } else {
-      showMsg('otp-msg', 'otp salah atau otp expired', 'error');
-    }
-  }
-
-  function handleReset() {
-    const pass = document.getElementById('new-password').value;
-    const confirm = document.getElementById('confirm-password').value;
-    
-    if (!pass || pass.length < 6) return showMsg('password-msg', 'Password must be at least 6 characters', 'error');
-    if (pass !== confirm) return showMsg('password-msg', 'Passwords do not match', 'error');
-    
-    showMsg('password-msg', 'Password successfully reset!', 'success');
-    setTimeout(() => showLogin(), 2000);
-  }
-
-  function setupOTPInputs() {
-    const inputs = document.querySelectorAll('.otp-box');
-    inputs.forEach((input, index) => {
-      input.addEventListener('input', (e) => {
-        if (e.target.value.length === 1 && index < inputs.length - 1) {
-          inputs[index + 1].focus();
-        }
-      });
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !e.target.value && index > 0) {
-          inputs[index - 1].focus();
-        }
-      });
-    });
-    inputs[0].focus();
-  }
-
-  function startCountdown(seconds) {
-    const btn = document.getElementById('resend-btn');
-    const timer = document.getElementById('resend-timer');
-    btn.style.display = 'none';
-    timer.style.display = 'inline';
-    
-    let count = seconds;
-    const interval = setInterval(() => {
-      timer.textContent = `Resend in ${count}s`;
-      if (count <= 0) {
-        clearInterval(interval);
-        timer.style.display = 'none';
-        btn.style.display = 'inline';
-      }
-      count--;
-    }, 1000);
-  }
+  
+  // Initialize OTP interaction if needed
+  // Note: auth.js already handles otpRow listeners
 </script>
 </body>
 </html>
