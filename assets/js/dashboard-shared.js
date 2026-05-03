@@ -2,6 +2,37 @@
     SHARED UTILITIES — used by all dashboards
     ══════════════════════════════════════════════ */
 
+/* ── Route Guard ── */
+var ROLE_DASHBOARD_MAP = {
+  'c_level':           'dashboard-clevel.html',
+  'hrd_manager':       'dashboard-manager.html',
+  'technical_manager': 'dashboard-manager.html',
+  'team_leader':       'dashboard-teamlead.html',
+  'staff':             'dashboard-staff.html'
+};
+
+function guardRoute(allowedRoles) {
+  var userStr = localStorage.getItem('hris_user');
+  var token   = localStorage.getItem('hris_token');
+
+  if (!userStr || !token) {
+    window.location.replace('../../index.html');
+    return;
+  }
+
+  var userRole = '';
+  try { userRole = JSON.parse(userStr).role || ''; } catch(e) {}
+
+  if (allowedRoles.indexOf(userRole) === -1) {
+    var target = ROLE_DASHBOARD_MAP[userRole];
+    if (target) {
+      window.location.replace(target);
+    } else {
+      window.location.replace('../../index.html');
+    }
+  }
+}
+
 /* ── Live clock ── */
 function updateLiveClock() {
   var el = document.getElementById('live-clock');
@@ -103,49 +134,10 @@ function animateProgress(pct) {
 }
 
 /* ══════════════════════════════════════════════
-  SHARED DUMMY DATA
+  SHARED DATA — DEPRECATED (Moved to API)
 ══════════════════════════════════════════════ */
-var DATA = {
-  divisions: ['Engineering','Design','Product','HR','Finance','Operations'],
-  teams: ['Frontend','Backend','DevOps','QA','UI/UX','Data','People Ops','Growth'],
+var DATA = { staff: [], birthdays: [], leaveRequests: [], myWeek: [] };
 
-  staff: [
-    { initials:'AR', name:'Alex Rivera',  color:'linear-gradient(135deg,#3d5c45,#6dbf80)', role:'Support Eng',   dept:'Engineering', team:'Backend',   level:'staff',      clockIn:'08:55 AM', clockIn2:'13:45 PM', clockOut:'17:05 PM', status:'complete', leaveLeft:12 },
-    { initials:'SC', name:'Sam Chen',     color:'linear-gradient(135deg,#4a6080,#7a9abf)', role:'Data Analyst',  dept:'Engineering', team:'Data',      level:'staff',      clockIn:'09:15 AM', clockIn2:'14:10 PM', clockOut:'17:00 PM', status:'late',     leaveLeft:9  },
-    { initials:'JL', name:'Jordan Lee',   color:'linear-gradient(135deg,#c0392b,#e07060)', role:'QA Tester',     dept:'Engineering', team:'QA',        level:'staff',      clockIn:'--:--',    clockIn2:'--:--',    clockOut:'--:--',    status:'pending',  leaveLeft:14 },
-    { initials:'MP', name:'Maya Putri',   color:'linear-gradient(135deg,#7d5a9a,#b08bc0)', role:'UI Designer',   dept:'Design',      team:'UI/UX',     level:'team-lead',  clockIn:'08:48 AM', clockIn2:'13:50 PM', clockOut:'17:02 PM', status:'complete', leaveLeft:10 },
-    { initials:'RW', name:'Ryan Wijaya',  color:'linear-gradient(135deg,#b07830,#d4a860)', role:'Backend Dev',   dept:'Engineering', team:'Backend',   level:'staff',      clockIn:'09:22 AM', clockIn2:'14:05 PM', clockOut:'17:10 PM', status:'late',     leaveLeft:7  },
-    { initials:'DN', name:'Diana Nas',    color:'linear-gradient(135deg,#2980b9,#5dade2)', role:'Product Mgr',   dept:'Product',     team:'Growth',    level:'management', clockIn:'08:30 AM', clockIn2:'13:40 PM', clockOut:'17:00 PM', status:'complete', leaveLeft:11 },
-    { initials:'BK', name:'Budi Kurnia',  color:'linear-gradient(135deg,#8e44ad,#bb8fce)', role:'DevOps',        dept:'Engineering', team:'DevOps',    level:'staff',      clockIn:'--:--',    clockIn2:'--:--',    clockOut:'--:--',    status:'pending',  leaveLeft:15 },
-    { initials:'LS', name:'Lisa Santoso', color:'linear-gradient(135deg,#16a085,#48c9b0)', role:'HR Specialist', dept:'HR',          team:'People Ops',level:'staff',      clockIn:'09:05 AM', clockIn2:'14:00 PM', clockOut:'17:00 PM', status:'complete', leaveLeft:13 },
-    { initials:'TK', name:'Toni Kusuma',  color:'linear-gradient(135deg,#e67e22,#f39c12)', role:'CFO',           dept:'Finance',     team:'Growth',    level:'c-level',    clockIn:'08:00 AM', clockIn2:'13:00 PM', clockOut:'17:00 PM', status:'complete', leaveLeft:20 },
-    { initials:'FR', name:'Fina Rahma',   color:'linear-gradient(135deg,#c0392b,#e74c3c)', role:'Ops Manager',   dept:'Operations',  team:'Growth',    level:'management', clockIn:'08:20 AM', clockIn2:'13:30 PM', clockOut:'17:00 PM', status:'complete', leaveLeft:8  },
-  ],
-
-  // Karyawan yang ulang tahun bulan ini
-  birthdays: [
-    { initials:'SC', name:'Sam Chen',     color:'linear-gradient(135deg,#4a6080,#7a9abf)', role:'Data Analyst',  date:'Apr 21', dept:'Engineering' },
-    { initials:'BK', name:'Budi Kurnia',  color:'linear-gradient(135deg,#8e44ad,#bb8fce)', role:'DevOps',        date:'Apr 25', dept:'Engineering' },
-    { initials:'LS', name:'Lisa Santoso', color:'linear-gradient(135deg,#16a085,#48c9b0)', role:'HR Specialist', date:'Apr 30', dept:'HR'          },
-  ],
-
-  // Data cuti
-  leaveRequests: [
-    { initials:'JL', name:'Jordan Lee',  color:'linear-gradient(135deg,#c0392b,#e07060)', type:'Annual Leave', from:'Apr 21', to:'Apr 23', status:'approved' },
-    { initials:'BK', name:'Budi Kurnia', color:'linear-gradient(135deg,#8e44ad,#bb8fce)', type:'Sick Leave',   from:'Apr 21', to:'Apr 21', status:'approved' },
-    { initials:'MP', name:'Maya Putri',  color:'linear-gradient(135deg,#7d5a9a,#b08bc0)', type:'Annual Leave', from:'Apr 28', to:'Apr 30', status:'pending'  },
-    { initials:'AR', name:'Alex Rivera', color:'linear-gradient(135deg,#3d5c45,#6dbf80)', type:'Annual Leave', from:'May 5',  to:'May 7',  status:'pending'  },
-  ],
-
-  // 1-week attendance history — personal staff
-  myWeek: [
-    { date:'Mon, Apr 14', clockIn:'08:55 AM', clockIn2:'13:45 PM', clockOut:'17:05 PM', status:'complete' },
-    { date:'Tue, Apr 15', clockIn:'09:02 AM', clockIn2:'14:10 PM', clockOut:'17:00 PM', status:'late'     },
-    { date:'Wed, Apr 16', clockIn:'--:--',    clockIn2:'--:--',    clockOut:'--:--',    status:'leave'    },
-    { date:'Thu, Apr 17', clockIn:'08:48 AM', clockIn2:'13:50 PM', clockOut:'17:10 PM', status:'complete' },
-    { date:'Fri, Apr 18', clockIn:'08:59 AM', clockIn2:'14:00 PM', clockOut:'17:00 PM', status:'complete' },
-  ],
-};
 
 /* ══════════════════════════════════════════════
   SHARED RENDER HELPERS
@@ -188,13 +180,11 @@ function renderAttTable(tbodyId, rows, rowFn) {
 
 /* ── Render birthday table ── */
 function renderBirthdays(tbodyId, titleId) {
-  if (titleId) document.getElementById(titleId).textContent = 'Birthday This Month 🎂';
-  var tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  // TODO backend: fetch('/api/birthdays?month=current&limit=' + MAX_ROWS)
-  tbody.innerHTML = DATA.birthdays.map(function(p) {
-    return '<tr><td>' + staffCell(p) + '</td><td class="att-date">' + p.dept + '</td><td class="checkin-time">' + p.date + '</td></tr>';
-  }).join('');
+  if (titleId) {
+    var titleEl = document.getElementById(titleId);
+    if(titleEl) titleEl.textContent = 'Birthdays This Month 🎂';
+  }
+  fetchBirthdays(tbodyId);
 }
 
 /* ── Render leave table ── */
@@ -344,7 +334,12 @@ var STATUS_MAP_SHARED = {
 
 function fetchAttendance(role, tbodyId) {
   var token = localStorage.getItem('hris_token');
-  fetch('http://localhost:8000/api/attendance/today?role=' + role, {
+  var url = 'http://localhost:8000/api/attendance/today?role=' + role;
+  if (role === 'team') {
+    url = 'http://localhost:8000/api/attendance/subordinates/today';
+  }
+
+  fetch(url, {
     headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
   })
   .then(function(res) { return res.json(); })
@@ -359,26 +354,61 @@ function fetchAttendance(role, tbodyId) {
       return;
     }
 
-    tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
-      var name = p.user_name || p.name || 'Unknown';
-      var rawRole = p.user_role || p.role || role;
+    if (role === 'team') {
+      // Group by user_id for CLOCK IN 1 / CLOCK IN 2 view (Team Lead)
+      var grouped = {};
+      rows.forEach(function(p) {
+        var uid = p.user_id;
+        if (!grouped[uid]) {
+          grouped[uid] = { 
+            name: p.user_name || p.name, 
+            role: p.user_role || p.role,
+            c1: '--:--', c2: '--:--', status: p.status 
+          };
+        }
+        var time = p.check_in_time || p.clock_in_time;
+        if (time && time.includes(' ')) time = time.split(' ')[1].substring(0, 5);
+        
+        if (p.session == 1) grouped[uid].c1 = time;
+        else if (p.session == 2) grouped[uid].c2 = time;
+      });
       
-      var staffObj = {
-        initials: name.substring(0, 2).toUpperCase(),
-        name: name,
-        role: ROLE_MAP_SHARED[rawRole] || rawRole,
-        color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
-      };
-      
-      var clockIn = p.clock_in_time || p.clockIn || '--:--';
-      var clockOut = p.clock_out_time || p.clockOut || '--:--';
-      
-      var s = p.status || 'pending';
-      var sc = STATUS_MAP_SHARED[s] || { label: '● ' + s, c: '#5a6b78', bg: '#f0f2f5' };
-      var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
+      var finalRows = Object.values(grouped);
+      tbody.innerHTML = finalRows.slice(0, MAX_ROWS).map(function(u) {
+        var staffObj = {
+          initials: u.name.substring(0, 2).toUpperCase(),
+          name: u.name,
+          role: ROLE_MAP_SHARED[u.role] || u.role,
+          color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
+        };
+        var sc = STATUS_MAP_SHARED[u.status] || { label: '● ' + u.status, c: '#5a6b78', bg: '#f0f2f5' };
+        var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
+        return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(u.c1) + timeCell(u.c2) + stCell + '</tr>';
+      }).join('');
+    } else {
+      // Standard logic for manager/staff (CLOCK IN / CLOCK OUT)
+      tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
+        var name = p.user_name || p.name || 'Unknown';
+        var rawRole = p.user_role || p.role || role;
+        var staffObj = {
+          initials: name.substring(0, 2).toUpperCase(),
+          name: name,
+          role: ROLE_MAP_SHARED[rawRole] || rawRole,
+          color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
+        };
+        
+        var clockIn = p.clock_in_time || p.check_in_time || p.clockIn || '--:--';
+        var clockOut = p.clock_out_time || p.check_out_time || p.clockOut || '--:--';
+        
+        if (clockIn.includes(' ')) clockIn = clockIn.split(' ')[1].substring(0, 5);
+        if (clockOut.includes(' ')) clockOut = clockOut.split(' ')[1].substring(0, 5);
 
-      return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(clockIn) + timeCell(clockOut) + stCell + '</tr>';
-    }).join('');
+        var s = p.status || 'pending';
+        var sc = STATUS_MAP_SHARED[s] || { label: '● ' + s, c: '#5a6b78', bg: '#f0f2f5' };
+        var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
+        return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(clockIn) + timeCell(clockOut) + stCell + '</tr>';
+      }).join('');
+    }
   })
   .catch(function(err) { console.error('Error fetching ' + role + ' attendance:', err); });
 }
@@ -436,4 +466,20 @@ function fetchBirthdays(tbodyId) {
     }).join('');
   })
   .catch(function(err) { console.error('Error fetching birthdays:', err); });
+}
+
+function fetchLeaveQuota(id) {
+  var token = localStorage.getItem('hris_token');
+  fetch('http://localhost:8000/api/leave/quota', {
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(resData) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (resData && resData.success && resData.data) {
+      el.textContent = resData.data.remaining_quota || 0;
+    }
+  })
+  .catch(function(err) { console.error('Error fetching leave quota:', err); });
 }

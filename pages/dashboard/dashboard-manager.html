@@ -129,7 +129,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3m0 0h3l3 3v5h-3"/><path d="M16 21a2 2 0 1 0 4 0 2 2 0 0 0-4 0M6 21a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/></svg>
               LEAVE QUOTA
             </div>
-            <div class="quota-number" id="leave-quota">12</div>
+            <div class="quota-number" id="leave-quota">0</div>
           </div>
           <div class="leave-title">Annual Leave Days</div>
           <div class="leave-sub">Remaining for 2025</div>
@@ -179,7 +179,7 @@
           <h2 class="section-title">Birthdays This Month 🎂</h2>
         </div>
         <table class="att-table">
-          <thead><tr><th>EMPLOYEE</th><th>DIVISION</th><th>DATE</th></tr></thead>
+          <thead><tr><th>EMPLOYEE</th><th>TEAM</th><th>DATE</th></tr></thead>
           <tbody id="tbody-bday-m"></tbody>
         </table>
       </div>
@@ -189,8 +189,9 @@
 
 <script src="../../assets/js/dashboard-shared.js"></script>
 <script>
-var ROLE_LABEL = 'MANAGEMENT';
+var ROLE_LABEL = 'MANAGER';
 var ROLE_COLOR = '#2980b9';
+guardRoute(['hrd_manager', 'technical_manager']);
 
 window.addEventListener('load', function() {
   window.loadComponents().then(function() {
@@ -240,6 +241,7 @@ window.addEventListener('load', function() {
   fetchAttendance('manager', 'tbody-mgr-m');
   renderLeave('tbody-leave-m');
   renderBirthdays('tbody-bday-m');
+  fetchLeaveQuota('leave-quota');
   if(av) av.textContent = 'D';
   initDateGreeting('Diana');
   var gs = document.getElementById('greeting-sub');
