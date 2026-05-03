@@ -80,7 +80,18 @@ async function handleLogin() {
       }
       msg.textContent = 'Authentication successful! Welcome, ' + (payload.user?.name || '') + '.';
       msg.className = 'msg success';
-      window.location.href = 'dashboard.html';
+      
+      var userRole = payload.user?.role;
+      console.log(userRole);
+      if (userRole === 'c_level') {
+        window.location.href = 'dashboard/dashboard-clevel.html';
+      } else if (userRole === 'hrd_manager' || userRole === 'technical_manager') {
+        window.location.href = 'dashboard/dashboard-manager.html';
+      } else if (userRole === 'team_leader') {
+        window.location.href = 'dashboard/dashboard-teamlead.html';
+      } else {
+        window.location.href = 'dashboard/dashboard-staff.html';
+      }
     } else {
       msg.textContent = data.message || 'Invalid email or password.';
       msg.className = 'msg error';
