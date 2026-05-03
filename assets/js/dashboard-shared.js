@@ -199,16 +199,71 @@ function renderBirthdays(tbodyId, titleId) {
 
 /* ── Render leave table ── */
 function renderLeave(tbodyId, titleId, rows) {
-  rows = rows || DATA.leaveRequests;
-  if (titleId) document.getElementById(titleId).textContent = 'Leave Requests';
-  var tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  // TODO backend: fetch('/api/leave-requests?limit=' + MAX_ROWS)
-  tbody.innerHTML = rows.map(function(p) {
-    return '<tr><td>' + staffCell(p) + '</td><td class="att-date">' + p.type + '</td>' +
-      '<td class="att-date">' + p.from + ' – ' + p.to + '</td>' +
-      '<td>' + leaveStatusBadge(p.status) + '</td></tr>';
-  }).join('');
+  if (titleId) {
+    var titleEl = document.getElementById(titleId);
+    if(titleEl) titleEl.textContent = 'Leave Requests';
+  }
+
+  if (rows) {
+    var tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    tbody.innerHTML = rows.map(function(p) {
+      return '<tr><td>' + staffCell(p) + '</td><td class="att-date">' + p.type + '</td>' +
+        '<td class="att-date">' + p.from + ' – ' + p.to + '</td>' +
+        '<td>' + leaveStatusBadge(p.status) + '</td></tr>';
+    }).join('');
+    return;
+  }
+
+  var token = localStorage.getItem('hris_token');
+  fetch('http://localhost:8000/api/leave/monthly', { 
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } 
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    var fetchedRows = data.data || data;
+    if (!Array.isArray(fetchedRows)) fetchedRows = [];
+    var tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+
+    if (fetchedRows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">-</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = fetchedRows.slice(0, MAX_ROWS).map(function(p) {
+      var name = p.user_name || p.name || 'Unknown';
+      var rawRole = p.user_role || p.role || '';
+      var staffObj = {
+        initials: name.substring(0, 2).toUpperCase(),
+        name: name,
+        role: ROLE_MAP_SHARED[rawRole] || rawRole,
+        color: 'linear-gradient(135deg,#7d5a9a,#b08bc0)'
+      };
+      
+      var type = p.leave_type || p.type || '-';
+      var fromDate = p.start_date || p.from_date || p.from || '';
+      var toDate = p.end_date || p.to_date || p.to || '';
+      var status = p.status || 'pending';
+      
+      var formatD = function(dStr) {
+        if (!dStr) return '';
+        var d = new Date(dStr);
+        if (isNaN(d)) return dStr;
+        return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getDate();
+      };
+      var formattedFrom = formatD(fromDate);
+      var formattedTo = formatD(toDate);
+      var dateRange = formattedFrom;
+      if (formattedTo && formattedTo !== formattedFrom) dateRange += ' – ' + formattedTo;
+      if (!dateRange) dateRange = '-';
+
+      return '<tr><td>' + staffCell(staffObj) + '</td><td class="att-date">' + type + '</td>' +
+        '<td class="att-date">' + dateRange + '</td>' +
+        '<td>' + leaveStatusBadge(status) + '</td></tr>';
+    }).join('');
+  })
+  .catch(function(err) { console.error('Error fetching leave monthly:', err); });
 }
 
 /* ── Stat cards helper ── */
@@ -299,6 +354,11 @@ function fetchAttendance(role, tbodyId) {
     var tbody = document.getElementById(tbodyId);
     if (!tbody) return;
 
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">-</td></tr>';
+      return;
+    }
+
     tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
       var name = p.user_name || p.name || 'Unknown';
       var rawRole = p.user_role || p.role || role;
@@ -350,6 +410,11 @@ function fetchBirthdays(tbodyId) {
     if (!Array.isArray(rows)) rows = [];
     var tbody = document.getElementById(tbodyId);
     if (!tbody) return;
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#888;">-</td></tr>';
+      return;
+    }
 
     tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
       var name = p.name || 'Unknown';
