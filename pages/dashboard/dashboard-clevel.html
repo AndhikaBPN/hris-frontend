@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Sanctuary – C-Level Dashboard</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+  <div id="navbar-placeholder"></div>
+  <main class="content">
+    <div class="greeting-row">
+      <div>
+        <h1 class="greeting" id="greeting-text">Good morning.</h1>
+        <p class="greeting-sub" id="greeting-sub"></p>
+      </div>
+      <div class="date-block">
+        <div class="date-label">TODAY'S DATE</div>
+        <div class="date-value" id="today-date"></div>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="stat-label">TOTAL KARYAWAN</div>
+        <div class="stat-value" id="stat-karyawan">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div class="stat-label">TOTAL DIVISI</div>
+        <div class="stat-value" id="stat-divisi">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+        </div>
+        <div class="stat-label">TOTAL TEAM</div>
+        <div class="stat-value" id="stat-team">0</div>
+      </div>
+    </div>
+
+    <!-- TABEL ABSENSI MANAGER + STAFF -->
+    <div class="table-row">
+      <div class="card">
+        <div class="attendance-header">
+          <h2 class="section-title">Absensi Manager — Hari Ini</h2>
+          <a class="view-all" href="#">Lihat Semua</a>
+        </div>
+        <table class="att-table">
+          <thead><tr><th>NAMA</th><th>CLOCK IN</th><th>CLOCK OUT</th><th>STATUS</th></tr></thead>
+          <tbody id="tbody-manager"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="attendance-header">
+          <h2 class="section-title">Absensi Staff — Hari Ini</h2>
+          <a class="view-all" href="#">Lihat Semua</a>
+        </div>
+        <table class="att-table">
+          <thead><tr><th>NAMA</th><th>CLOCK IN</th><th>CLOCK OUT</th><th>STATUS</th></tr></thead>
+          <tbody id="tbody-staff"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DATA CUTI + BIRTHDAY -->
+    <div class="table-row">
+      <div class="card">
+        <div class="attendance-header">
+          <h2 class="section-title">Data Cuti Karyawan</h2>
+          <a class="view-all" href="#">Lihat Semua</a>
+        </div>
+        <table class="att-table">
+          <thead><tr><th>KARYAWAN</th><th>TIPE</th><th>TANGGAL</th><th>STATUS</th></tr></thead>
+          <tbody id="tbody-leave"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="attendance-header">
+          <h2 class="section-title">Ulang Tahun Bulan Ini 🎂</h2>
+        </div>
+        <table class="att-table">
+          <thead><tr><th>KARYAWAN</th><th>DIVISI</th><th>TANGGAL</th></tr></thead>
+          <tbody id="tbody-birthday"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script>
+var ROLE_LABEL = 'C-LEVEL';
+var ROLE_COLOR = '#7d5a9a';
+
+window.addEventListener('load', function() {
+  window.loadComponents().then(function() {
+  var badge = document.getElementById('role-badge');
+  if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
+  var av = document.getElementById('avatar-init');
+  
+  fetchAttendance('manager', 'tbody-manager');
+  fetchAttendance('staff', 'tbody-staff');
+
+  fetchCount('http://localhost:8000/api/users/count', 'stat-karyawan');
+  fetchCount('http://localhost:8000/api/teams/count', 'stat-divisi');
+  fetchCount('http://localhost:8000/api/roles/count', 'stat-team');
+
+  renderLeave('tbody-leave');
+  fetchBirthdays('tbody-birthday');
+  if(av) av.textContent = 'T';
+  initDateGreeting('CEO');
+  updateLiveClock();
+  setInterval(updateLiveClock, 1000);
+  animateProgress(8);
+  });
+});
+initDateGreeting('Alex');
+</script>
+</body>
+</html>

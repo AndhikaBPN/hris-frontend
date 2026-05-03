@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Sanctuary – Staff Dashboard</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+  <div id="navbar-placeholder"></div>
+  <main class="content">
+    <div class="greeting-row">
+      <div>
+        <h1 class="greeting" id="greeting-text">Good morning.</h1>
+        <p class="greeting-sub" id="greeting-sub"></p>
+      </div>
+      <div class="date-block">
+        <div class="date-label">TODAY'S DATE</div>
+        <div class="date-value" id="today-date"></div>
+      </div>
+    </div>
+
+    <!-- BIO GRID -->
+    <div class="bio-grid">
+
+      <!-- BIOMETRIC CARD -->
+      <div class="biometric-card card">
+        <div id="state-pre">
+          <div class="pre-header">
+            <div>
+              <div class="card-title">My Session</div>
+              <div class="pre-status">READY TO START</div>
+            </div>
+            <div class="fingerprint-icon">
+              <svg viewBox="0 0 60 60" fill="none" width="48" height="48">
+                <circle cx="30" cy="30" r="16" stroke="#c5cdd5" stroke-width="2" fill="none"/>
+                <circle cx="24" cy="27" r="2" fill="#c5cdd5"/><circle cx="36" cy="27" r="2" fill="#c5cdd5"/>
+                <path d="M24 35 Q30 40 36 35" stroke="#c5cdd5" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <path d="M8 18 L8 8 L18 8" stroke="#c5cdd5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M42 8 L52 8 L52 18" stroke="#c5cdd5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M8 42 L8 52 L18 52" stroke="#c5cdd5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M52 42 L52 52 L42 52" stroke="#c5cdd5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pre-body">
+            <div>
+              <div class="pre-time-label">Current Time</div>
+              <div class="pre-time-value" id="live-clock">--:-- --</div>
+            </div>
+            <button class="clock-now-btn" onclick="activateBiometric()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Clock In Now
+            </button>
+          </div>
+        </div>
+        <div id="state-active" style="display:none;">
+          <div class="biometric-header">
+            <div>
+              <div class="card-title">Biometric Entry</div>
+              <div class="card-sub">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;vertical-align:middle;margin-right:4px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Validating 50m radius...
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="scan-indicator"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+              <button class="bio-close-btn" onclick="deactivateBiometric()" title="Kembali ke My Session">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="camera-wrap">
+            <div class="camera-inner">
+              <div class="camera-lens">
+                <div class="lens-ring r1"></div><div class="lens-ring r2"></div><div class="lens-ring r3"></div>
+                <div class="lens-core"></div>
+              </div>
+              <div class="scan-line"></div>
+              <div class="camera-corners">
+                <span class="corner tl"></span><span class="corner tr"></span>
+                <span class="corner bl"></span><span class="corner br"></span>
+              </div>
+            </div>
+          </div>
+          <div class="session-btns">
+            <button class="btn-session primary" onclick="clockSession(1)">Clock In (Session 1)</button>
+            <button class="btn-session secondary" onclick="clockSession(2)">Clock In (Session 2)</button>
+          </div>
+          <div id="session-msg" class="session-msg"></div>
+        </div>
+      </div>
+
+      <!-- KANAN: Shift + Leave -->
+      <div class="bio-right-col">
+        <div class="card shift-card">
+          <div class="card-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            UPCOMING SHIFT
+          </div>
+          <div class="shift-time">09:00 – 17:00</div>
+          <div class="shift-loc">Main HQ · Floor 3</div>
+          <div class="progress-row">
+            <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+            <span class="progress-label">45m</span>
+          </div>
+        </div>
+        <div class="card leave-card">
+          <div class="leave-top">
+            <div class="card-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3m0 0h3l3 3v5h-3"/><path d="M16 21a2 2 0 1 0 4 0 2 2 0 0 0-4 0M6 21a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/></svg>
+              LEAVE QUOTA
+            </div>
+            <div class="quota-number" id="leave-quota">12</div>
+          </div>
+          <div class="leave-title">Annual Leave Days</div>
+          <div class="leave-sub">Remaining for 2025</div>
+          <a class="leave-link" href="#">Request Leave →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA CUTI + BIRTHDAY -->
+    <div class="table-row">
+      <div class="card">
+        <div class="attendance-header">
+          <h2 class="section-title">Data Cuti Karyawan</h2>
+          <a class="view-all" href="#">Lihat Semua</a>
+        </div>
+        <table class="att-table">
+          <thead><tr><th>KARYAWAN</th><th>TIPE</th><th>TANGGAL</th><th>STATUS</th></tr></thead>
+          <tbody id="tbody-leave-s"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="attendance-header">
+          <h2 class="section-title">Ulang Tahun Bulan Ini 🎂</h2>
+        </div>
+        <table class="att-table">
+          <thead><tr><th>KARYAWAN</th><th>DIVISI</th><th>TANGGAL</th></tr></thead>
+          <tbody id="tbody-bday-s"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script>
+var ROLE_LABEL = 'STAFF';
+var ROLE_COLOR = '#6b7c8d';
+
+window.addEventListener('load', function() {
+  window.loadComponents().then(function() {
+  var badge = document.getElementById('role-badge');
+  if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
+  var av = document.getElementById('avatar-init');
+  
+  renderLeave('tbody-leave-s', null, DATA.leaveRequests.filter(function(p){ return p.name==='Alex Rivera'; }));
+  renderBirthdays('tbody-bday-s');
+  if(av) av.textContent = 'A';
+  var gs = document.getElementById('greeting-sub');
+  if(gs) gs.innerHTML = 'Shift kamu dimulai pukul <strong>09:00</strong>.';
+  updateLiveClock();
+  setInterval(updateLiveClock, 1000);
+  animateProgress(8);
+  });
+});
+initDateGreeting('Alex');
+</script>
+</body>
+</html>
