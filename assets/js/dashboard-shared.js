@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════
-    SHARED UTILITIES — dipakai semua dashboard
-══════════════════════════════════════════════ */
+    SHARED UTILITIES — used by all dashboards
+    ══════════════════════════════════════════════ */
 
 /* ── Live clock ── */
 function updateLiveClock() {
@@ -137,7 +137,7 @@ var DATA = {
     { initials:'AR', name:'Alex Rivera', color:'linear-gradient(135deg,#3d5c45,#6dbf80)', type:'Annual Leave', from:'May 5',  to:'May 7',  status:'pending'  },
   ],
 
-  // Riwayat absen 1 minggu — staff pribadi
+  // 1-week attendance history — personal staff
   myWeek: [
     { date:'Mon, Apr 14', clockIn:'08:55 AM', clockIn2:'13:45 PM', clockOut:'17:05 PM', status:'complete' },
     { date:'Tue, Apr 15', clockIn:'09:02 AM', clockIn2:'14:10 PM', clockOut:'17:00 PM', status:'late'     },
@@ -149,9 +149,9 @@ var DATA = {
 
 /* ══════════════════════════════════════════════
   SHARED RENDER HELPERS
-  NOTE: Semua tabel dibatasi MAX_ROWS baris.
-  Saat integrasi backend, ganti DATA.xxx dengan
-  response API dan tetap slice(0, MAX_ROWS).
+  NOTE: All tables are limited to MAX_ROWS.
+  When integrating backend, replace DATA.xxx with
+  API response and keep slice(0, MAX_ROWS).
 ══════════════════════════════════════════════ */
 var MAX_ROWS = 5;
 
@@ -323,7 +323,7 @@ window.loadComponents = function() {
 };
 
 /* ══════════════════════════════════════════════
-  API FETCH HELPERS — integrasi backend
+  API FETCH HELPERS — backend integration
 ══════════════════════════════════════════════ */
 
 var ROLE_MAP_SHARED = { 

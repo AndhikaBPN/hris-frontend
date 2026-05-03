@@ -69,7 +69,7 @@
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
               <div class="scan-indicator"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
-              <button class="bio-close-btn" onclick="deactivateBiometric()" title="Kembali ke My Session">
+              <button class="bio-close-btn" onclick="deactivateBiometric()" title="Back to My Session">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
@@ -142,21 +142,21 @@
     <div class="table-row">
       <div class="card">
         <div class="attendance-header">
-          <h2 class="section-title">Absensi Karyawan — Hari Ini</h2>
-          <a class="view-all" href="#">Lihat Semua</a>
+          <h2 class="section-title">Employee Attendance — Today</h2>
+          <a class="view-all" href="#">View All</a>
         </div>
         <table class="att-table">
-          <thead><tr><th>NAMA</th><th>CLOCK IN</th><th>CLOCK OUT</th><th>STATUS</th></tr></thead>
+          <thead><tr><th>NAME</th><th>CLOCK IN</th><th>CLOCK OUT</th><th>STATUS</th></tr></thead>
           <tbody id="tbody-staff-m"></tbody>
         </table>
       </div>
       <div class="card">
         <div class="attendance-header">
-          <h2 class="section-title">Absensi Manager — Hari Ini</h2>
-          <a class="view-all" href="#">Lihat Semua</a>
+          <h2 class="section-title">Manager Attendance — Today</h2>
+          <a class="view-all" href="#">View All</a>
         </div>
         <table class="att-table">
-          <thead><tr><th>NAMA</th><th>CLOCK IN</th><th>CLOCK OUT</th><th>STATUS</th></tr></thead>
+          <thead><tr><th>NAME</th><th>CLOCK IN</th><th>CLOCK OUT</th><th>STATUS</th></tr></thead>
           <tbody id="tbody-mgr-m"></tbody>
         </table>
       </div>
@@ -166,20 +166,20 @@
     <div class="table-row">
       <div class="card">
         <div class="attendance-header">
-          <h2 class="section-title">Data Cuti Karyawan</h2>
-          <a class="view-all" href="#">Lihat Semua</a>
+          <h2 class="section-title">Employee Leave Data</h2>
+          <a class="view-all" href="#">View All</a>
         </div>
         <table class="att-table">
-          <thead><tr><th>KARYAWAN</th><th>TIPE</th><th>TANGGAL</th><th>STATUS</th></tr></thead>
+          <thead><tr><th>EMPLOYEE</th><th>TYPE</th><th>DATE</th><th>STATUS</th></tr></thead>
           <tbody id="tbody-leave-m"></tbody>
         </table>
       </div>
       <div class="card">
         <div class="attendance-header">
-          <h2 class="section-title">Ulang Tahun Bulan Ini 🎂</h2>
+          <h2 class="section-title">Birthdays This Month 🎂</h2>
         </div>
         <table class="att-table">
-          <thead><tr><th>KARYAWAN</th><th>DIVISI</th><th>TANGGAL</th></tr></thead>
+          <thead><tr><th>EMPLOYEE</th><th>DIVISION</th><th>DATE</th></tr></thead>
           <tbody id="tbody-bday-m"></tbody>
         </table>
       </div>
@@ -212,7 +212,7 @@ window.addEventListener('load', function() {
     document.getElementById('btn-clockout').disabled = false;
     document.getElementById('btn-clockout').style.opacity = '1';
     var msg = document.getElementById('session-msg');
-    msg.textContent = '✓ Clock in berhasil pukul ' + hh + ':' + mm;
+    msg.textContent = '✓ Clock in successful at ' + hh + ':' + mm;
     msg.style.color = '#2e7d4f';
     durationTimer = setInterval(updateDuration, 1000);
     updateDuration();
@@ -225,7 +225,7 @@ window.addEventListener('load', function() {
     document.getElementById('btn-clockout').disabled = true;
     document.getElementById('btn-clockout').style.opacity = '0.6';
     var msg = document.getElementById('session-msg');
-    msg.textContent = '✓ Clock out pukul ' + hh + ':' + mm;
+    msg.textContent = '✓ Clocked out at ' + hh + ':' + mm;
     msg.style.color = '#c0392b';
   }
   function updateDuration() {
@@ -248,7 +248,7 @@ window.addEventListener('load', function() {
   if(av) av.textContent = 'D';
   initDateGreeting('Diana');
   var gs = document.getElementById('greeting-sub');
-  if(gs) gs.innerHTML = 'Shift dimulai pukul <strong>09:00</strong>.';
+  if(gs) gs.innerHTML = 'Shift starts at <strong>09:00</strong>.';
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
   animateProgress(8);
