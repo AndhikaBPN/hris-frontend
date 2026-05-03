@@ -236,13 +236,8 @@ window.addEventListener('load', function() {
     if (el) el.textContent = h + 'h ' + m.toString().padStart(2,'0') + 'm';
   }
 
-  function attRow(p) {
-    return '<tr><td>' + staffCell(p) + '</td>' + timeCell(p.clockIn) + timeCell(p.clockOut) + statusCell(p.status) + '</tr>';
-  }
-  var staffOnly = DATA.staff.filter(function(p){ return p.level==='staff'||p.level==='team-lead'; });
-  var mgrOnly   = DATA.staff.filter(function(p){ return p.level==='management'; });
-  document.getElementById('tbody-staff-m').innerHTML = staffOnly.slice(0, MAX_ROWS).map(attRow).join('');
-  document.getElementById('tbody-mgr-m').innerHTML   = mgrOnly.slice(0, MAX_ROWS).map(attRow).join('');
+  fetchAttendance('staff', 'tbody-staff-m');
+  fetchAttendance('manager', 'tbody-mgr-m');
   renderLeave('tbody-leave-m');
   renderBirthdays('tbody-bday-m');
   if(av) av.textContent = 'D';
