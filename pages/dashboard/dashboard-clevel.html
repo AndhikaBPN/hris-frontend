@@ -98,6 +98,9 @@
   </main>
 </div>
 
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
 <script src="../../assets/js/dashboard-shared.js"></script>
 <script>
 var ROLE_LABEL = 'C-LEVEL';
@@ -113,9 +116,9 @@ window.addEventListener('load', function() {
   fetchAttendance('manager', 'tbody-manager');
   fetchAttendance('staff', 'tbody-staff');
 
-  fetchCount('http://localhost:8000/api/users/count', 'stat-karyawan');
-  fetchCount('http://localhost:8000/api/teams/count', 'stat-divisi');
-  fetchCount('http://localhost:8000/api/roles/count', 'stat-team');
+  fetchCount('/users/count', 'stat-karyawan');
+  fetchCount('/teams/count', 'stat-divisi');
+  fetchCount('/roles/count', 'stat-team');
 
   renderLeave('tbody-leave');
   fetchBirthdays('tbody-birthday');
