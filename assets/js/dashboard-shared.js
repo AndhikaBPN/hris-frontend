@@ -212,7 +212,7 @@ function renderLeave(tbodyId, titleId, rows) {
     if (!tbody) return;
 
     if (fetchedRows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">-</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
       return;
     }
 
@@ -227,21 +227,22 @@ function renderLeave(tbodyId, titleId, rows) {
       };
       
       var type = p.leave_type || p.type || '-';
-      var fromDate = p.start_date || p.from_date || p.from || '';
-      var toDate = p.end_date || p.to_date || p.to || '';
+      var fromDate = p.leave_date_from || p.start_date || p.from_date || p.from || '';
+      var toDate   = p.leave_date_to   || p.end_date   || p.to_date   || p.to   || '';
       var status = p.status || 'pending';
       
+      var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       var formatD = function(dStr) {
         if (!dStr) return '';
-        var d = new Date(dStr);
+        var d = new Date(dStr.replace(' ', 'T').split('T')[0] + 'T00:00:00Z');
         if (isNaN(d)) return dStr;
-        return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getDate();
+        return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
       };
       var formattedFrom = formatD(fromDate);
-      var formattedTo = formatD(toDate);
-      var dateRange = formattedFrom;
-      if (formattedTo && formattedTo !== formattedFrom) dateRange += ' – ' + formattedTo;
-      if (!dateRange) dateRange = '-';
+      var formattedTo   = formatD(toDate);
+      var dateRange = formattedFrom && formattedTo && formattedFrom !== formattedTo
+        ? formattedFrom + ' – ' + formattedTo
+        : (formattedFrom || formattedTo || '-');
 
       return '<tr><td>' + staffCell(staffObj) + '</td><td class="att-date">' + type + '</td>' +
         '<td class="att-date">' + dateRange + '</td>' +
@@ -367,7 +368,7 @@ function fetchAttendance(role, tbodyId) {
     if (!tbody) return;
 
     if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">-</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
       return;
     }
 
@@ -453,7 +454,7 @@ function fetchBirthdays(tbodyId) {
     if (!tbody) return;
 
     if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#888;">-</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
       return;
     }
 
