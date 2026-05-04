@@ -16,6 +16,7 @@ function guardRoute(allowedRoles) {
   var token   = localStorage.getItem('hris_token');
 
   if (!userStr || !token) {
+    // If we are in pages/xxx/, index.html is at ../../index.html
     window.location.replace('../../index.html');
     return;
   }
@@ -26,7 +27,14 @@ function guardRoute(allowedRoles) {
   if (allowedRoles.indexOf(userRole) === -1) {
     var target = ROLE_DASHBOARD_MAP[userRole];
     if (target) {
-      window.location.replace(target);
+      // All dashboards are in ../dashboard/ relative to pages/attendance/
+      // or same directory if already in pages/dashboard/
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('/attendance/')) {
+        window.location.replace('../dashboard/' + target);
+      } else {
+        window.location.replace(target);
+      }
     } else {
       window.location.replace('../../index.html');
     }
@@ -101,16 +109,7 @@ function closeLogoutModal() {
 }
 
 function executeLogout() {
-  const token = localStorage.getItem('hris_token');
-  
-  // Hit API
-  fetch('http://localhost:8000/api/logout', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json'
-    }
-  }).finally(() => {
+  apiRequest('/logout', { method: 'POST' }).finally(() => {
     localStorage.removeItem('hris_token');
     localStorage.removeItem('hris_user');
     window.location.href = '../../index.html';
@@ -205,11 +204,7 @@ function renderLeave(tbodyId, titleId, rows) {
     return;
   }
 
-  var token = localStorage.getItem('hris_token');
-  fetch('http://localhost:8000/api/leave/monthly', { 
-    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } 
-  })
-  .then(function(res) { return res.json(); })
+  apiRequest('/leave/monthly')
   .then(function(data) {
     var fetchedRows = data.data || data;
     if (!Array.isArray(fetchedRows)) fetchedRows = [];
@@ -266,32 +261,59 @@ function setStatCard(id, value, sub) {
 
 /* ── Load Components ── */
 window.loadComponents = function() {
-  var p1 = fetch('../components/sidebar.html').then(r => r.text()).then(html => {
-    var el = document.getElementById('sidebar-placeholder');
+  const userStr = localStorage.getItem('hris_user');
+  let userRole = '';
+  if (userStr) {
+    try {
+      const userObj = JSON.parse(userStr);
+      userRole = userObj.role || '';
+    } catch(e) {}
+  }
+
+  const p1 = fetch('../components/sidebar.html').then(r => r.text()).then(html => {
+    const el = document.getElementById('sidebar-placeholder');
     if(el) el.outerHTML = html;
-    var userStr = localStorage.getItem('hris_user');
-    var userRole = '';
-    if (userStr) {
-      try {
-        var userObj = JSON.parse(userStr);
-        userRole = userObj.role || '';
-      } catch(e) {}
-    }
     
+    // Set Dynamic Links based on Role
+    const navItems = document.querySelectorAll('.nav-item');
+    const dashboardLink = navItems[0];
+    const attendanceLink = navItems[1];
+
+    if (dashboardLink) {
+      if (userRole === 'c_level') dashboardLink.href = '../dashboard/dashboard-clevel.html';
+      else if (userRole === 'team_leader') dashboardLink.href = '../dashboard/dashboard-teamlead.html';
+      else if (userRole === 'hrd_manager' || userRole === 'technical_manager') dashboardLink.href = '../dashboard/dashboard-manager.html';
+      else dashboardLink.href = '../dashboard/dashboard-staff.html';
+    }
+
+    if (attendanceLink) {
+      if (userRole === 'team_leader') attendanceLink.href = '../attendance/attendance-teamlead.html';
+      else attendanceLink.href = '../attendance/attendance-staff.html';
+    }
+
+    // Hide unauthorized menus
     if (userRole === 'staff') {
       document.querySelectorAll('.nav-reports, .nav-admin').forEach(e => e.style.display = 'none');
     } else if (userRole === 'team_leader') {
       document.querySelectorAll('.nav-reports').forEach(e => e.style.display = 'none');
     }
+
+    // Set Active State based on current URL
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.nav-item').forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') && currentPath.includes(link.getAttribute('href').replace('../', ''))) {
+        link.classList.add('active');
+      }
+    });
   });
 
-  var p2 = fetch('../components/navbar.html').then(r => r.text()).then(html => {
-    var el = document.getElementById('navbar-placeholder');
+  const p2 = fetch('../components/navbar.html').then(r => r.text()).then(html => {
+    const el = document.getElementById('navbar-placeholder');
     if(el) el.outerHTML = html;
 
-    // Inject Custom Logout Modal to Body
     if (!document.getElementById('logout-modal')) {
-      var modalHTML = `
+      const modalHTML = `
         <div id="logout-modal" class="modal-overlay">
           <div class="modal-content">
             <div class="modal-icon-wrap">
@@ -333,16 +355,11 @@ var STATUS_MAP_SHARED = {
 };
 
 function fetchAttendance(role, tbodyId) {
-  var token = localStorage.getItem('hris_token');
-  var url = 'http://localhost:8000/api/attendance/today?role=' + role;
-  if (role === 'team') {
-    url = 'http://localhost:8000/api/attendance/subordinates/today';
-  }
+  var path = role === 'team'
+    ? '/attendance/subordinates/today'
+    : '/attendance/today?role=' + role;
 
-  fetch(url, {
-    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-  })
-  .then(function(res) { return res.json(); })
+  apiRequest(path)
   .then(function(data) {
     var rows = data.data || data;
     if (!Array.isArray(rows)) rows = [];
@@ -413,10 +430,8 @@ function fetchAttendance(role, tbodyId) {
   .catch(function(err) { console.error('Error fetching ' + role + ' attendance:', err); });
 }
 
-function fetchCount(url, id) {
-  var token = localStorage.getItem('hris_token');
-  fetch(url, { headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } })
-    .then(function(res) { return res.json(); })
+function fetchCount(path, id) {
+  apiRequest(path)
     .then(function(resData) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -430,11 +445,7 @@ function fetchCount(url, id) {
 }
 
 function fetchBirthdays(tbodyId) {
-  var token = localStorage.getItem('hris_token');
-  fetch('http://localhost:8000/api/users/birthdays', { 
-    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } 
-  })
-  .then(function(res) { return res.json(); })
+  apiRequest('/users/birthdays')
   .then(function(data) {
     var rows = data.data || data;
     if (!Array.isArray(rows)) rows = [];
@@ -469,11 +480,7 @@ function fetchBirthdays(tbodyId) {
 }
 
 function fetchLeaveQuota(id) {
-  var token = localStorage.getItem('hris_token');
-  fetch('http://localhost:8000/api/leave/quota', {
-    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-  })
-  .then(function(res) { return res.json(); })
+  apiRequest('/leave/quota')
   .then(function(resData) {
     var el = document.getElementById(id);
     if (!el) return;
