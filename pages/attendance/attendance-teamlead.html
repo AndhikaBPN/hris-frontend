@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Attendance</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/attendance.css">
+</head>
+<body>
+
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+
+  <div id="navbar-placeholder"></div>
+
+  <main class="content">
+
+    <!-- TOP SECTION: Calendar + Legend + Next Shift -->
+    <div class="att-top-grid">
+
+      <!-- CALENDAR CARD -->
+      <div class="card calendar-card">
+        <div class="cal-header">
+          <h2 class="cal-month" id="cal-month-label">October 2023</h2>
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="changeMonth(-1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="cal-nav-btn" onclick="changeMonth(1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-day-header">SUN</div><div class="cal-day-header">MON</div>
+          <div class="cal-day-header">TUE</div><div class="cal-day-header">WED</div>
+          <div class="cal-day-header">THU</div><div class="cal-day-header">FRI</div>
+          <div class="cal-day-header">SAT</div>
+        </div>
+        <div class="cal-body" id="cal-body"></div>
+        <div class="cal-hint">Click for a date · <kbd>Shift</kbd>+click for a range</div>
+      </div>
+
+      <!-- RIGHT: Legend + Next Shift -->
+      <div class="att-right-panel">
+
+        <div class="card legend-card">
+          <div class="legend-title">ROTATION LEGEND</div>
+          <ul class="legend-list">
+            <li><span class="legend-dot morning"></span> Morning (06:00 – 14:00)</li>
+            <li><span class="legend-dot evening"></span> Evening (14:00 – 22:00)</li>
+            <li><span class="legend-dot night"></span> Night (22:00 – 06:00)</li>
+            <li><span class="legend-dot dayoff"></span> Day Off</li>
+          </ul>
+        </div>
+
+        <div class="card next-shift-card">
+          <div class="next-shift-inner">
+            <div>
+              <div class="next-shift-label">Next Shift</div>
+              <div class="next-shift-name" id="next-shift-name">Evening</div>
+              <div class="next-shift-time" id="next-shift-time">Today, 14:00 – 22:00</div>
+              <button class="btn-swap">Request Swap</button>
+            </div>
+            <div class="clock-deco">
+              <svg viewBox="0 0 80 80" fill="none" width="68" height="68">
+                <circle cx="40" cy="40" r="36" stroke="#dde3ea" stroke-width="3" fill="none"/>
+                <circle cx="40" cy="40" r="28" stroke="#eef1f4" stroke-width="2" fill="none"/>
+                <line x1="40" y1="40" x2="40" y2="16" stroke="#c5cdd5" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="40" y1="40" x2="56" y2="48" stroke="#c5cdd5" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="40" cy="40" r="3" fill="#c5cdd5"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ATTENDANCE TABLE -->
+    <div class="card att-table-card">
+      <div class="attendance-header">
+        <h2 class="section-title" id="att-table-title">Attendance History</h2>
+        <div class="att-filter-row">
+          <select class="att-filter" id="filter-status" onchange="onStatusFilterChange()">
+            <option value="all">All Status</option>
+            <option value="valid">Valid</option>
+            <option value="late">Late</option>
+            <option value="invalid">Invalid</option>
+            <option value="leave">Leave</option>
+            <option value="sick-leave">Sick Leave</option>
+            <option value="permit">Permit</option>
+          </select>
+          <button class="btn-reset-filter" onclick="resetFilters()">⟳ Reset</button>
+        </div>
+      </div>
+      <div class="att-table-scroll">
+        <table class="att-table">
+          <thead>
+            <tr>
+              <th>DATE</th>
+              <th>SESSION</th>
+              <th>CHECK IN</th>
+              <th>CHECK OUT</th>
+              <th>STATUS</th>
+              <th>ATTACHMENT</th>
+            </tr>
+          </thead>
+          <tbody id="att-main-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- POPUP MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Attendance Attachment</div>
+        <div class="modal-subtitle" id="modal-subtitle">Tanggal · Shift</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Dua foto: Clock In 1 & Clock In 2 -->
+      <div class="modal-photos-row">
+        <!-- Foto Clock In 1 -->
+        <div class="modal-photo-col">
+          <div class="modal-photo-label-top">Clock In 1</div>
+          <div class="modal-photo-wrap" id="photo-ci1-wrap">
+            <div class="photo-inner">
+              <svg viewBox="0 0 80 80" fill="none" width="52" height="52">
+                <circle cx="40" cy="40" r="20" stroke="#4a7c59" stroke-width="2" fill="none"/>
+                <circle cx="32" cy="35" r="3" fill="#4a7c59"/>
+                <circle cx="48" cy="35" r="3" fill="#4a7c59"/>
+                <path d="M32 48 Q40 54 48 48" stroke="#4a7c59" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <path d="M10 24 L10 10 L24 10" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M56 10 L70 10 L70 24" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M10 56 L10 70 L24 70" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M70 56 L70 70 L56 70" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+              <div class="photo-scan-line" id="scan-ci1"></div>
+              <div class="photo-label" id="photo-ci1-label">Verified Photo</div>
+            </div>
+          </div>
+          <div class="modal-photo-time" id="photo-ci1-time">--:--</div>
+        </div>
+
+        <!-- Foto Clock In 2 -->
+        <div class="modal-photo-col">
+          <div class="modal-photo-label-top">Clock In 2</div>
+          <div class="modal-photo-wrap modal-photo-wrap--dim" id="photo-ci2-wrap">
+            <div class="photo-inner" id="photo-ci2-inner">
+              <svg viewBox="0 0 80 80" fill="none" width="52" height="52" opacity="0.35">
+                <circle cx="40" cy="40" r="20" stroke="#9aabb7" stroke-width="2" fill="none"/>
+                <circle cx="32" cy="35" r="3" fill="#9aabb7"/>
+                <circle cx="48" cy="35" r="3" fill="#9aabb7"/>
+                <path d="M32 48 Q40 54 48 48" stroke="#9aabb7" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <path d="M10 24 L10 10 L24 10" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M56 10 L70 10 L70 24" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M10 56 L10 70 L24 70" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M70 56 L70 70 L56 70" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+              <div class="photo-label" id="photo-ci2-label" style="color:#b0bec5;">No photo</div>
+            </div>
+          </div>
+          <div class="modal-photo-time" id="photo-ci2-time" style="color:#b0bec5;">--:--</div>
+        </div>
+      </div>
+
+      <div class="modal-detail-grid" id="modal-details"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-download">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </button>
+      <button class="btn-close-modal" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/attendance.js"></script>
+<script>
+  var ROLE_LABEL = 'TEAM LEAD';
+  var ROLE_COLOR = '#3d5c45';
+  guardRoute(['team_leader']);
+
+  window.addEventListener('load', function() {
+    window.loadComponents().then(function() {
+      var badge = document.getElementById('role-badge');
+      if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
+    });
+  });
+</script>
+</body>
+</html>
