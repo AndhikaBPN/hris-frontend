@@ -420,17 +420,21 @@ body {
   font-size: 13.5px;
 }
 .att-table th {
-  text-align: left;
+  text-align: center;
   font-size: 10px; letter-spacing: 1.5px;
   color: #9aabb7; font-weight: 600;
   padding: 0 1rem 0.7rem;
   border-bottom: 1px solid #f0f2f5;
 }
+.att-table th:first-child { text-align: left; }
 .att-table td {
   padding: 0.85rem 1rem;
   color: #2c3e50;
   border-bottom: 1px solid #f8f9fa;
+  text-align: center;
+  white-space: nowrap;
 }
+.att-table td:first-child { text-align: left; white-space: normal; }
 .att-table tbody tr:last-child td { border-bottom: none; }
 .att-table tbody tr:hover td { background: #fafbfc; }
 
