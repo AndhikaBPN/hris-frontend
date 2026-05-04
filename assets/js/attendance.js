@@ -13,6 +13,7 @@ var selFrom = null;   // { y, m, d } — first clicked (or only) date
 var selTo   = null;   // { y, m, d } — shift+clicked date (range end), null = single
 var apiRecords    = [];
 var recordsByDate = {};
+var shiftsByDate  = {};
 var currentFilters = { date_from: getMonthStartStr(), date_to: getTodayStr(), status: 'all' };
 
 /* helper: compare two { y,m,d } objects */
@@ -26,6 +27,9 @@ function dateToStr(o) { return o.y + '-' + pad(o.m+1) + '-' + pad(o.d); }
 /* ── Status mapping (API values → display) ── */
 var statusCls   = { valid:'complete', late:'late', invalid:'pending', on_leave:'approved', leave:'approved', 'sick-leave':'approved', permit:'approved' };
 var statusLabel = { valid:'● Valid',  late:'● Late', invalid:'● Invalid', on_leave:'● On Leave', leave:'● Leave', 'sick-leave':'● Sick Leave', permit:'● Permit' };
+
+/* ── Shift name mapping (ID → EN) ── */
+var shiftNameMap = { 'Pagi': 'Morning', 'Siang': 'Afternoon', 'Malam': 'Night', 'Off': 'Day Off' };
 
 /* ── Utilities ── */
 function getToken() { return localStorage.getItem('hris_token') || ''; }
@@ -66,6 +70,7 @@ window.addEventListener('load', function() {
   calMonth = d.getMonth();
   currentFilters.date_from = getMonthStartStr();
   currentFilters.date_to   = getTodayStr();
+  fetchShifts(calYear, calMonth);
   fetchAttendance();
 });
 
@@ -107,6 +112,34 @@ function fetchAttendance() {
     });
 }
 
+function fetchShifts(year, month) {
+  var token = getToken();
+  if (!token) return;
+
+  var firstDay = year + '-' + pad(month + 1) + '-01';
+  var lastDay  = year + '-' + pad(month + 1) + '-' + pad(new Date(year, month + 1, 0).getDate());
+  var path = '/shifts?page=1&limit=31&order_by=date&sorting=ASC&date_from=' + firstDay + '&date_to=' + lastDay;
+
+  apiRequest(path)
+    .then(function(resp) {
+      shiftsByDate = {};
+      if (resp.success && resp.data) {
+        resp.data.forEach(function(s) { shiftsByDate[s.date] = s; });
+      }
+      renderCalendar();
+      updateNextShiftPanel();
+    })
+    .catch(function(err) { console.error('Shifts API error:', err); });
+}
+
+function getShiftDotClass(s) {
+  if (s.is_day_off) return 'dayoff';
+  var h = parseInt(s.start_time.split(':')[0]);
+  if (h >= 6  && h < 14) return 'morning';
+  if (h >= 14 && h < 22) return 'evening';
+  return 'night';
+}
+
 /* ══════════════════════════════════════════════
    CALENDAR
 ══════════════════════════════════════════════ */
@@ -125,6 +158,7 @@ function changeMonth(dir) {
   currentFilters.date_from = firstDay;
   currentFilters.date_to   = lastDay;
 
+  fetchShifts(calYear, calMonth);
   fetchAttendance();
 }
 
@@ -159,7 +193,10 @@ function renderCalendar() {
     var isSingle  = selFrom && !selTo && isStart; // single selection, no range end yet
 
     var dotClass = 'none';
-    if (records.length > 0) {
+    var shiftRec = shiftsByDate[dateStr];
+    if (shiftRec) {
+      dotClass = getShiftDotClass(shiftRec);
+    } else if (records.length > 0) {
       if (records.some(function(r) { return r.status === 'invalid'; }))   dotClass = 'night';
       else if (records.some(function(r) { return r.status === 'late'; })) dotClass = 'evening';
       else dotClass = 'morning';
@@ -346,37 +383,25 @@ function updateNextShiftPanel() {
   var timeEl = document.getElementById('next-shift-time');
   if (!nameEl || !timeEl) return;
 
-  var shiftNames = { 1: 'Morning', 2: 'Evening', 3: 'Night' };
-  var shiftTimes = { 1: '06:00 – 14:00', 2: '14:00 – 22:00', 3: '22:00 – 06:00' };
-  var todayStr   = getTodayStr();
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var tomorrowStr = tomorrow.getFullYear() + '-' + pad(tomorrow.getMonth() + 1) + '-' + pad(tomorrow.getDate());
 
-  // Find next upcoming shift: future date first, then today's unstarted record
-  var sorted = apiRecords.slice().sort(function(a, b) {
-    if (a.shift_date !== b.shift_date) return a.shift_date > b.shift_date ? 1 : -1;
-    return (a.session || 1) - (b.session || 1);
-  });
+  var shift = shiftsByDate[tomorrowStr];
 
-  var next = null;
-  for (var i = 0; i < sorted.length; i++) {
-    var rec = sorted[i];
-    if (rec.shift_date > todayStr) { next = rec; break; }
-    if (rec.shift_date === todayStr && !rec.check_in_time) { next = rec; break; }
-  }
-
-  // Fall back to today's latest record if no upcoming shift found
-  if (!next) {
-    var todayRecs = recordsByDate[todayStr] || [];
-    if (todayRecs.length > 0) next = todayRecs[todayRecs.length - 1];
-  }
-
-  if (next) {
-    var session   = next.session || 1;
-    var dateLabel = next.shift_date === todayStr ? 'Today' : formatDateDisplay(next.shift_date);
-    nameEl.textContent = shiftNames[session] || ('Session ' + session);
-    timeEl.textContent = dateLabel + ', ' + (shiftTimes[session] || '');
+  if (shift) {
+    if (shift.is_day_off) {
+      nameEl.textContent = 'Day Off';
+      timeEl.textContent = formatDateDisplay(tomorrowStr);
+    } else {
+      nameEl.textContent = shiftNameMap[shift.shift_name] || shift.shift_name;
+      var startTime = shift.start_time.substring(0, 5);
+      var endTime   = shift.end_time.substring(0, 5);
+      timeEl.textContent = formatDateDisplay(tomorrowStr) + ', ' + startTime + ' – ' + endTime;
+    }
   } else {
     nameEl.textContent = '—';
-    timeEl.textContent = 'No upcoming shifts';
+    timeEl.textContent = 'No shift scheduled';
   }
 }
 
