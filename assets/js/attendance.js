@@ -187,7 +187,7 @@ function renderCalendar() {
     var records = recordsByDate[dateStr] || [];
 
     // Selection classes
-    var isStart  = selFrom && selFrom.y === calYear && selFrom.m === calMonth && selFrom.d === d;
+    var isStart  = rFrom && rFrom.y === calYear && rFrom.m === calMonth && rFrom.d === d;
     var isEnd    = rTo   && rTo.y   === calYear && rTo.m   === calMonth && rTo.d   === d;
     var isInRange = rFrom && rTo && dateCmp(cellObj, rFrom) > 0 && dateCmp(cellObj, rTo) < 0;
     var isSingle  = selFrom && !selTo && isStart; // single selection, no range end yet
