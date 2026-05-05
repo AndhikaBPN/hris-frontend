@@ -170,13 +170,14 @@ window.addEventListener('load', function() {
   fetchLeaveQuota('leave-quota');
   if(av) av.textContent = 'A';
   var gs = document.getElementById('greeting-sub');
-  if(gs) gs.innerHTML = 'Your shift starts at <strong>09:00</strong>.';
+  var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
+  initDateGreeting(name);
+  if(gs) gs.innerHTML = 'Keep up your performance.';
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
   animateProgress(8);
   });
 });
-initDateGreeting('Alex');
 </script>
 </body>
 </html>

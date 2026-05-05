@@ -247,9 +247,10 @@ window.addEventListener('load', function() {
   renderBirthdays('tbody-bday-m');
   fetchLeaveQuota('leave-quota');
   if(av) av.textContent = 'D';
-  initDateGreeting('Diana');
+  var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
+  initDateGreeting(name);
   var gs = document.getElementById('greeting-sub');
-  if(gs) gs.innerHTML = 'Shift starts at <strong>09:00</strong>.';
+  if(gs) gs.innerHTML = 'Managing your team members efficiently.';
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
   animateProgress(8);

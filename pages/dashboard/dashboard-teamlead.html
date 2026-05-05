@@ -183,7 +183,8 @@ window.addEventListener('load', function() {
   renderBirthdays('tbody-bday-tl');
   fetchLeaveQuota('leave-quota');
   if(av) av.textContent = 'M';
-  initDateGreeting('Maya');
+  var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
+  initDateGreeting(name);
   var gs = document.getElementById('greeting-sub');
   if(gs) gs.innerHTML = 'Managing your team members efficiently.';
   updateLiveClock();
@@ -191,7 +192,6 @@ window.addEventListener('load', function() {
   animateProgress(8);
   });
 });
-initDateGreeting('Alex');
 </script>
 </body>
 </html>
