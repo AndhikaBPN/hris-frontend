@@ -58,7 +58,7 @@ Run a static server from the project root:
 
 ```bash
 cd /Users/apple/Documents/kuliah/hris-frontend
-python3 -m http.server 5500
+node server.js
 ```
 
 Open browser:
