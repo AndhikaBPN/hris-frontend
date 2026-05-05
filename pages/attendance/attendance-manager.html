@@ -86,6 +86,7 @@
             <option value="sick-leave">Sick Leave</option>
             <option value="permit">Permit</option>
           </select>
+          <button class="btn-reset-filter" style="display:inline-flex;" onclick="resetPersonalFilters()">⟳ Reset</button>
         </div>
       </div>
       <div class="table-scroll">
@@ -135,6 +136,7 @@
             <option value="Product">Product</option>
             <option value="HR">HR</option>
           </select>
+          <button class="btn-reset-filter" style="display:inline-flex;" onclick="resetTeamFilters()">⟳ Reset</button>
         </div>
       </div>
 
@@ -164,11 +166,14 @@
           <h2 class="section-title">Attendance Summary — October 2023</h2>
           <div class="mgr-table-sub">Total attendance per employee this month</div>
         </div>
-        <select class="att-filter" id="filter-summary-month">
-          <option value="10">Oktober 2023</option>
-          <option value="9">September 2023</option>
-          <option value="8">Agustus 2023</option>
-        </select>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <select class="att-filter" id="filter-summary-month">
+            <option value="10">Oktober 2023</option>
+            <option value="9">September 2023</option>
+            <option value="8">Agustus 2023</option>
+          </select>
+          <button class="btn-reset-filter" style="display:inline-flex;" onclick="resetSummaryFilters()">⟳ Reset</button>
+        </div>
       </div>
       <div class="table-scroll">
         <table class="att-table">

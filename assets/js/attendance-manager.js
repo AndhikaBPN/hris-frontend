@@ -174,7 +174,7 @@ function fetchTeamAttendance(page) {
   var dateTo   = document.getElementById('filter-team-to').value   || todayStr;
 
   var filterStatus = document.getElementById('filter-team-status').value;
-  var params = '?view=all&page=' + teamCurrentPage + '&limit=' + teamLimit +
+  var params = '?view=staff&page=' + teamCurrentPage + '&limit=' + teamLimit +
     '&date_from=' + dateFrom + '&date_to=' + dateTo + '&order_by=id&sorting=DESC';
   if (filterStatus && filterStatus !== 'all') params += '&status=' + encodeURIComponent(filterStatus);
 
@@ -598,6 +598,34 @@ function fetchPersonalAttendance() {
     console.error('Error fetching personal attendance:', err);
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#c0392b;font-size:13px;">Failed to load data</td></tr>';
   });
+}
+
+function resetPersonalFilters() {
+  var pad = function(n) { return n.toString().padStart(2, '0'); };
+  var t = new Date();
+  var todayStr = t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate());
+  document.getElementById('filter-personal-from').value = todayStr;
+  document.getElementById('filter-personal-to').value   = todayStr;
+  document.getElementById('filter-personal-status').value = '';
+  fetchPersonalAttendance();
+}
+
+function resetTeamFilters() {
+  var pad = function(n) { return n.toString().padStart(2, '0'); };
+  var t = new Date();
+  var todayStr = t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate());
+  document.getElementById('filter-team-from').value   = todayStr;
+  document.getElementById('filter-team-to').value     = todayStr;
+  document.getElementById('filter-team-status').value = '';
+  document.getElementById('filter-division').value    = 'all';
+  teamCurrentPage = 1;
+  fetchTeamAttendance();
+}
+
+function resetSummaryFilters() {
+  var sel = document.getElementById('filter-summary-month');
+  if (sel) sel.selectedIndex = 0;
+  renderSummaryTable();
 }
 
 function openPersonalModal(r) {
