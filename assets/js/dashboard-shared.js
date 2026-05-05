@@ -289,6 +289,7 @@ window.loadComponents = function() {
 
     if (attendanceLink) {
       if (userRole === 'team_leader') attendanceLink.href = '../attendance/attendance-teamlead.html';
+      else if (userRole === 'hrd_manager' || userRole === 'technical_manager') attendanceLink.href = '../attendance/attendance-manager.html';
       else attendanceLink.href = '../attendance/attendance-staff.html';
     }
 
@@ -296,7 +297,9 @@ window.loadComponents = function() {
     if (userRole === 'staff') {
       document.querySelectorAll('.nav-reports, .nav-admin').forEach(e => e.style.display = 'none');
     } else if (userRole === 'team_leader') {
-      document.querySelectorAll('.nav-reports').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-reports, .nav-admin').forEach(e => e.style.display = 'none');
+    } else if (userRole === 'hrd_manager' || userRole === 'technical_manager') {
+      document.querySelectorAll('.nav-admin').forEach(e => e.style.display = 'none');
     }
 
     // Set Active State based on current URL
