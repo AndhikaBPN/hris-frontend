@@ -272,11 +272,11 @@ function updateTableTitle() {
     title.textContent = 'Attendance History';
   } else if (!selTo) {
     var df = new Date(selFrom.y, selFrom.m, selFrom.d);
-    title.textContent = 'Attendance — ' + days[df.getDay()] + ', ' + selFrom.d + ' ' + months[selFrom.m] + ' ' + selFrom.y;
+    title.textContent = 'Attendance History';
   } else {
     var a = dateCmp(selFrom, selTo) <= 0 ? selFrom : selTo;
     var b = dateCmp(selFrom, selTo) <= 0 ? selTo   : selFrom;
-    title.textContent = 'Attendance — ' + a.d + ' ' + months[a.m] + (a.y !== b.y ? ' '+a.y : '') + '  –  ' + b.d + ' ' + months[b.m] + ' ' + b.y;
+    title.textContent = 'Attendance History';
   }
 }
 
