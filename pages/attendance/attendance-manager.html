@@ -147,7 +147,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             Semua Data
           </button>
-          <select class="att-filter" id="filter-team-status" onchange="renderTeamTable()">
+          <select class="att-filter" id="filter-team-status" onchange="fetchTeamAttendance()">
             <option value="all">Semua Status</option>
             <option value="complete">Complete</option>
             <option value="late">Late Entry</option>
@@ -156,7 +156,7 @@
           </select>
 
           <!-- Filter divisi -->
-          <select class="att-filter" id="filter-division" onchange="renderTeamTable()">
+          <select class="att-filter" id="filter-division" onchange="fetchTeamAttendance()">
             <option value="all">Semua Divisi</option>
             <option value="Engineering">Engineering</option>
             <option value="Design">Design</option>

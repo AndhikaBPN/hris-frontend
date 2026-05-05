@@ -192,7 +192,7 @@ function onCalClick(day) {
     renderDpCalendar();
   }
   renderCalendar();
-  renderTeamTable();
+  fetchTeamAttendance();
   renderLateAlerts();
 }
 
@@ -266,6 +266,97 @@ function renderTeamTable() {
 
   document.getElementById('team-tbody').innerHTML = html ||
     '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;">Tidak ada data</td></tr>';
+}
+
+function fetchTeamAttendance() {
+  var pad = function(n) { return n.toString().padStart(2, '0'); };
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
+
+  var dateStr = todayStr;
+  if (dpPickedDate && dpPickedMonth !== null && dpPickedYear !== null) {
+    dateStr = dpPickedYear + '-' + pad(dpPickedMonth + 1) + '-' + pad(dpPickedDate);
+  }
+
+  var filterStatus = document.getElementById('filter-team-status').value;
+  var params = '?view=staff&page=1&limit=100&date_from=' + dateStr + '&date_to=' + dateStr + '&order_by=id&sorting=DESC';
+  if (filterStatus && filterStatus !== 'all') params += '&status=' + encodeURIComponent(filterStatus);
+
+  var MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var titleDate = dpPickedDate
+    ? dpPickedDate + ' ' + MONTHS_ID[dpPickedMonth] + ' ' + dpPickedYear
+    : 'Hari Ini';
+  var titleEl = document.getElementById('team-table-title');
+  if (titleEl) titleEl.textContent = 'Absensi Tim — ' + titleDate;
+
+  var tbody = document.getElementById('team-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;">Memuat data...</td></tr>';
+
+  apiRequest('/attendance' + params)
+  .then(function(res) {
+    var rows = res.data || [];
+    if (!Array.isArray(rows)) rows = [];
+
+    var filterDiv = document.getElementById('filter-division').value;
+    if (filterDiv && filterDiv !== 'all') {
+      rows = rows.filter(function(r) { return (r.division || r.dept || '') === filterDiv; });
+    }
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;font-size:13px;">Tidak ada data</td></tr>';
+      return;
+    }
+
+    var html = rows.map(function(r) {
+      var name = r.user_name || 'Unknown';
+      var avatarObj = {
+        initials: name.substring(0, 2).toUpperCase(),
+        name: name,
+        role: ROLE_MAP_SHARED[r.user_role || ''] || (r.user_role || ''),
+        color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
+      };
+
+      var ci = r.check_in_time  ? r.check_in_time.split(' ')[1].substring(0, 5)  : '--:--';
+      var co = r.check_out_time ? r.check_out_time.split(' ')[1].substring(0, 5) : '--:--';
+
+      var dur = '—';
+      if (r.check_in_time && r.check_out_time) {
+        var ciP = ci.split(':').map(Number);
+        var coP = co.split(':').map(Number);
+        var mins = (coP[0] * 60 + coP[1]) - (ciP[0] * 60 + ciP[1]);
+        if (mins < 0) mins += 24 * 60;
+        dur = Math.floor(mins / 60) + 'j ' + (mins % 60) + 'm';
+      }
+
+      var dept = r.division || r.dept || '-';
+      var sc = STATUS_MAP_SHARED[r.status] || { label: '● ' + (r.status || '-'), c: '#5a6b78', bg: '#f0f2f5' };
+      var stCell = '<td><span class="badge-status" style="color:' + sc.c + ';background:' + sc.bg + ';">' + sc.label + '</span></td>';
+
+      var lamp = r.face_image
+        ? '<button class="btn-view" onclick=\'openPersonalModal(' + JSON.stringify(r) + ')\'>' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View</button>'
+        : '<span class="btn-view-na">—</span>';
+
+      var ciCls = !r.check_in_time  ? ' pending-time' : '';
+      var coCls = !r.check_out_time ? ' pending-time' : '';
+
+      return '<tr>' +
+        '<td>' + staffCell(avatarObj) + '</td>' +
+        '<td class="staff-role">' + dept + '</td>' +
+        '<td class="checkin-time' + ciCls + '">' + ci + '</td>' +
+        '<td class="checkin-time' + coCls + '">' + co + '</td>' +
+        '<td><span class="dur-pill">' + dur + '</span></td>' +
+        stCell +
+        '<td>' + lamp + '</td>' +
+      '</tr>';
+    }).join('');
+
+    tbody.innerHTML = html;
+  })
+  .catch(function(err) {
+    console.error('Error fetching team attendance:', err);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#c0392b;font-size:13px;">Gagal memuat data</td></tr>';
+  });
 }
 
 function staffCell(r) {
@@ -384,7 +475,7 @@ function dpSelectDay(day) {
   if (rb) rb.style.display = 'inline-flex';
 
   renderDpCalendar();
-  renderTeamTable();
+  fetchTeamAttendance();
 
   dpOpen = false;
   document.getElementById('date-picker-popup').style.display = 'none';
@@ -405,7 +496,7 @@ function dpClearDate() {
   var rb = document.getElementById('btn-reset-team');
   if (rb) rb.style.display = 'none';
   renderDpCalendar();
-  renderTeamTable();
+  fetchTeamAttendance();
   dpOpen = false;
   document.getElementById('date-picker-popup').style.display = 'none';
 }
@@ -482,7 +573,7 @@ document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close
 /* ══ INIT ══ */
 window.addEventListener('load', function() {
   renderSummary();
-  renderTeamTable();
+  fetchTeamAttendance();
   renderSummaryTable();
   fetchPersonalAttendance();
 });
