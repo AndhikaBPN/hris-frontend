@@ -28,6 +28,7 @@ build/
 .cache/
 .parcel-cache/
 .vite/
+.playwright-mcp/
 
 # Coverage
 coverage/
