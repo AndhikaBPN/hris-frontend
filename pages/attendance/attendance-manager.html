@@ -131,10 +131,6 @@
           <!-- Filter team -->
           <select class="att-filter" id="filter-division" onchange="teamCurrentPage=1;fetchTeamAttendance()">
             <option value="all">All Team</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Design">Design</option>
-            <option value="Product">Product</option>
-            <option value="HR">HR</option>
           </select>
           <button class="btn-reset-filter" style="display:inline-flex;" onclick="resetTeamFilters()">⟳ Reset</button>
         </div>
@@ -245,6 +241,7 @@
 <script src="../../assets/js/api.js"></script>
 <script src="../../assets/js/dashboard-shared.js"></script>
 <script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/team.js"></script>
 <script src="../../assets/js/attendance-manager.js"></script>
 <script>
 guardRoute(["hrd_manager", "technical_manager"]);
@@ -279,7 +276,28 @@ window.addEventListener("load", function() {
   var currentMonthStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0');
   summaryMonthSelect.value = currentMonthStr;
   fetchAttendanceSummary(currentMonthStr);
+
+  // Populate team filter with dynamic teams from API
+  populateTeamFilter();
 });
+
+function populateTeamFilter() {
+  getAllTeams(function(result) {
+    if (result.success && result.data) {
+      var divisionSelect = document.getElementById('filter-division');
+      var existingTeams = divisionSelect.querySelectorAll('option[data-team-id]');
+      existingTeams.forEach(function(opt) { opt.remove(); });
+
+      result.data.forEach(function(team) {
+        var opt = document.createElement('option');
+        opt.value = team.team_name;
+        opt.textContent = team.team_name;
+        opt.setAttribute('data-team-id', team.id);
+        divisionSelect.appendChild(opt);
+      });
+    }
+  });
+}
 </script>
 </body>
 </html>
