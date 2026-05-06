@@ -21,7 +21,9 @@ function parseEnv() {
 }
 
 function generateEnvJs(env) {
-  var config = { URL_LOCAL: env.URL_LOCAL || 'http://localhost:8000/api' };
+  var config = {
+    URL_LOCAL: env.URL_LOCAL || 'http://localhost:8000/api',
+  };
   var content = '/* auto-generated from .env — do not edit */\nvar APP_ENV = ' + JSON.stringify(config, null, 2) + ';\n';
   fs.writeFileSync(path.join(__dirname, 'assets/js/env.js'), content, 'utf8');
 }
