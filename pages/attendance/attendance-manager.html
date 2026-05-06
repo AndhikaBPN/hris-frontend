@@ -163,15 +163,11 @@
     <div class="card mgr-table-card">
       <div class="mgr-table-header">
         <div>
-          <h2 class="section-title">Attendance Summary — October 2023</h2>
+          <h2 class="section-title">Attendance Summary</h2>
           <div class="mgr-table-sub">Total attendance per employee this month</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <select class="att-filter" id="filter-summary-month">
-            <option value="10">Oktober 2023</option>
-            <option value="9">September 2023</option>
-            <option value="8">Agustus 2023</option>
-          </select>
+          <select class="att-filter" id="filter-summary-month" onchange="teamCurrentPage=1;fetchAttendanceSummary(this.value)"></select>
           <button class="btn-reset-filter" style="display:inline-flex;" onclick="resetSummaryFilters()">⟳ Reset</button>
         </div>
       </div>
@@ -259,6 +255,30 @@ window.addEventListener("load", function() {
     var av = document.getElementById("avatar-init");
     if (av) av.textContent = "M";
   });
+
+  // Populate summary month filter (12 months, descending)
+  var summaryMonthSelect = document.getElementById('filter-summary-month');
+  var now = new Date();
+  var currentMonth = now.getMonth();
+  var currentYear = now.getFullYear();
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  for (var i = 0; i < 12; i++) {
+    var m = currentMonth - i;
+    var y = currentYear;
+    if (m < 0) { m += 12; y--; }
+    var monthStr = y + '-' + String(m + 1).padStart(2, '0');
+    var label = monthNames[m] + ' ' + y;
+    var opt = document.createElement('option');
+    opt.value = monthStr;
+    opt.textContent = label;
+    summaryMonthSelect.appendChild(opt);
+  }
+
+  // Fetch attendance summary for current month
+  var currentMonthStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0');
+  summaryMonthSelect.value = currentMonthStr;
+  fetchAttendanceSummary(currentMonthStr);
 });
 </script>
 </body>

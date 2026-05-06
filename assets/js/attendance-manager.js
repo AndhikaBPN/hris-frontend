@@ -9,36 +9,66 @@ function setActive(el) {
 }
 function exportReport() { alert('Report exported successfully! File will download.'); }
 
-/* Monthly summary per employee */
-var summaryData = [
-  { initials:'AR', name:'Alex Rivera',  color:'linear-gradient(135deg,#3d5c45,#6dbf80)', role:'Support Eng',   total:22, hadir:20, late:2, absent:0, cuti:2  },
-  { initials:'SC', name:'Sam Chen',     color:'linear-gradient(135deg,#4a6080,#7a9abf)', role:'Data Analyst',  total:22, hadir:18, late:4, absent:2, cuti:0  },
-  { initials:'JL', name:'Jordan Lee',   color:'linear-gradient(135deg,#c0392b,#e07060)', role:'QA Tester',     total:22, hadir:15, late:1, absent:4, cuti:3  },
-  { initials:'MP', name:'Maya Putri',   color:'linear-gradient(135deg,#7d5a9a,#b08bc0)', role:'UI Designer',   total:22, hadir:21, late:1, absent:0, cuti:1  },
-  { initials:'RW', name:'Ryan Wijaya',  color:'linear-gradient(135deg,#b07830,#d4a860)', role:'Backend Dev',   total:22, hadir:19, late:3, absent:1, cuti:2  },
-  { initials:'DN', name:'Diana Nas',    color:'linear-gradient(135deg,#2980b9,#5dade2)', role:'Product Mgr',   total:22, hadir:22, late:0, absent:0, cuti:0  },
-  { initials:'BK', name:'Budi Kurnia',  color:'linear-gradient(135deg,#8e44ad,#bb8fce)', role:'DevOps',        total:22, hadir:16, late:2, absent:4, cuti:2  },
-  { initials:'LS', name:'Lisa Santoso', color:'linear-gradient(135deg,#16a085,#48c9b0)', role:'HR Specialist', total:22, hadir:21, late:1, absent:0, cuti:1  },
-  { initials:'FR', name:'Fina Rahma',   color:'linear-gradient(135deg,#c0392b,#e74c3c)', role:'Ops Manager',   total:22, hadir:18, late:0, absent:1, cuti:3  },
-];
-
-
-
 /* ══ SUMMARY STRIP ══ */
-function renderSummary(rows) {
-  rows = rows || [];
-  var hadir  = rows.filter(function(r){ return r.status === 'valid'; }).length;
-  var late   = rows.filter(function(r){ return r.status === 'late'; }).length;
-  var absent = rows.filter(function(r){ return r.status === 'invalid'; }).length;
-  var cuti   = rows.filter(function(r){ return r.status === 'leave' || r.status === 'sick-leave' || r.status === 'permit'; }).length;
-  var total  = rows.length;
-  var rate   = total > 0 ? Math.round(((hadir + late) / total) * 100) : 0;
+function fetchAttendanceSummary(month) {
+  var token = localStorage.getItem('hris_token');
+  var url = 'http://localhost:8000/api/attendance/summary?month=' + month;
 
-  document.getElementById('sum-hadir').textContent  = hadir;
-  document.getElementById('sum-late').textContent   = late;
-  document.getElementById('sum-absent').textContent = absent;
-  document.getElementById('sum-cuti').textContent   = cuti;
-  document.getElementById('sum-rate').textContent   = rate + '%';
+  fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    var rows = data.data || [];
+    if (!Array.isArray(rows)) rows = [];
+
+    var hadir = 0, late = 0, absent = 0, cuti = 0, rates = [];
+    rows.forEach(function(r) {
+      hadir += r.total_valid || 0;
+      late += r.total_late || 0;
+      absent += r.total_invalid || 0;
+      cuti += r.total_leave || 0;
+      if (r.rate !== undefined) rates.push(r.rate);
+    });
+
+    var avgRate = rates.length > 0 ? Math.round(rates.reduce(function(a, b) { return a + b; }, 0) / rates.length) : 0;
+
+    document.getElementById('sum-hadir').textContent = hadir;
+    document.getElementById('sum-late').textContent = late;
+    document.getElementById('sum-absent').textContent = absent;
+    document.getElementById('sum-cuti').textContent = cuti;
+    document.getElementById('sum-rate').textContent = avgRate + '%';
+
+    renderSummaryTableFromAPI(rows);
+  })
+  .catch(function(err) { console.error('Error fetching attendance summary:', err); });
+}
+
+function renderSummaryTableFromAPI(rows) {
+  var html = rows.map(function(r) {
+    var total = r.total_valid + r.total_late + r.total_invalid + r.total_leave;
+    var rate = total > 0 ? Math.round((r.total_valid / total) * 100) : 0;
+    var barColor = rate >= 90 ? '#2e7d4f' : rate >= 70 ? '#f39c12' : '#c0392b';
+    var avatarObj = {
+      initials: (r.user_name || 'U').substring(0, 2).toUpperCase(),
+      name: r.user_name || 'Unknown',
+      role: ROLE_MAP_SHARED[r.user_role || ''] || (r.user_role || ''),
+      color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
+    };
+    return '<tr>' +
+      '<td>' + staffCell(avatarObj) + '</td>' +
+      '<td class="checkin-time">' + total + '</td>' +
+      '<td class="checkin-time">' + r.total_valid + '</td>' +
+      '<td class="checkin-time">' + (r.total_late  ? '<span style="color:#b06000;font-weight:500;">' + r.total_late  + '</span>' : '0') + '</td>' +
+      '<td class="checkin-time">' + (r.total_invalid? '<span style="color:#c0392b;font-weight:500;">' + r.total_invalid + '</span>' : '0') + '</td>' +
+      '<td class="checkin-time">' + r.total_leave + '</td>' +
+      '<td><div class="rate-bar-wrap">' +
+        '<div class="rate-bar"><div class="rate-bar-fill" style="width:' + rate + '%;background:' + barColor + ';"></div></div>' +
+        '<span class="rate-pct">' + rate + '%</span>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+  document.getElementById('summary-tbody').innerHTML = html;
 }
 
 /* ══ CALENDAR ══ */
@@ -196,8 +226,6 @@ function fetchTeamAttendance(page) {
       rows = rows.filter(function(r) { return (r.division || r.dept || '') === filterDiv; });
     }
 
-    renderSummary(rows);
-
     if (rows.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;font-size:13px;">No data</td></tr>';
       return;
@@ -296,27 +324,6 @@ function staffCell(r) {
     '<div class="staff-avatar" style="background:' + r.color + ';">' + r.initials + '</div>' +
     '<div><div class="staff-name">' + r.name + '</div><div class="staff-role">' + r.role + '</div></div>' +
   '</div>';
-}
-
-/* ══ SUMMARY TABLE ══ */
-function renderSummaryTable() {
-  var html = summaryData.map(function(r) {
-    var rate = Math.round((r.hadir / r.total) * 100);
-    var barColor = rate >= 90 ? '#2e7d4f' : rate >= 70 ? '#f39c12' : '#c0392b';
-    return '<tr>' +
-      '<td>' + staffCell(r) + '</td>' +
-      '<td class="checkin-time">' + r.total + '</td>' +
-      '<td class="checkin-time">' + r.hadir + '</td>' +
-      '<td class="checkin-time">' + (r.late  ? '<span style="color:#b06000;font-weight:500;">' + r.late  + '</span>' : '0') + '</td>' +
-      '<td class="checkin-time">' + (r.absent? '<span style="color:#c0392b;font-weight:500;">' + r.absent + '</span>' : '0') + '</td>' +
-      '<td class="checkin-time">' + r.cuti + '</td>' +
-      '<td><div class="rate-bar-wrap">' +
-        '<div class="rate-bar"><div class="rate-bar-fill" style="width:' + rate + '%;background:' + barColor + ';"></div></div>' +
-        '<span class="rate-pct">' + rate + '%</span>' +
-      '</div></td>' +
-    '</tr>';
-  }).join('');
-  document.getElementById('summary-tbody').innerHTML = html;
 }
 
 /* ══ PENDING TABLE ══ */
@@ -514,7 +521,6 @@ window.addEventListener('load', function() {
   });
 
   fetchTeamAttendance();
-  renderSummaryTable();
   fetchPersonalAttendance();
 });
 
@@ -624,8 +630,10 @@ function resetTeamFilters() {
 
 function resetSummaryFilters() {
   var sel = document.getElementById('filter-summary-month');
-  if (sel) sel.selectedIndex = 0;
-  renderSummaryTable();
+  if (sel) {
+    sel.selectedIndex = 0;
+    fetchAttendanceSummary(sel.value);
+  }
 }
 
 function openPersonalModal(r) {
