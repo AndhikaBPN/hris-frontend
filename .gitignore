@@ -2,8 +2,6 @@
 .env
 .env.*
 !.env.example
-assets/js/env.js
-env.js
 
 # macOS
 .DS_Store
