@@ -71,17 +71,34 @@ async function handleLogin() {
 
   if (result.success) {
     var payload = result.data || {};
-    if (payload.token) {
-      localStorage.setItem('hris_token', payload.token);
+
+    console.log('Login response:', payload);
+
+    var token = payload.token || payload.access_token || payload.data?.token;
+    var user = payload.user || payload.data?.user;
+
+    if (!token || !user) {
+      msg.textContent = 'Login response invalid. Token or user missing.';
+      msg.className = 'msg error';
+      console.error('Missing token or user:', { token, user, payload });
+      return;
     }
-    if (payload.user) {
-      localStorage.setItem('hris_user', JSON.stringify(payload.user));
+
+    try {
+      localStorage.setItem('hris_token', token);
+      localStorage.setItem('hris_user', JSON.stringify(user));
+    } catch (e) {
+      msg.textContent = 'Failed to save session. ' + e.message;
+      msg.className = 'msg error';
+      console.error('localStorage error:', e);
+      return;
     }
-    msg.textContent = 'Authentication successful! Welcome, ' + (payload.user?.name || '') + '.';
+
+    msg.textContent = 'Authentication successful! Welcome, ' + (user.name || '') + '.';
     msg.className = 'msg success';
 
-    var userRole = payload.user?.role;
-    console.log(userRole);
+    var userRole = user.role;
+    console.log('User role:', userRole);
     if (userRole === 'c_level') {
       window.location.href = 'dashboard/dashboard-clevel.html';
     } else if (userRole === 'hrd_manager' || userRole === 'technical_manager') {

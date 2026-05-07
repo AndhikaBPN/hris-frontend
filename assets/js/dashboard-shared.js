@@ -204,8 +204,7 @@ async function renderLeave(tbodyId, titleId, rows) {
   }
 
   var result = await apiRequest('/leave/monthly');
-  var fetchedRows = result.data || (result.data && Array.isArray(result.data) ? result.data : []);
-  if (!Array.isArray(fetchedRows)) fetchedRows = [];
+  var fetchedRows = extractListData(result);
   var tbody = document.getElementById(tbodyId);
   if (!tbody) return;
 
@@ -285,8 +284,7 @@ async function fetchAttendance(role, tbodyId) {
     : '/attendance/today?role=' + role;
 
   var result = await apiRequest(path);
-  var rows = result.data || [];
-  if (!Array.isArray(rows)) rows = [];
+  var rows = extractListData(result);
   var tbody = document.getElementById(tbodyId);
   if (!tbody) return;
 
@@ -361,17 +359,14 @@ async function fetchCount(path, id) {
 
   var el = document.getElementById(id);
   if (!el) return;
-  var val = 0;
-  if (result.data && result.data.total !== undefined) val = result.data.total;
-  else if (result.data && result.data.data && typeof result.data.data === 'number') val = result.data.data;
-  else val = 0;
+  var d = extractSingleData(result) || {};
+  var val = (d.total !== undefined) ? d.total : 0;
   el.innerText = val;
 }
 
 async function fetchBirthdays(tbodyId) {
   var result = await apiRequest('/users/birthdays');
-  var rows = result.data || [];
-  if (!Array.isArray(rows)) rows = [];
+  var rows = extractListData(result);
   var tbody = document.getElementById(tbodyId);
   if (!tbody) return;
 
@@ -406,8 +401,9 @@ async function fetchLeaveQuota(id) {
   var result = await apiRequest('/leave/quota');
   var el = document.getElementById(id);
   if (!el) return;
-  if (result.success && result.data) {
-    el.textContent = result.data.remaining_quota || 0;
+  if (result.success) {
+    var qData = extractSingleData(result) || {};
+    el.textContent = qData.remaining_quota !== undefined ? qData.remaining_quota : 0;
   } else {
     console.error('Error fetching leave quota:', result.error);
   }

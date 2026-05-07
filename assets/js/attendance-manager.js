@@ -17,8 +17,7 @@ async function fetchAttendanceSummary(month) {
     return;
   }
 
-  var rows = result.data || [];
-  if (!Array.isArray(rows)) rows = [];
+  var rows = extractListData(result);
 
   var hadir = 0, late = 0, absent = 0, cuti = 0, rates = [];
   rows.forEach(function(r) {
@@ -218,8 +217,7 @@ async function fetchTeamAttendance(page) {
     return;
   }
 
-  var rows = result.data || [];
-  if (!Array.isArray(rows)) rows = [];
+  var rows = extractListData(result);
 
   var filterDiv = document.getElementById('filter-division').value;
   if (filterDiv && filterDiv !== 'all') {
@@ -277,7 +275,8 @@ async function fetchTeamAttendance(page) {
 
   tbody.innerHTML = html;
 
-  var total = result.data && Array.isArray(result.data) ? result.data.length : 0;
+  var metaTotal = extractMeta(result).total;
+  var total = metaTotal !== undefined ? metaTotal : rows.length;
   var lastPage = Math.ceil(total / teamLimit) || 1;
   renderTeamPagination(lastPage);
 }
@@ -540,8 +539,7 @@ async function fetchPersonalAttendance() {
     return;
   }
 
-  var rows = result.data || [];
-  if (!Array.isArray(rows)) rows = [];
+  var rows = extractListData(result);
 
   if (rows.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;font-size:13px;">No data</td></tr>';

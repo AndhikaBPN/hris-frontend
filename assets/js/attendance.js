@@ -93,7 +93,7 @@ async function fetchAttendance() {
 
   var result = await apiRequest(path);
   if (result.success) {
-    apiRecords = result.data || [];
+    apiRecords = extractListData(result);
     recordsByDate = {};
     apiRecords.forEach(function(rec) {
       var dk = rec.shift_date;
@@ -120,8 +120,8 @@ async function fetchShifts(year, month) {
 
   var result = await apiRequest(path);
   shiftsByDate = {};
-  if (result.success && result.data) {
-    result.data.forEach(function(s) { shiftsByDate[s.date] = s; });
+  if (result.success) {
+    extractListData(result).forEach(function(s) { shiftsByDate[s.date] = s; });
   }
   renderCalendar();
   updateNextShiftPanel();

@@ -281,22 +281,20 @@ window.addEventListener("load", function() {
   populateTeamFilter();
 });
 
-function populateTeamFilter() {
-  getAllTeams(function(result) {
-    if (result.success && result.data) {
-      var divisionSelect = document.getElementById('filter-division');
-      var existingTeams = divisionSelect.querySelectorAll('option[data-team-id]');
-      existingTeams.forEach(function(opt) { opt.remove(); });
+async function populateTeamFilter() {
+  var result = await getAllTeams({ limit: 100 });
+  if (result.success && result.data && result.data.length > 0) {
+    var divisionSelect = document.getElementById('filter-division');
+    divisionSelect.querySelectorAll('option[data-team-id]').forEach(function(opt) { opt.remove(); });
 
-      result.data.forEach(function(team) {
-        var opt = document.createElement('option');
-        opt.value = team.team_name;
-        opt.textContent = team.team_name;
-        opt.setAttribute('data-team-id', team.id);
-        divisionSelect.appendChild(opt);
-      });
-    }
-  });
+    result.data.forEach(function(team) {
+      var opt = document.createElement('option');
+      opt.value = team.team_name;
+      opt.textContent = team.team_name;
+      opt.setAttribute('data-team-id', team.id);
+      divisionSelect.appendChild(opt);
+    });
+  }
 }
 </script>
 </body>

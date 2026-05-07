@@ -18,6 +18,28 @@ function handleUnauthorized() {
   };
 })();
 
+function extractListData(result) {
+  if (!result || !result.data) return [];
+  var d = result.data;
+  if (Array.isArray(d)) return d;
+  if (d && Array.isArray(d.data)) return d.data;
+  return [];
+}
+
+function extractSingleData(result) {
+  if (!result || !result.data) return null;
+  var d = result.data;
+  if (d && !Array.isArray(d) && Object.prototype.hasOwnProperty.call(d, 'data')) return d.data;
+  return d;
+}
+
+function extractMeta(result) {
+  if (!result || !result.data) return {};
+  var d = result.data;
+  if (d && !Array.isArray(d) && d.meta) return d.meta;
+  return {};
+}
+
 async function apiRequest(path, options) {
   var requestOptions = options || {};
   var token = localStorage.getItem('hris_token');
