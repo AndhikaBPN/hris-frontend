@@ -328,7 +328,7 @@ window.addEventListener('load', async function() {
   }
 
   if (document.getElementById('team-list')) {
-    var res = await getAllTeams({ limit: 100 });
+    var res = await getAllTeams({ limit: 10 });
     if (res.success && res.data && res.data.length > 0) {
       TEAMS = mapTeamData(res.data);
       filterTeams();
