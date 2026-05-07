@@ -235,21 +235,39 @@ function deleteTeam(id, name) {
   }
 }
 
-function openCreateModal() { document.getElementById('create-modal').classList.add('open'); document.body.style.overflow='hidden'; }
+async function openCreateModal() {
+  await populateTeamLeadDropdown();
+  document.getElementById('create-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
 function closeCreateModal() { document.getElementById('create-modal').classList.remove('open'); document.body.style.overflow=''; }
-function submitCreateTeam() {
+async function submitCreateTeam() {
   var name = (document.getElementById('f-name')||{}).value || '';
-  var div  = (document.getElementById('f-division')||{}).value || '';
   var lead = (document.getElementById('f-lead')||{}).value || '';
-  var func = (document.getElementById('f-function')||{}).value || '';
   var err  = document.getElementById('form-error');
-  if (!name.trim() || !div || !lead || !func.trim()) {
+
+  if (!name.trim() || !lead) {
     if (err) { err.textContent='Harap lengkapi semua field wajib (*)'; err.style.display='block'; }
     return;
   }
+
   if (err) err.style.display='none';
-  closeCreateModal();
-  alert('Tim "' + name + '" berhasil dibuat!');
+
+  var result = await createTeam({
+    team_name: name,
+    team_lead_id: parseInt(lead)
+  });
+
+  if (result.success) {
+    closeCreateModal();
+    alert(result.message);
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-lead').value = '';
+    document.getElementById('f-desc').value = '';
+    filterTeams();
+  } else {
+    if (err) { err.textContent=result.message; err.style.display='block'; }
+  }
 }
 
 /* ══ SHARED UTILS ══ */
@@ -261,6 +279,26 @@ document.addEventListener('keydown', function(e) {
     if (typeof closeEditModal === 'function') closeEditModal();
   }
 });
+
+/* ══ POPULATE TEAM LEAD DROPDOWN ── */
+async function populateTeamLeadDropdown() {
+  var res = await getAllTeamLeaders({ limit: 50 });
+  if (res.success && res.data && res.data.length > 0) {
+    var select = document.getElementById('f-lead');
+    if (select) {
+      var firstOption = select.querySelector('option');
+      select.innerHTML = '';
+      if (firstOption) select.appendChild(firstOption);
+
+      res.data.forEach(function(lead) {
+        var opt = document.createElement('option');
+        opt.value = lead.id;
+        opt.textContent = lead.name;
+        select.appendChild(opt);
+      });
+    }
+  }
+}
 
 /* ══ INIT ══ */
 window.addEventListener('load', async function() {
