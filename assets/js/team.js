@@ -241,6 +241,23 @@ async function openCreateModal() {
   document.body.style.overflow = 'hidden';
 }
 function closeCreateModal() { document.getElementById('create-modal').classList.remove('open'); document.body.style.overflow=''; }
+
+function openSuccessModal(message) {
+  var msgEl = document.getElementById('success-message');
+  if (msgEl) msgEl.textContent = message;
+  document.getElementById('success-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(function() {
+    closeSuccessModal();
+  }, 2000);
+}
+
+function closeSuccessModal() {
+  document.getElementById('success-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  location.reload();
+}
 async function submitCreateTeam() {
   var name = (document.getElementById('f-name')||{}).value || '';
   var lead = (document.getElementById('f-lead')||{}).value || '';
@@ -260,11 +277,10 @@ async function submitCreateTeam() {
 
   if (result.success) {
     closeCreateModal();
-    alert(result.message);
     document.getElementById('f-name').value = '';
     document.getElementById('f-lead').value = '';
     document.getElementById('f-desc').value = '';
-    filterTeams();
+    openSuccessModal(result.message);
   } else {
     if (err) { err.textContent=result.message; err.style.display='block'; }
   }
