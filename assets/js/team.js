@@ -279,7 +279,6 @@ async function submitCreateTeam() {
     closeCreateModal();
     document.getElementById('f-name').value = '';
     document.getElementById('f-lead').value = '';
-    document.getElementById('f-desc').value = '';
     openSuccessModal(result.message);
   } else {
     if (err) { err.textContent=result.message; err.style.display='block'; }
