@@ -189,25 +189,45 @@ Validation:
 
 ### Fetching Data from API
 
-Always use `apiRequest()`:
+**Standard Pattern:** Use `apiRequest()` with async/await. ALL API calls must follow this pattern.
 
 ```javascript
-try {
-  var response = await apiRequest('/api/dashboard/staff', {
-    method: 'GET'
-  });
-  console.log(response.data);
-} catch (error) {
-  console.error('Failed to load dashboard:', error.message);
-  // Show user-friendly error
+var result = await apiRequest('/api/dashboard/staff');
+if (result.success) {
+  var data = result.data;
+  console.log('Data:', data);
+} else {
+  console.error('Error:', result.error);
+  // Show user-friendly error message
 }
 ```
 
-The function automatically handles:
-- Authorization header with JWT
+**Return Structure:** `apiRequest()` always returns:
+```javascript
+{
+  success: boolean,
+  data: any,         // Response data from API (null if failed)
+  error: string      // Error message (null if success)
+}
+```
+
+**API call options (all optional):**
+```javascript
+var result = await apiRequest('/path', {
+  method: 'POST',                    // Default: GET
+  body: JSON.stringify({ key: val }), // Stringify before sending
+  headers: { 'X-Custom': 'value' }    // Extra headers (merged with defaults)
+});
+```
+
+**The function automatically handles:**
+- Authorization header with JWT token
 - Content-Type JSON
 - 401 logout redirects
 - Response parsing (JSON)
+- Error extraction from response
+
+**Never use `.then()` or callbacks** — always async/await for consistency.
 
 ### Submitting Forms
 

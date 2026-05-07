@@ -11,6 +11,26 @@ window.loadComponents = function() {
     } catch(e) {}
   }
 
+  // Create logout modal immediately
+  if (!document.getElementById('logout-modal')) {
+    const modalHTML = `
+      <div id="logout-modal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          </div>
+          <h3>Log Out</h3>
+          <p>Are you sure you want to log out? <br>Your active session will be ended.</p>
+          <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+            <button class="btn-logout" onclick="executeLogout()">Log Out</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  }
+
   const p1 = fetch('../components/sidebar.html').then(r => r.text()).then(html => {
     const el = document.getElementById('sidebar-placeholder');
     if(el) el.outerHTML = html;
@@ -19,6 +39,7 @@ window.loadComponents = function() {
     const navItems = document.querySelectorAll('.nav-item');
     const dashboardLink = navItems[0];
     const attendanceLink = navItems[1];
+    const teamLink = navItems[2];
 
     if (dashboardLink) {
       if (userRole === 'c_level') dashboardLink.href = '../dashboard/dashboard-clevel.html';
@@ -31,6 +52,11 @@ window.loadComponents = function() {
       if (userRole === 'team_leader') attendanceLink.href = '../attendance/attendance-teamlead.html';
       else if (userRole === 'hrd_manager' || userRole === 'technical_manager') attendanceLink.href = '../attendance/attendance-manager.html';
       else attendanceLink.href = '../attendance/attendance-staff.html';
+    }
+
+    if (teamLink) {
+      if (userRole === 'team_leader' || userRole === 'hrd_manager' || userRole === 'technical_manager' || userRole === 'c_level') teamLink.href = '../team/team-hub.html';
+      else teamLink.href = '../team/team-staff.html';
     }
 
     // Hide unauthorized menus
@@ -55,25 +81,6 @@ window.loadComponents = function() {
   const p2 = fetch('../components/navbar.html').then(r => r.text()).then(html => {
     const el = document.getElementById('navbar-placeholder');
     if(el) el.outerHTML = html;
-
-    if (!document.getElementById('logout-modal')) {
-      const modalHTML = `
-        <div id="logout-modal" class="modal-overlay">
-          <div class="modal-content">
-            <div class="modal-icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            </div>
-            <h3>Log Out</h3>
-            <p>Are you sure you want to log out? <br>Your active session will be ended.</p>
-            <div class="modal-actions">
-              <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
-              <button class="btn-logout" onclick="executeLogout()">Log Out</button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.insertAdjacentHTML('beforeend', modalHTML);
-    }
   });
   return Promise.all([p1, p2]);
 };

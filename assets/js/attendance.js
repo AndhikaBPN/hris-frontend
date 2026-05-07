@@ -64,22 +64,26 @@ function showTableMessage(msg, isError) {
 /* ══════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════ */
-window.addEventListener('load', function() {
+window.addEventListener('load', async function() {
   var d = new Date();
   calYear  = d.getFullYear();
   calMonth = d.getMonth();
   currentFilters.date_from = getMonthStartStr();
   currentFilters.date_to   = getTodayStr();
-  fetchShifts(calYear, calMonth);
-  fetchAttendance();
+  await fetchShifts(calYear, calMonth);
+  await fetchAttendance();
 });
 
 /* ══════════════════════════════════════════════
    API FETCH
 ══════════════════════════════════════════════ */
-function fetchAttendance() {
+async function fetchAttendance() {
   var token = getToken();
-  if (!token) { showTableMessage('Please log in to view attendance data.'); renderCalendar(); return; }
+  if (!token) {
+    showTableMessage('Please log in to view attendance data.');
+    renderCalendar();
+    return;
+  }
 
   showTableMessage('Loading...');
 
@@ -87,32 +91,26 @@ function fetchAttendance() {
   if (currentFilters.date_from) path += '&date_from=' + currentFilters.date_from;
   if (currentFilters.date_to)   path += '&date_to='   + currentFilters.date_to;
 
-  apiRequest(path)
-    .then(function(resp) {
-      if (resp.success) {
-        apiRecords = resp.data || [];
-        recordsByDate = {};
-        apiRecords.forEach(function(rec) {
-          var dk = rec.shift_date;
-          if (!recordsByDate[dk]) recordsByDate[dk] = [];
-          recordsByDate[dk].push(rec);
-        });
-        renderCalendar();
-        renderAttTable();
-        updateNextShiftPanel();
-      } else {
-        showTableMessage('Failed to load data.');
-        renderCalendar();
-      }
-    })
-    .catch(function(err) {
-      console.error('Attendance API error:', err);
-      showTableMessage('Error: ' + err.message, true);
-      renderCalendar();
+  var result = await apiRequest(path);
+  if (result.success) {
+    apiRecords = result.data || [];
+    recordsByDate = {};
+    apiRecords.forEach(function(rec) {
+      var dk = rec.shift_date;
+      if (!recordsByDate[dk]) recordsByDate[dk] = [];
+      recordsByDate[dk].push(rec);
     });
+    renderCalendar();
+    renderAttTable();
+    updateNextShiftPanel();
+  } else {
+    showTableMessage('Failed to load data.');
+    renderCalendar();
+    console.error('Attendance API error:', result.error);
+  }
 }
 
-function fetchShifts(year, month) {
+async function fetchShifts(year, month) {
   var token = getToken();
   if (!token) return;
 
@@ -120,16 +118,13 @@ function fetchShifts(year, month) {
   var lastDay  = year + '-' + pad(month + 1) + '-' + pad(new Date(year, month + 1, 0).getDate());
   var path = '/shifts?page=1&limit=31&order_by=date&sorting=ASC&date_from=' + firstDay + '&date_to=' + lastDay;
 
-  apiRequest(path)
-    .then(function(resp) {
-      shiftsByDate = {};
-      if (resp.success && resp.data) {
-        resp.data.forEach(function(s) { shiftsByDate[s.date] = s; });
-      }
-      renderCalendar();
-      updateNextShiftPanel();
-    })
-    .catch(function(err) { console.error('Shifts API error:', err); });
+  var result = await apiRequest(path);
+  shiftsByDate = {};
+  if (result.success && result.data) {
+    result.data.forEach(function(s) { shiftsByDate[s.date] = s; });
+  }
+  renderCalendar();
+  updateNextShiftPanel();
 }
 
 function getShiftDotClass(s) {
@@ -143,7 +138,7 @@ function getShiftDotClass(s) {
 /* ══════════════════════════════════════════════
    CALENDAR
 ══════════════════════════════════════════════ */
-function changeMonth(dir) {
+async function changeMonth(dir) {
   calMonth += dir;
   if (calMonth > 11) { calMonth = 0; calYear++; }
   if (calMonth < 0)  { calMonth = 11; calYear--; }
@@ -158,8 +153,8 @@ function changeMonth(dir) {
   currentFilters.date_from = firstDay;
   currentFilters.date_to   = lastDay;
 
-  fetchShifts(calYear, calMonth);
-  fetchAttendance();
+  await fetchShifts(calYear, calMonth);
+  await fetchAttendance();
 }
 
 function renderCalendar() {
@@ -219,7 +214,7 @@ function renderCalendar() {
   if (calBody) calBody.innerHTML = html;
 }
 
-function onCalDay(day, evt) {
+async function onCalDay(day, evt) {
   var clicked = { y: calYear, m: calMonth, d: day };
 
   if (evt && evt.shiftKey && selFrom) {
@@ -259,7 +254,7 @@ function onCalDay(day, evt) {
   }
 
   updateTableTitle();
-  fetchAttendance();
+  await fetchAttendance();
 }
 
 function updateTableTitle() {
@@ -283,7 +278,7 @@ function updateTableTitle() {
 /* ══════════════════════════════════════════════
    FILTERS
 ══════════════════════════════════════════════ */
-function onDateFilterChange() {
+async function onDateFilterChange() {
   var fromEl = document.getElementById('filter-date-from');
   var toEl   = document.getElementById('filter-date-to');
   currentFilters.date_from = fromEl ? fromEl.value : '';
@@ -295,7 +290,7 @@ function onDateFilterChange() {
     calYear  = parseInt(parts[0]);
     calMonth = parseInt(parts[1]) - 1;
   }
-  fetchAttendance();
+  await fetchAttendance();
 }
 
 function onStatusFilterChange() {

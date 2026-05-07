@@ -10,38 +10,34 @@ function setActive(el) {
 function exportReport() { alert('Report exported successfully! File will download.'); }
 
 /* ══ SUMMARY STRIP ══ */
-function fetchAttendanceSummary(month) {
-  var token = localStorage.getItem('hris_token');
-  var url = 'http://localhost:8000/api/attendance/summary?month=' + month;
+async function fetchAttendanceSummary(month) {
+  var result = await apiRequest('/attendance/summary?month=' + month);
+  if (!result.success) {
+    console.error('Error fetching attendance summary:', result.error);
+    return;
+  }
 
-  fetch(url, {
-    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    var rows = data.data || [];
-    if (!Array.isArray(rows)) rows = [];
+  var rows = result.data || [];
+  if (!Array.isArray(rows)) rows = [];
 
-    var hadir = 0, late = 0, absent = 0, cuti = 0, rates = [];
-    rows.forEach(function(r) {
-      hadir += r.total_valid || 0;
-      late += r.total_late || 0;
-      absent += r.total_invalid || 0;
-      cuti += r.total_leave || 0;
-      if (r.rate !== undefined) rates.push(r.rate);
-    });
+  var hadir = 0, late = 0, absent = 0, cuti = 0, rates = [];
+  rows.forEach(function(r) {
+    hadir += r.total_valid || 0;
+    late += r.total_late || 0;
+    absent += r.total_invalid || 0;
+    cuti += r.total_leave || 0;
+    if (r.rate !== undefined) rates.push(r.rate);
+  });
 
-    var avgRate = rates.length > 0 ? Math.round(rates.reduce(function(a, b) { return a + b; }, 0) / rates.length) : 0;
+  var avgRate = rates.length > 0 ? Math.round(rates.reduce(function(a, b) { return a + b; }, 0) / rates.length) : 0;
 
-    document.getElementById('sum-hadir').textContent = hadir;
-    document.getElementById('sum-late').textContent = late;
-    document.getElementById('sum-absent').textContent = absent;
-    document.getElementById('sum-cuti').textContent = cuti;
-    document.getElementById('sum-rate').textContent = avgRate + '%';
+  document.getElementById('sum-hadir').textContent = hadir;
+  document.getElementById('sum-late').textContent = late;
+  document.getElementById('sum-absent').textContent = absent;
+  document.getElementById('sum-cuti').textContent = cuti;
+  document.getElementById('sum-rate').textContent = avgRate + '%';
 
-    renderSummaryTableFromAPI(rows);
-  })
-  .catch(function(err) { console.error('Error fetching attendance summary:', err); });
+  renderSummaryTableFromAPI(rows);
 }
 
 function renderSummaryTableFromAPI(rows) {
@@ -193,7 +189,7 @@ function onCalClick(day) {
 var teamCurrentPage = 1;
 var teamLimit = 5;
 
-function fetchTeamAttendance(page) {
+async function fetchTeamAttendance(page) {
   if (page !== undefined) teamCurrentPage = page;
 
   var pad = function(n) { return n.toString().padStart(2, '0'); };
@@ -208,7 +204,6 @@ function fetchTeamAttendance(page) {
     '&date_from=' + dateFrom + '&date_to=' + dateTo + '&order_by=id&sorting=DESC';
   if (filterStatus && filterStatus !== 'all') params += '&status=' + encodeURIComponent(filterStatus);
 
-  var titleDate = dateFrom === dateTo ? dateFrom : dateFrom + ' – ' + dateTo;
   var titleEl = document.getElementById('team-table-title');
   if (titleEl) titleEl.textContent = 'Staff Attendance';
 
@@ -216,78 +211,75 @@ function fetchTeamAttendance(page) {
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;">Loading data...</td></tr>';
   document.getElementById('team-pagination').innerHTML = '';
 
-  apiRequest('/attendance' + params)
-  .then(function(res) {
-    var rows = res.data || [];
-    if (!Array.isArray(rows)) rows = [];
-
-    var filterDiv = document.getElementById('filter-division').value;
-    if (filterDiv && filterDiv !== 'all') {
-      rows = rows.filter(function(r) { return (r.division || r.dept || '') === filterDiv; });
-    }
-
-    if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;font-size:13px;">No data</td></tr>';
-      return;
-    }
-
-    var html = rows.map(function(r) {
-      var name = r.user_name || 'Unknown';
-      var avatarObj = {
-        initials: name.substring(0, 2).toUpperCase(),
-        name: name,
-        role: ROLE_MAP_SHARED[r.user_role || ''] || (r.user_role || ''),
-        color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
-      };
-
-      var ci = r.check_in_time  ? r.check_in_time.split(' ')[1].substring(0, 5)  : '--:--';
-      var co = r.check_out_time ? r.check_out_time.split(' ')[1].substring(0, 5) : '--:--';
-
-      var dur = '—';
-      if (r.check_in_time && r.check_out_time) {
-        var ciP = ci.split(':').map(Number);
-        var coP = co.split(':').map(Number);
-        var mins = (coP[0] * 60 + coP[1]) - (ciP[0] * 60 + ciP[1]);
-        if (mins < 0) mins += 24 * 60;
-        dur = Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
-      }
-
-      var dept = r.division || r.dept || '-';
-      var sc = STATUS_MAP_SHARED[r.status] || { label: '● ' + (r.status || '-'), c: '#5a6b78', bg: '#f0f2f5' };
-      var stCell = '<td><span class="badge-status" style="color:' + sc.c + ';background:' + sc.bg + ';">' + sc.label + '</span></td>';
-
-      var lamp = r.face_image
-        ? '<button class="btn-view" onclick=\'openPersonalModal(' + JSON.stringify(r) + ')\'>' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View</button>'
-        : '<span class="btn-view-na">—</span>';
-
-      var ciCls = !r.check_in_time  ? ' pending-time' : '';
-      var coCls = !r.check_out_time ? ' pending-time' : '';
-
-      return '<tr>' +
-        '<td>' + staffCell(avatarObj) + '</td>' +
-        '<td class="staff-role">' + dept + '</td>' +
-        '<td class="checkin-time' + ciCls + '">' + ci + '</td>' +
-        '<td class="checkin-time' + coCls + '">' + co + '</td>' +
-        '<td><span class="dur-pill">' + dur + '</span></td>' +
-        stCell +
-        '<td>' + lamp + '</td>' +
-      '</tr>';
-    }).join('');
-
-    tbody.innerHTML = html;
-
-    var total = res.total || (res.meta && res.meta.total) || 0;
-    var lastPage = res.last_page
-      || (res.meta && res.meta.last_page)
-      || (total ? Math.ceil(total / teamLimit) : 0)
-      || (rows.length >= teamLimit ? teamCurrentPage + 1 : teamCurrentPage);
-    renderTeamPagination(lastPage);
-  })
-  .catch(function(err) {
-    console.error('Error fetching team attendance:', err);
+  var result = await apiRequest('/attendance' + params);
+  if (!result.success) {
+    console.error('Error fetching team attendance:', result.error);
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#c0392b;font-size:13px;">Failed to load data</td></tr>';
-  });
+    return;
+  }
+
+  var rows = result.data || [];
+  if (!Array.isArray(rows)) rows = [];
+
+  var filterDiv = document.getElementById('filter-division').value;
+  if (filterDiv && filterDiv !== 'all') {
+    rows = rows.filter(function(r) { return (r.division || r.dept || '') === filterDiv; });
+  }
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;font-size:13px;">No data</td></tr>';
+    return;
+  }
+
+  var html = rows.map(function(r) {
+    var name = r.user_name || 'Unknown';
+    var avatarObj = {
+      initials: name.substring(0, 2).toUpperCase(),
+      name: name,
+      role: ROLE_MAP_SHARED[r.user_role || ''] || (r.user_role || ''),
+      color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
+    };
+
+    var ci = r.check_in_time  ? r.check_in_time.split(' ')[1].substring(0, 5)  : '--:--';
+    var co = r.check_out_time ? r.check_out_time.split(' ')[1].substring(0, 5) : '--:--';
+
+    var dur = '—';
+    if (r.check_in_time && r.check_out_time) {
+      var ciP = ci.split(':').map(Number);
+      var coP = co.split(':').map(Number);
+      var mins = (coP[0] * 60 + coP[1]) - (ciP[0] * 60 + ciP[1]);
+      if (mins < 0) mins += 24 * 60;
+      dur = Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+    }
+
+    var dept = r.division || r.dept || '-';
+    var sc = STATUS_MAP_SHARED[r.status] || { label: '● ' + (r.status || '-'), c: '#5a6b78', bg: '#f0f2f5' };
+    var stCell = '<td><span class="badge-status" style="color:' + sc.c + ';background:' + sc.bg + ';">' + sc.label + '</span></td>';
+
+    var lamp = r.face_image
+      ? '<button class="btn-view" onclick=\'openPersonalModal(' + JSON.stringify(r) + ')\'>' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View</button>'
+      : '<span class="btn-view-na">—</span>';
+
+    var ciCls = !r.check_in_time  ? ' pending-time' : '';
+    var coCls = !r.check_out_time ? ' pending-time' : '';
+
+    return '<tr>' +
+      '<td>' + staffCell(avatarObj) + '</td>' +
+      '<td class="staff-role">' + dept + '</td>' +
+      '<td class="checkin-time' + ciCls + '">' + ci + '</td>' +
+      '<td class="checkin-time' + coCls + '">' + co + '</td>' +
+      '<td><span class="dur-pill">' + dur + '</span></td>' +
+      stCell +
+      '<td>' + lamp + '</td>' +
+    '</tr>';
+  }).join('');
+
+  tbody.innerHTML = html;
+
+  var total = result.data && Array.isArray(result.data) ? result.data.length : 0;
+  var lastPage = Math.ceil(total / teamLimit) || 1;
+  renderTeamPagination(lastPage);
 }
 
 function renderTeamPagination(lastPage) {
@@ -510,7 +502,7 @@ function closeModal() {
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
 
 /* ══ INIT ══ */
-window.addEventListener('load', function() {
+window.addEventListener('load', async function() {
   var pad = function(n) { return n.toString().padStart(2, '0'); };
   var today = new Date();
   var todayStr = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
@@ -520,15 +512,15 @@ window.addEventListener('load', function() {
     if (el) el.value = todayStr;
   });
 
-  fetchTeamAttendance();
-  fetchPersonalAttendance();
+  await fetchTeamAttendance();
+  await fetchPersonalAttendance();
 });
 
 /* ══════════════════════════════════════════════
    PERSONAL ATTENDANCE
 ══════════════════════════════════════════════ */
 
-function fetchPersonalAttendance() {
+async function fetchPersonalAttendance() {
   var dateFrom = document.getElementById('filter-personal-from').value;
   var dateTo   = document.getElementById('filter-personal-to').value;
   var status   = document.getElementById('filter-personal-status').value;
@@ -541,69 +533,69 @@ function fetchPersonalAttendance() {
   var tbody = document.getElementById('personal-tbody');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;">Loading data...</td></tr>';
 
-  apiRequest('/attendance' + params)
-  .then(function(res) {
-    var rows = res.data || [];
-    if (!Array.isArray(rows)) rows = [];
+  var result = await apiRequest('/attendance' + params);
+  if (!result.success) {
+    console.error('Error fetching personal attendance:', result.error);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#c0392b;font-size:13px;">Failed to load data</td></tr>';
+    return;
+  }
 
-    if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;font-size:13px;">No data</td></tr>';
-      return;
+  var rows = result.data || [];
+  if (!Array.isArray(rows)) rows = [];
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9aabb7;font-size:13px;">No data</td></tr>';
+    return;
+  }
+
+  var MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  var html = rows.map(function(r) {
+    var dateStr = r.shift_date || '';
+    var formattedDate = dateStr;
+    if (dateStr) {
+      var d = new Date(dateStr + 'T00:00:00');
+      formattedDate = DAY_SHORT[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS_SHORT[d.getMonth()] + ' ' + d.getFullYear();
     }
 
-    var MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var ci = r.check_in_time  ? r.check_in_time.split(' ')[1].substring(0, 5)  : '--:--';
+    var co = r.check_out_time ? r.check_out_time.split(' ')[1].substring(0, 5) : '--:--';
 
-    var html = rows.map(function(r) {
-      var dateStr = r.shift_date || '';
-      var formattedDate = dateStr;
-      if (dateStr) {
-        var d = new Date(dateStr + 'T00:00:00');
-        formattedDate = DAY_SHORT[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS_SHORT[d.getMonth()] + ' ' + d.getFullYear();
-      }
+    var dur = '—';
+    if (r.check_in_time && r.check_out_time) {
+      var ciP = ci.split(':').map(Number);
+      var coP = co.split(':').map(Number);
+      var mins = (coP[0] * 60 + coP[1]) - (ciP[0] * 60 + ciP[1]);
+      if (mins < 0) mins += 24 * 60;
+      dur = Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+    }
 
-      var ci = r.check_in_time  ? r.check_in_time.split(' ')[1].substring(0, 5)  : '--:--';
-      var co = r.check_out_time ? r.check_out_time.split(' ')[1].substring(0, 5) : '--:--';
+    var sessionBadge = '<span class="shift-badge morning" style="font-size:11px;">Session ' + (r.session || 1) + '</span>';
 
-      var dur = '—';
-      if (r.check_in_time && r.check_out_time) {
-        var ciP = ci.split(':').map(Number);
-        var coP = co.split(':').map(Number);
-        var mins = (coP[0] * 60 + coP[1]) - (ciP[0] * 60 + ciP[1]);
-        if (mins < 0) mins += 24 * 60;
-        dur = Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
-      }
+    var sc = STATUS_MAP_SHARED[r.status] || { label: '● ' + r.status, c: '#5a6b78', bg: '#f0f2f5' };
+    var stCell = '<span class="badge-status" style="color:' + sc.c + ';background:' + sc.bg + ';">' + sc.label + '</span>';
 
-      var sessionBadge = '<span class="shift-badge morning" style="font-size:11px;">Session ' + (r.session || 1) + '</span>';
+    var lamp = r.face_image
+      ? '<button class="btn-view" onclick=\'openPersonalModal(' + JSON.stringify(r) + ')\'>' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View</button>'
+      : '<span class="btn-view-na">—</span>';
 
-      var sc = STATUS_MAP_SHARED[r.status] || { label: '● ' + r.status, c: '#5a6b78', bg: '#f0f2f5' };
-      var stCell = '<span class="badge-status" style="color:' + sc.c + ';background:' + sc.bg + ';">' + sc.label + '</span>';
+    var ciCls = !r.check_in_time  ? ' pending-time' : '';
+    var coCls = !r.check_out_time ? ' pending-time' : '';
 
-      var lamp = r.face_image
-        ? '<button class="btn-view" onclick=\'openPersonalModal(' + JSON.stringify(r) + ')\'>' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View</button>'
-        : '<span class="btn-view-na">—</span>';
+    return '<tr>' +
+      '<td class="att-date">' + formattedDate + '</td>' +
+      '<td>' + sessionBadge + '</td>' +
+      '<td class="checkin-time' + ciCls + '">' + ci + '</td>' +
+      '<td class="checkin-time' + coCls + '">' + co + '</td>' +
+      '<td><span class="dur-pill">' + dur + '</span></td>' +
+      '<td>' + stCell + '</td>' +
+      '<td>' + lamp + '</td>' +
+    '</tr>';
+  }).join('');
 
-      var ciCls = !r.check_in_time  ? ' pending-time' : '';
-      var coCls = !r.check_out_time ? ' pending-time' : '';
-
-      return '<tr>' +
-        '<td class="att-date">' + formattedDate + '</td>' +
-        '<td>' + sessionBadge + '</td>' +
-        '<td class="checkin-time' + ciCls + '">' + ci + '</td>' +
-        '<td class="checkin-time' + coCls + '">' + co + '</td>' +
-        '<td><span class="dur-pill">' + dur + '</span></td>' +
-        '<td>' + stCell + '</td>' +
-        '<td>' + lamp + '</td>' +
-      '</tr>';
-    }).join('');
-
-    tbody.innerHTML = html;
-  })
-  .catch(function(err) {
-    console.error('Error fetching personal attendance:', err);
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#c0392b;font-size:13px;">Failed to load data</td></tr>';
-  });
+  tbody.innerHTML = html;
 }
 
 function resetPersonalFilters() {

@@ -27,22 +27,27 @@ async function apiRequest(path, options) {
     requestOptions.headers || {}
   );
 
-  var response = await fetch(getApiUrl(path), Object.assign({}, requestOptions, {
-    headers: headers
-  }));
+  try {
+    var response = await fetch(getApiUrl(path), Object.assign({}, requestOptions, {
+      headers: headers
+    }));
 
-  if (response.status === 401 && path !== '/login') {
-    handleUnauthorized();
-    return;
+    if (response.status === 401 && path !== '/login') {
+      handleUnauthorized();
+      return { success: false, data: null, error: 'Unauthorized. Please login again.' };
+    }
+
+    var data = await response.json().catch(function() {
+      return {};
+    });
+
+    if (!response.ok) {
+      var errorMsg = data.message || 'Request failed.';
+      return { success: false, data: null, error: errorMsg };
+    }
+
+    return { success: true, data: data, error: null };
+  } catch (err) {
+    return { success: false, data: null, error: err.message || 'Network error' };
   }
-
-  var data = await response.json().catch(function() {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Request failed.');
-  }
-
-  return data;
 }

@@ -64,42 +64,37 @@ async function handleLogin() {
   msg.textContent = 'Processing...';
   msg.className = 'msg';
 
-  try {
-    var data = await apiRequest('/login', {
-      method: 'POST',
-      body: JSON.stringify({ email: email, password: password })
-    });
+  var result = await apiRequest('/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: email, password: password })
+  });
 
-    if (data.success) {
-      var payload = data.data || {};
-      if (payload.token) {
-        localStorage.setItem('hris_token', payload.token);
-      }
-      if (payload.user) {
-        localStorage.setItem('hris_user', JSON.stringify(payload.user));
-      }
-      msg.textContent = 'Authentication successful! Welcome, ' + (payload.user?.name || '') + '.';
-      msg.className = 'msg success';
-      
-      var userRole = payload.user?.role;
-      console.log(userRole);
-      if (userRole === 'c_level') {
-        window.location.href = 'dashboard/dashboard-clevel.html';
-      } else if (userRole === 'hrd_manager' || userRole === 'technical_manager') {
-        window.location.href = 'dashboard/dashboard-manager.html';
-      } else if (userRole === 'team_leader') {
-        window.location.href = 'dashboard/dashboard-teamlead.html';
-      } else {
-        window.location.href = 'dashboard/dashboard-staff.html';
-      }
-    } else {
-      msg.textContent = data.message || 'Invalid email or password.';
-      msg.className = 'msg error';
+  if (result.success) {
+    var payload = result.data || {};
+    if (payload.token) {
+      localStorage.setItem('hris_token', payload.token);
     }
-  } catch (err) {
-    msg.textContent = err.message || 'Failed to connect to server. Make sure the server is running.';
+    if (payload.user) {
+      localStorage.setItem('hris_user', JSON.stringify(payload.user));
+    }
+    msg.textContent = 'Authentication successful! Welcome, ' + (payload.user?.name || '') + '.';
+    msg.className = 'msg success';
+
+    var userRole = payload.user?.role;
+    console.log(userRole);
+    if (userRole === 'c_level') {
+      window.location.href = 'dashboard/dashboard-clevel.html';
+    } else if (userRole === 'hrd_manager' || userRole === 'technical_manager') {
+      window.location.href = 'dashboard/dashboard-manager.html';
+    } else if (userRole === 'team_leader') {
+      window.location.href = 'dashboard/dashboard-teamlead.html';
+    } else {
+      window.location.href = 'dashboard/dashboard-staff.html';
+    }
+  } else {
+    msg.textContent = result.error || 'Invalid email or password.';
     msg.className = 'msg error';
-    console.error('Login error:', err);
+    console.error('Login error:', result.error);
   }
 }
 
@@ -169,20 +164,16 @@ async function sendOTP() {
 
   showMsg('email-msg', 'Sending OTP...', 'success');
   
-  try {
-    var data = await apiRequest('/otp/send', {
-      method: 'POST',
-      body: JSON.stringify({ email: email })
-    });
+  var result = await apiRequest('/otp/send', {
+    method: 'POST',
+    body: JSON.stringify({ email: email })
+  });
 
-    if (data.success) {
-      showMsg('otp-msg', 'OTP sent successfully!', 'success');
-      goToStep('step-otp');
-    } else {
-      showMsg('email-msg', data.message || 'Failed to send OTP.', 'error');
-    }
-  } catch (err) {
-    showMsg('email-msg', err.message || 'Connection error.', 'error');
+  if (result.success) {
+    showMsg('otp-msg', 'OTP sent successfully!', 'success');
+    goToStep('step-otp');
+  } else {
+    showMsg('email-msg', result.error || 'Failed to send OTP.', 'error');
   }
 }
 
@@ -199,20 +190,16 @@ async function verifyOTP() {
 
   showMsg('otp-msg', 'Verifying...', 'success');
 
-  try {
-    var data = await apiRequest('/otp/verify', {
-      method: 'POST',
-      body: JSON.stringify({ email: email, otp_code: otp })
-    });
+  var result = await apiRequest('/otp/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email: email, otp_code: otp })
+  });
 
-    if (data.success) {
-      showMsg('password-msg', 'OTP verified!', 'success');
-      goToStep('step-password');
-    } else {
-      showMsg('otp-msg', data.message || 'Invalid OTP.', 'error');
-    }
-  } catch (err) {
-    showMsg('otp-msg', err.message || 'Verification failed.', 'error');
+  if (result.success) {
+    showMsg('password-msg', 'OTP verified!', 'success');
+    goToStep('step-password');
+  } else {
+    showMsg('otp-msg', result.error || 'Invalid OTP.', 'error');
   }
 }
 
@@ -238,27 +225,23 @@ async function handleReset() {
 
   showMsg('password-msg', 'Resetting password...', 'success');
 
-  try {
-    var data = await apiRequest('/password/reset', {
-      method: 'POST',
-      body: JSON.stringify({
-        email: email,
-        otp_code: otp,
-        new_password: pass,
-        new_password_confirmation: confirm
-      })
-    });
+  var result = await apiRequest('/password/reset', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: email,
+      otp_code: otp,
+      new_password: pass,
+      new_password_confirmation: confirm
+    })
+  });
 
-    if (data.success) {
-      showMsg('password-msg', 'Password successfully reset! Redirecting to login...', 'success');
-      setTimeout(function() {
-        showLogin();
-      }, 2000);
-    } else {
-      showMsg('password-msg', data.message || 'Reset failed.', 'error');
-    }
-  } catch (err) {
-    showMsg('password-msg', err.message || 'Error occurred.', 'error');
+  if (result.success) {
+    showMsg('password-msg', 'Password successfully reset! Redirecting to login...', 'success');
+    setTimeout(function() {
+      showLogin();
+    }, 2000);
+  } else {
+    showMsg('password-msg', result.error || 'Reset failed.', 'error');
   }
 }
 

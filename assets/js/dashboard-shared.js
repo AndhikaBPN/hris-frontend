@@ -108,12 +108,11 @@ function closeLogoutModal() {
   if (modal) modal.style.display = 'none';
 }
 
-function executeLogout() {
-  apiRequest('/logout', { method: 'POST' }).finally(() => {
-    localStorage.removeItem('hris_token');
-    localStorage.removeItem('hris_user');
-    window.location.href = '../../index.html';
-  });
+async function executeLogout() {
+  await apiRequest('/logout', { method: 'POST' });
+  localStorage.removeItem('hris_token');
+  localStorage.removeItem('hris_user');
+  window.location.href = '../../index.html';
 }
 
 /* ── Date & greeting ── */
@@ -187,7 +186,7 @@ function renderBirthdays(tbodyId, titleId) {
 }
 
 /* ── Render leave table ── */
-function renderLeave(tbodyId, titleId, rows) {
+async function renderLeave(tbodyId, titleId, rows) {
   if (titleId) {
     var titleEl = document.getElementById(titleId);
     if(titleEl) titleEl.textContent = 'Leave Requests';
@@ -204,52 +203,51 @@ function renderLeave(tbodyId, titleId, rows) {
     return;
   }
 
-  apiRequest('/leave/monthly')
-  .then(function(data) {
-    var fetchedRows = data.data || data;
-    if (!Array.isArray(fetchedRows)) fetchedRows = [];
-    var tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
+  var result = await apiRequest('/leave/monthly');
+  var fetchedRows = result.data || (result.data && Array.isArray(result.data) ? result.data : []);
+  if (!Array.isArray(fetchedRows)) fetchedRows = [];
+  var tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
 
-    if (fetchedRows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
-      return;
-    }
+  if (fetchedRows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
+    return;
+  }
 
-    tbody.innerHTML = fetchedRows.slice(0, MAX_ROWS).map(function(p) {
-      var name = p.user_name || p.name || 'Unknown';
-      var rawRole = p.user_role || p.role || '';
-      var staffObj = {
-        initials: name.substring(0, 2).toUpperCase(),
-        name: name,
-        role: ROLE_MAP_SHARED[rawRole] || rawRole,
-        color: 'linear-gradient(135deg,#7d5a9a,#b08bc0)'
-      };
-      
-      var type = p.leave_type || p.type || '-';
-      var fromDate = p.leave_date_from || p.start_date || p.from_date || p.from || '';
-      var toDate   = p.leave_date_to   || p.end_date   || p.to_date   || p.to   || '';
-      var status = p.status || 'pending';
-      
-      var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      var formatD = function(dStr) {
-        if (!dStr) return '';
-        var d = new Date(dStr.replace(' ', 'T').split('T')[0] + 'T00:00:00Z');
-        if (isNaN(d)) return dStr;
-        return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
-      };
-      var formattedFrom = formatD(fromDate);
-      var formattedTo   = formatD(toDate);
-      var dateRange = formattedFrom && formattedTo && formattedFrom !== formattedTo
-        ? formattedFrom + ' – ' + formattedTo
-        : (formattedFrom || formattedTo || '-');
+  tbody.innerHTML = fetchedRows.slice(0, MAX_ROWS).map(function(p) {
+    var name = p.user_name || p.name || 'Unknown';
+    var rawRole = p.user_role || p.role || '';
+    var staffObj = {
+      initials: name.substring(0, 2).toUpperCase(),
+      name: name,
+      role: ROLE_MAP_SHARED[rawRole] || rawRole,
+      color: 'linear-gradient(135deg,#7d5a9a,#b08bc0)'
+    };
 
-      return '<tr><td>' + staffCell(staffObj) + '</td><td class="att-date">' + type + '</td>' +
-        '<td class="att-date">' + dateRange + '</td>' +
-        '<td>' + leaveStatusBadge(status) + '</td></tr>';
-    }).join('');
-  })
-  .catch(function(err) { console.error('Error fetching leave monthly:', err); });
+    var type = p.leave_type || p.type || '-';
+    var fromDate = p.leave_date_from || p.start_date || p.from_date || p.from || '';
+    var toDate   = p.leave_date_to   || p.end_date   || p.to_date   || p.to   || '';
+    var status = p.status || 'pending';
+
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var formatD = function(dStr) {
+      if (!dStr) return '';
+      var d = new Date(dStr.replace(' ', 'T').split('T')[0] + 'T00:00:00Z');
+      if (isNaN(d)) return dStr;
+      return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+    };
+    var formattedFrom = formatD(fromDate);
+    var formattedTo   = formatD(toDate);
+    var dateRange = formattedFrom && formattedTo && formattedFrom !== formattedTo
+      ? formattedFrom + ' – ' + formattedTo
+      : (formattedFrom || formattedTo || '-');
+
+    return '<tr><td>' + staffCell(staffObj) + '</td><td class="att-date">' + type + '</td>' +
+      '<td class="att-date">' + dateRange + '</td>' +
+      '<td>' + leaveStatusBadge(status) + '</td></tr>';
+  }).join('');
+
+  if (!result.success) console.error('Error fetching leave monthly:', result.error);
 }
 
 /* ── Stat cards helper ── */
@@ -281,139 +279,136 @@ var STATUS_MAP_SHARED = {
   'permit': { label: '● Permit', c: '#2980b9', bg: '#e8f0fc' }
 };
 
-function fetchAttendance(role, tbodyId) {
+async function fetchAttendance(role, tbodyId) {
   var path = role === 'team'
     ? '/attendance/subordinates/today'
     : '/attendance/today?role=' + role;
 
-  apiRequest(path)
-  .then(function(data) {
-    var rows = data.data || data;
-    if (!Array.isArray(rows)) rows = [];
-    var tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
+  var result = await apiRequest(path);
+  var rows = result.data || [];
+  if (!Array.isArray(rows)) rows = [];
+  var tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
 
-    if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
-      return;
-    }
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
+    return;
+  }
 
-    if (role === 'team') {
-      // Group by user_id for CLOCK IN 1 / CLOCK IN 2 view (Team Lead)
-      var grouped = {};
-      rows.forEach(function(p) {
-        var uid = p.user_id;
-        if (!grouped[uid]) {
-          grouped[uid] = { 
-            name: p.user_name || p.name, 
-            role: p.user_role || p.role,
-            c1: '--:--', c2: '--:--', status: p.status 
-          };
-        }
-        var time = p.check_in_time || p.clock_in_time;
-        if (time && time.includes(' ')) time = time.split(' ')[1].substring(0, 5);
-        
-        if (p.session == 1) grouped[uid].c1 = time;
-        else if (p.session == 2) grouped[uid].c2 = time;
-      });
-      
-      var finalRows = Object.values(grouped);
-      tbody.innerHTML = finalRows.slice(0, MAX_ROWS).map(function(u) {
-        var staffObj = {
-          initials: u.name.substring(0, 2).toUpperCase(),
-          name: u.name,
-          role: ROLE_MAP_SHARED[u.role] || u.role,
-          color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
+  if (role === 'team') {
+    var grouped = {};
+    rows.forEach(function(p) {
+      var uid = p.user_id;
+      if (!grouped[uid]) {
+        grouped[uid] = {
+          name: p.user_name || p.name,
+          role: p.user_role || p.role,
+          c1: '--:--', c2: '--:--', status: p.status
         };
-        var sc = STATUS_MAP_SHARED[u.status] || { label: '● ' + u.status, c: '#5a6b78', bg: '#f0f2f5' };
-        var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
-        return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(u.c1) + timeCell(u.c2) + stCell + '</tr>';
-      }).join('');
-    } else {
-      // Standard logic for manager/staff (CLOCK IN / CLOCK OUT)
-      tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
-        var name = p.user_name || p.name || 'Unknown';
-        var rawRole = p.user_role || p.role || role;
-        var staffObj = {
-          initials: name.substring(0, 2).toUpperCase(),
-          name: name,
-          role: ROLE_MAP_SHARED[rawRole] || rawRole,
-          color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
-        };
-        
-        var clockIn = p.clock_in_time || p.check_in_time || p.clockIn || '--:--';
-        var clockOut = p.clock_out_time || p.check_out_time || p.clockOut || '--:--';
-        
-        if (clockIn.includes(' ')) clockIn = clockIn.split(' ')[1].substring(0, 5);
-        if (clockOut.includes(' ')) clockOut = clockOut.split(' ')[1].substring(0, 5);
+      }
+      var time = p.check_in_time || p.clock_in_time;
+      if (time && time.includes(' ')) time = time.split(' ')[1].substring(0, 5);
 
-        var s = p.status || 'pending';
-        var sc = STATUS_MAP_SHARED[s] || { label: '● ' + s, c: '#5a6b78', bg: '#f0f2f5' };
-        var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
-        return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(clockIn) + timeCell(clockOut) + stCell + '</tr>';
-      }).join('');
-    }
-  })
-  .catch(function(err) { console.error('Error fetching ' + role + ' attendance:', err); });
-}
+      if (p.session == 1) grouped[uid].c1 = time;
+      else if (p.session == 2) grouped[uid].c2 = time;
+    });
 
-function fetchCount(path, id) {
-  apiRequest(path)
-    .then(function(resData) {
-      var el = document.getElementById(id);
-      if (!el) return;
-      var val = 0;
-      if (resData && resData.data && resData.data.total !== undefined) val = resData.data.total;
-      else if (resData && resData.total !== undefined) val = resData.total;
-      else val = resData.data || resData || 0;
-      el.innerText = val;
-    })
-    .catch(function(err) { console.error('Error fetching count:', err); });
-}
-
-function fetchBirthdays(tbodyId) {
-  apiRequest('/users/birthdays')
-  .then(function(data) {
-    var rows = data.data || data;
-    if (!Array.isArray(rows)) rows = [];
-    var tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
-
-    if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
-      return;
-    }
-
+    var finalRows = Object.values(grouped);
+    tbody.innerHTML = finalRows.slice(0, MAX_ROWS).map(function(u) {
+      var staffObj = {
+        initials: u.name.substring(0, 2).toUpperCase(),
+        name: u.name,
+        role: ROLE_MAP_SHARED[u.role] || u.role,
+        color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
+      };
+      var sc = STATUS_MAP_SHARED[u.status] || { label: '● ' + u.status, c: '#5a6b78', bg: '#f0f2f5' };
+      var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
+      return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(u.c1) + timeCell(u.c2) + stCell + '</tr>';
+    }).join('');
+  } else {
     tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
-      var name = p.name || 'Unknown';
-      var rawRole = p.role || '';
+      var name = p.user_name || p.name || 'Unknown';
+      var rawRole = p.user_role || p.role || role;
       var staffObj = {
         initials: name.substring(0, 2).toUpperCase(),
         name: name,
         role: ROLE_MAP_SHARED[rawRole] || rawRole,
-        color: 'linear-gradient(135deg,#8e44ad,#bb8fce)'
+        color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
       };
-      var dob = p.birth_date || '';
-      var formattedDate = dob;
-      if (dob) {
-          var d = new Date(dob);
-          if (!isNaN(d)) formattedDate = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getDate();
-      }
-      var dept = p.team_name || (p.team_id ? 'Team ' + p.team_id : '-');
-      return '<tr><td>' + staffCell(staffObj) + '</td><td class="att-date">' + dept + '</td><td class="checkin-time">' + formattedDate + '</td></tr>';
+
+      var clockIn = p.clock_in_time || p.check_in_time || p.clockIn || '--:--';
+      var clockOut = p.clock_out_time || p.check_out_time || p.clockOut || '--:--';
+
+      if (clockIn.includes(' ')) clockIn = clockIn.split(' ')[1].substring(0, 5);
+      if (clockOut.includes(' ')) clockOut = clockOut.split(' ')[1].substring(0, 5);
+
+      var s = p.status || 'pending';
+      var sc = STATUS_MAP_SHARED[s] || { label: '● ' + s, c: '#5a6b78', bg: '#f0f2f5' };
+      var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
+      return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(clockIn) + timeCell(clockOut) + stCell + '</tr>';
     }).join('');
-  })
-  .catch(function(err) { console.error('Error fetching birthdays:', err); });
+  }
+
+  if (!result.success) console.error('Error fetching ' + role + ' attendance:', result.error);
 }
 
-function fetchLeaveQuota(id) {
-  apiRequest('/leave/quota')
-  .then(function(resData) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    if (resData && resData.success && resData.data) {
-      el.textContent = resData.data.remaining_quota || 0;
+async function fetchCount(path, id) {
+  var result = await apiRequest(path);
+  if (!result.success) {
+    console.error('Error fetching count:', result.error);
+    return;
+  }
+
+  var el = document.getElementById(id);
+  if (!el) return;
+  var val = 0;
+  if (result.data && result.data.total !== undefined) val = result.data.total;
+  else if (result.data && result.data.data && typeof result.data.data === 'number') val = result.data.data;
+  else val = 0;
+  el.innerText = val;
+}
+
+async function fetchBirthdays(tbodyId) {
+  var result = await apiRequest('/users/birthdays');
+  var rows = result.data || [];
+  if (!Array.isArray(rows)) rows = [];
+  var tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
+    var name = p.name || 'Unknown';
+    var rawRole = p.role || '';
+    var staffObj = {
+      initials: name.substring(0, 2).toUpperCase(),
+      name: name,
+      role: ROLE_MAP_SHARED[rawRole] || rawRole,
+      color: 'linear-gradient(135deg,#8e44ad,#bb8fce)'
+    };
+    var dob = p.birth_date || '';
+    var formattedDate = dob;
+    if (dob) {
+      var d = new Date(dob);
+      if (!isNaN(d)) formattedDate = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getDate();
     }
-  })
-  .catch(function(err) { console.error('Error fetching leave quota:', err); });
+    var dept = p.team_name || (p.team_id ? 'Team ' + p.team_id : '-');
+    return '<tr><td>' + staffCell(staffObj) + '</td><td class="att-date">' + dept + '</td><td class="checkin-time">' + formattedDate + '</td></tr>';
+  }).join('');
+
+  if (!result.success) console.error('Error fetching birthdays:', result.error);
+}
+
+async function fetchLeaveQuota(id) {
+  var result = await apiRequest('/leave/quota');
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (result.success && result.data) {
+    el.textContent = result.data.remaining_quota || 0;
+  } else {
+    console.error('Error fetching leave quota:', result.error);
+  }
 }
