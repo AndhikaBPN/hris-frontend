@@ -32,3 +32,8 @@ build/
 
 # Coverage
 coverage/
+
+# Claude Code local cache
+ruvector.db
+agentdb.rvf
+agentdb.rvf.lock
