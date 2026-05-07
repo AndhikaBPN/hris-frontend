@@ -264,7 +264,7 @@ async function submitCreateTeam() {
   var err  = document.getElementById('form-error');
 
   if (!name.trim() || !lead) {
-    if (err) { err.textContent='Harap lengkapi semua field wajib (*)'; err.style.display='block'; }
+    if (err) { err.textContent='Please fill in all required fields (*)'; err.style.display='block'; }
     return;
   }
 

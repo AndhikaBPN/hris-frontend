@@ -56,17 +56,17 @@
 <div class="modal-overlay" id="create-modal" onclick="closeCreateModal()">
   <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div><div class="modal-title">Create New Team</div><div class="modal-subtitle">Tambahkan tim baru ke organisasi</div></div>
+      <div><div class="modal-title">Create New Team</div><div class="modal-subtitle">Add a new team to the organization</div></div>
       <button class="modal-close" onclick="closeCreateModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="create-form">
       <div class="form-group"><label class="form-label">Team Name <span class="req">*</span></label><input type="text" class="form-input" id="f-name" placeholder="e.g. Engineering Alpha"></div>
-      <div class="form-group"><label class="form-label">Team Lead <span class="req">*</span></label><select class="form-input" id="f-lead"><option value="">Pilih Team Lead</option></select></div>
+      <div class="form-group"><label class="form-label">Team Lead <span class="req">*</span></label><select class="form-input" id="f-lead"><option value="">Select Team Lead</option></select></div>
       <div id="form-error" class="form-error" style="display:none;"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeCreateModal()">Batal</button>
-      <button class="btn-submit" onclick="submitCreateTeam()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>Buat Tim</button>
+      <button class="btn-cancel" onclick="closeCreateModal()">Cancel</button>
+      <button class="btn-submit" onclick="submitCreateTeam()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>Create Team</button>
     </div>
   </div>
 </div>
@@ -77,7 +77,7 @@
     <div style="text-align:center;">
       <svg viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;margin:0 auto 12px;"><polyline points="20 6 9 17 4 12"/></svg>
       <div id="success-message" style="font-size:15px;font-weight:600;color:#333;margin-bottom:6px;"></div>
-      <div style="font-size:13px;color:#777;">Tim telah berhasil ditambahkan ke sistem</div>
+      <div style="font-size:13px;color:#777;">Team has been successfully added to the system</div>
     </div>
   </div>
 </div>
