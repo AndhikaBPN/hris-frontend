@@ -9,8 +9,11 @@ async function fetchTeams(options) {
   var limit = options.limit || 50;
   var orderBy = options.order_by || 'id';
   var sorting = options.sorting || 'asc';
+  var search = options.search || '';
 
   var params = '?page=' + page + '&limit=' + limit + '&order_by=' + orderBy + '&sorting=' + sorting;
+  if (search) params += '&search=' + encodeURIComponent(search);
+
   var result = await apiRequest('/teams' + params);
 
   if (!result.success) {
@@ -162,44 +165,76 @@ function mapTeamData(teams) {
 
 /* ══ LIST PAGE ══ */
 var currentPage   = 1;
-var filteredTeams = TEAMS.slice();
+var currentLimit  = 10;
+var lastPage      = 1;
+var currentSearch = '';
+var TEAMS_PAGE    = [];
 
-function filterTeams() {
-  var q     = (document.getElementById('search-input') || {}).value || '';
+async function filterTeams() {
+  var q = (document.getElementById('search-input') || {}).value || '';
   var limit = parseInt((document.getElementById('limit-select') || {}).value || 10);
-  filteredTeams = TEAMS.filter(function(t) {
-    return t.name.toLowerCase().includes(q.toLowerCase()) ||
-           t.division.toLowerCase().includes(q.toLowerCase()) ||
-           t.leadName.toLowerCase().includes(q.toLowerCase());
-  });
+  currentSearch = q;
+  currentLimit = limit;
   currentPage = 1;
-  renderList(limit);
+
+  var res = await fetchTeams({
+    page: currentPage,
+    limit: currentLimit,
+    search: currentSearch,
+    order_by: 'id',
+    sorting: 'asc'
+  });
+
+  if (res.success) {
+    TEAMS_PAGE = mapTeamData(res.data);
+    lastPage = res.meta.last_page || 1;
+    renderList();
+  }
 }
 
 async function onLimitChange() {
   var limit = parseInt((document.getElementById('limit-select') || {}).value || 10);
-  var res = await getAllTeams({ limit: limit });
-  if (res.success && res.data && res.data.length > 0) {
-    TEAMS = mapTeamData(res.data);
-    filterTeams();
+  currentLimit = limit;
+  currentPage = 1;
+
+  var res = await fetchTeams({
+    page: currentPage,
+    limit: currentLimit,
+    search: currentSearch,
+    order_by: 'id',
+    sorting: 'asc'
+  });
+
+  if (res.success) {
+    TEAMS_PAGE = mapTeamData(res.data);
+    lastPage = res.meta.last_page || 1;
+    renderList();
   }
 }
 
-function changePage(dir) {
-  var limit   = parseInt(document.getElementById('limit-select').value);
-  var maxPage = Math.ceil(filteredTeams.length / limit) || 1;
-  currentPage = Math.max(1, Math.min(maxPage, currentPage + dir));
-  renderList(limit);
+async function changePage(dir) {
+  var newPage = currentPage + dir;
+  if (newPage < 1 || newPage > lastPage) return;
+
+  currentPage = newPage;
+
+  var res = await fetchTeams({
+    page: currentPage,
+    limit: currentLimit,
+    search: currentSearch,
+    order_by: 'id',
+    sorting: 'asc'
+  });
+
+  if (res.success) {
+    TEAMS_PAGE = mapTeamData(res.data);
+    lastPage = res.meta.last_page || 1;
+    renderList();
+  }
 }
 
-function renderList(limit) {
-  var total   = filteredTeams.length;
-  var maxPage = Math.ceil(total / limit) || 1;
-  var start   = (currentPage - 1) * limit;
-  var end     = Math.min(start + limit, total);
-  var visible = filteredTeams.slice(start, end);
-
-  var html = visible.map(function(t) {
+function renderList() {
+  var html = TEAMS_PAGE.map(function(t) {
     var actions = CAN_MANAGE ? '<div class="team-actions"><div style="display:flex;gap:6px;">' +
         '<button class="btn-mem-edit" onclick="event.preventDefault();event.stopPropagation();alert(\'Edit: ' + t.name + '\')">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
@@ -218,14 +253,14 @@ function renderList(limit) {
   }).join('');
 
   var el = document.getElementById('team-list');
-  if (el) el.innerHTML = html || '<div class="team-empty">Tidak ada tim ditemukan</div>';
+  if (el) el.innerHTML = html || '<div class="team-empty">No teams found</div>';
 
   var info = document.getElementById('pag-info');
-  if (info) info.textContent = 'Showing ' + (start+1) + '-' + end + ' of ' + total + ' teams';
+  if (info) info.textContent = 'Page ' + currentPage + ' of ' + lastPage;
   var prev = document.getElementById('pag-prev');
   var next = document.getElementById('pag-next');
   if (prev) prev.disabled = currentPage <= 1;
-  if (next) next.disabled = currentPage >= maxPage;
+  if (next) next.disabled = currentPage >= lastPage;
 }
 
 function deleteTeam(id, name) {
@@ -328,13 +363,22 @@ window.addEventListener('load', async function() {
   }
 
   if (document.getElementById('team-list')) {
-    var res = await getAllTeams({ limit: 10 });
+    currentLimit = parseInt((document.getElementById('limit-select') || {}).value || 10);
+    var res = await fetchTeams({
+      page: currentPage,
+      limit: currentLimit,
+      search: currentSearch,
+      order_by: 'id',
+      sorting: 'asc'
+    });
+
     if (res.success && res.data && res.data.length > 0) {
-      TEAMS = mapTeamData(res.data);
-      filterTeams();
+      TEAMS_PAGE = mapTeamData(res.data);
+      lastPage = res.meta.last_page || 1;
+      renderList();
     } else {
       console.error('Failed to load teams:', res.error);
-      document.getElementById('team-list').innerHTML = '<div class="team-empty">Gagal memuat data tim</div>';
+      document.getElementById('team-list').innerHTML = '<div class="team-empty">No teams found</div>';
     }
   }
 });
