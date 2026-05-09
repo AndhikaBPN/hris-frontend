@@ -163,7 +163,7 @@
           <div class="mgr-table-sub">Total attendance per employee this month</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <select class="att-filter" id="filter-summary-month" onchange="teamCurrentPage=1;fetchAttendanceSummary(this.value)"></select>
+          <select class="att-filter" id="filter-summary-month" onchange="teamCurrentPage=1;loadAttendanceSummary(this.value)"></select>
           <button class="btn-reset-filter" style="display:inline-flex;" onclick="resetSummaryFilters()">⟳ Reset</button>
         </div>
       </div>
@@ -249,8 +249,8 @@ guardRoute(["hrd_manager", "technical_manager"]);
 
 var currentSummaryMonth = '';
 var teamCurrentPage = 1;
-var personalFilters = { from: '', to: '', status: '' };
-var teamFilters = { from: '', to: '', status: '', division: 'all' };
+var personalFilters = { from: '', to: '', role: 'manager' };
+var teamFilters = { from: '', to: '', role: '', division: 'all', page: 1, limit: 10 };
 
 window.addEventListener("load", function() {
   window.loadComponents().then(function() {
@@ -280,7 +280,7 @@ window.addEventListener("load", function() {
 
   currentSummaryMonth = currentYear + '-' + String(currentMonth + 1).padStart(2, '0');
   summaryMonthSelect.value = currentSummaryMonth;
-  fetchAttendanceSummary(currentSummaryMonth);
+  loadAttendanceSummary(currentSummaryMonth);
 
   populateTeamFilter();
   loadPersonalAttendance();
@@ -402,7 +402,7 @@ function renderTeamPagination(meta) {
   }
 }
 
-async function fetchAttendanceSummary(month) {
+async function loadAttendanceSummary(month) {
   currentSummaryMonth = month;
   var res = await fetchAttendanceSummary(month);
   if (res.success) {
@@ -413,12 +413,38 @@ async function fetchAttendanceSummary(month) {
 }
 
 function updateSummaryCards(data) {
-  var cards = buildSummaryCards(data);
-  document.getElementById('sum-hadir').textContent = cards.hadir;
-  document.getElementById('sum-late').textContent = cards.late;
-  document.getElementById('sum-absent').textContent = cards.absent;
-  document.getElementById('sum-cuti').textContent = cards.cuti;
-  document.getElementById('sum-rate').textContent = cards.rate + '%';
+  if (!data || data.length === 0) {
+    document.getElementById('sum-hadir').textContent = '0';
+    document.getElementById('sum-late').textContent = '0';
+    document.getElementById('sum-absent').textContent = '0';
+    document.getElementById('sum-cuti').textContent = '0';
+    document.getElementById('sum-rate').textContent = '0%';
+    return;
+  }
+
+  var totals = {
+    valid: 0,
+    late: 0,
+    invalid: 0,
+    leave: 0,
+    totalRate: 0
+  };
+
+  data.forEach(function(record) {
+    totals.valid += record.total_valid || 0;
+    totals.late += record.total_late || 0;
+    totals.invalid += record.total_invalid || 0;
+    totals.leave += record.total_leave || 0;
+    totals.totalRate += record.rate || 0;
+  });
+
+  var avgRate = data.length > 0 ? Math.round(totals.totalRate / data.length) : 0;
+
+  document.getElementById('sum-hadir').textContent = totals.valid;
+  document.getElementById('sum-late').textContent = totals.late;
+  document.getElementById('sum-absent').textContent = totals.invalid;
+  document.getElementById('sum-cuti').textContent = totals.leave;
+  document.getElementById('sum-rate').textContent = avgRate + '%';
 }
 
 function renderSummaryTable(rows) {

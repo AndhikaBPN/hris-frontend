@@ -51,15 +51,15 @@ function formatTimeForManager(timeStr) {
 
 function buildSummaryRows(summaryData) {
   return summaryData.map(function(r) {
-    var total = r.total_valid + r.total_late + r.total_invalid + r.total_leave;
-    var rate = total > 0 ? Math.round((r.total_valid / total) * 100) : 0;
+    var total = (r.total_valid || 0) + (r.total_late || 0) + (r.total_invalid || 0) + (r.total_leave || 0);
+    var rate = r.rate || 0;
     var barColor = rate >= 90 ? '#2e7d4f' : rate >= 70 ? '#f39c12' : '#c0392b';
 
     return {
       userName: r.user_name || 'Unknown',
       userRole: r.user_role || '',
-      total: total,
-      valid: r.total_valid,
+      total: r.total_working_days || total,
+      valid: r.total_valid || 0,
       late: r.total_late || 0,
       invalid: r.total_invalid || 0,
       leave: r.total_leave || 0,

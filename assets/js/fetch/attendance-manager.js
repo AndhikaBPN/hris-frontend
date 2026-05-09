@@ -46,7 +46,7 @@ async function fetchPersonalAttendance(filters) {
 
   if (filters.from) params += '&date_from=' + filters.from;
   if (filters.to) params += '&date_to=' + filters.to;
-  if (filters.status) params += '&status=' + filters.status;
+  if (filters.role) params += '&role=' + filters.role;
 
   if (params) params = '?' + params.substring(1);
 
