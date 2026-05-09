@@ -118,14 +118,199 @@
 <script src="../../assets/js/api.js"></script>
 <script src="../../assets/js/dashboard-shared.js"></script>
 <script src="../../assets/js/sidebar.js"></script>
-<script src="../../assets/js/team.js"></script>
-<script src="../../assets/js/team-detail.js"></script>
+<script src="../../assets/js/fetch/team.js"></script>
+<script src="../../assets/js/fetch/team-detail.js"></script>
+<script src="../../assets/js/render/team.js"></script>
+<script src="../../assets/js/render/team-detail.js"></script>
 <script>
 guardRoute(["hrd_manager", "technical_manager", "c_level", "team_leader", "staff"]);
 
+var currentTeamId = null;
+var currentTeamData = null;
+var rosterData = [];
+var projectsData = [];
+var activitiesData = [];
+var rosterExpanded = false;
+
 window.addEventListener("load", function() {
   window.loadComponents();
+
+  var params = new URLSearchParams(window.location.search);
+  currentTeamId = params.get('id');
+
+  if (!currentTeamId) {
+    window.location.replace('team-hub.html');
+    return;
+  }
+
+  loadTeamDetail();
 });
+
+async function loadTeamDetail() {
+  var res = await fetchTeamDetail(currentTeamId);
+  if (res.success) {
+    currentTeamData = res.data;
+    renderHero();
+    loadTeamRoster();
+    loadTeamProjects();
+    loadTeamActivities();
+  } else {
+    console.error('Failed to load team detail:', res.error);
+  }
+}
+
+async function loadTeamRoster() {
+  var res = await fetchTeamRoster(currentTeamId);
+  if (res.success) {
+    rosterData = res.data;
+    renderRoster();
+  }
+}
+
+async function loadTeamProjects() {
+  var res = await fetchTeamProjects(currentTeamId);
+  if (res.success) {
+    projectsData = res.data;
+    renderProjects();
+  }
+}
+
+async function loadTeamActivities() {
+  var res = await fetchTeamActivities(currentTeamId);
+  if (res.success) {
+    activitiesData = res.data;
+    renderActivities();
+  }
+}
+
+function renderHero() {
+  if (!currentTeamData) return;
+
+  var heroData = buildTeamHeroData(currentTeamData);
+  var statsData = buildTeamStatsData(currentTeamData, rosterData.length);
+
+  document.getElementById('hero-label').textContent = heroData.label;
+  document.getElementById('hero-name').textContent = heroData.name;
+  document.getElementById('hero-avatar').textContent = heroData.leadInitials;
+  document.getElementById('hero-avatar').style.background = 'linear-gradient(135deg,' + heroData.leadColor + ',#6dbf80)';
+  document.getElementById('hero-lead-name').textContent = heroData.leadName;
+  document.getElementById('hero-lead-role').textContent = heroData.leadRole;
+
+  document.getElementById('stat-members').textContent = statsData.totalMembers;
+  document.getElementById('stat-growth').textContent = statsData.growth;
+  document.getElementById('stat-retention').textContent = Math.round(statsData.retentionRate) + '%';
+  document.getElementById('stat-retention-bar').style.width = statsData.retentionRate + '%';
+  document.getElementById('stat-perf').textContent = (statsData.performanceScore || 0).toFixed(1);
+}
+
+function renderRoster() {
+  var rows = rosterExpanded ? buildRosterExpanded(rosterData) : buildRosterPreview(rosterData);
+  var tbody = document.getElementById('roster-tbody');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;">No members found</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><div style="display:flex;align-items:center;gap:8px;">' +
+                   '<div style="width:28px;height:28px;border-radius:50%;background:' + row.color + ';color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">' +
+                   row.initials + '</div>' +
+                   '<span>' + row.name + '</span></div></td>' +
+                   '<td>' + row.role + '</td>' +
+                   '<td>' + row.joinDate + '</td>' +
+                   '<td><span style="padding:4px 8px;background:#e8f5ec;color:#2e7d4f;border-radius:4px;font-size:12px;font-weight:500;">' + row.status + '</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function renderProjects() {
+  var rows = buildProjectsList(projectsData);
+  var projectsList = document.getElementById('projects-list');
+  projectsList.innerHTML = '';
+
+  if (rows.length === 0) {
+    projectsList.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">No active projects</div>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var div = document.createElement('div');
+    div.style.marginBottom = '16px';
+    div.innerHTML = '<div style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">' +
+                    '<div style="font-weight:500;font-size:13px;">' + row.name + '</div>' +
+                    '<div style="font-size:12px;color:#666;">' + row.percentage + '%</div></div>' +
+                    '<div style="height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;">' +
+                    '<div style="height:100%;background:#2e7d4f;width:' + row.percentage + '%;"></div></div>' +
+                    '<div style="font-size:12px;color:#999;margin-top:6px;">' + row.description + '</div>';
+    projectsList.appendChild(div);
+  });
+}
+
+function renderActivities() {
+  var rows = buildActivityList(activitiesData);
+  var activityList = document.getElementById('activity-list');
+  activityList.innerHTML = '';
+
+  if (rows.length === 0) {
+    activityList.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">No recent activity</div>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var div = document.createElement('div');
+    div.style.paddingBottom = '12px';
+    div.style.marginBottom = '12px';
+    div.style.borderBottom = '1px solid #e0e0e0';
+    div.innerHTML = '<div style="display:flex;gap:8px;">' +
+                    '<div style="width:20px;height:20px;flex-shrink:0;color:#666;">' + row.icon + '</div>' +
+                    '<div style="flex:1;">' +
+                    '<div style="font-size:13px;line-height:1.5;">' + row.text + '</div>' +
+                    '<div style="font-size:11px;color:#999;margin-top:4px;">' + row.meta + '</div></div></div>';
+    activityList.appendChild(div);
+  });
+}
+
+function expandRoster() {
+  rosterExpanded = !rosterExpanded;
+  renderRoster();
+  return false;
+}
+
+function openEditModal() {
+  if (!currentTeamData) return;
+
+  document.getElementById('ef-name').value = currentTeamData.team_name || '';
+  document.getElementById('ef-lead').value = currentTeamData.lead_name || '';
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+}
+
+async function submitEdit() {
+  var updateData = {
+    team_name: document.getElementById('ef-name').value,
+    team_lead_id: currentTeamData.team_lead_id
+  };
+
+  if (!updateData.team_name) {
+    alert('Team name is required');
+    return;
+  }
+
+  var res = await updateTeam(currentTeamId, updateData);
+  if (res.success) {
+    alert('Team updated successfully');
+    closeEditModal();
+    loadTeamDetail();
+  } else {
+    alert('Error: ' + (res.error || 'Update failed'));
+  }
+}
 </script>
 </body>
 </html>
