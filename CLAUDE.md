@@ -244,6 +244,71 @@ Validation:
 
 **Failures do not block submission** — system logs them as `invalid` status in backend for fraud audit.
 
+## Fetch/Render Module Pattern
+
+All feature logic is organized into three layers:
+
+### 1. Fetch Layer (`assets/js/fetch/[feature].js`)
+Returns data objects from API calls.
+
+```javascript
+// fetch/attendance.js
+async function fetchAttendance(filters) {
+  var result = await apiRequest('/attendance?date_from=' + filters.date_from);
+  return {
+    success: result.success,
+    data: extractListData(result),
+    error: result.error
+  };
+}
+```
+
+### 2. Render Layer (`assets/js/render/[feature].js`)
+Transforms raw data into render-ready objects. NO HTML generation.
+
+```javascript
+// render/attendance.js
+function buildCalendarCells(year, month, recordsByDate) {
+  return [...Array(daysInMonth).keys()].map(d => ({
+    day: d + 1,
+    dateStr: formatDate(year, month, d + 1),
+    dotClass: getShiftDotClass(recordsByDate[...])
+  }));
+}
+```
+
+### 3. Page Layer (HTML `<script>` tag)
+Orchestrates fetch + render. Handles DOM updates and user interaction.
+
+```html
+<script src="../../assets/js/fetch/attendance.js"></script>
+<script src="../../assets/js/render/attendance.js"></script>
+<script>
+async function loadAttendance() {
+  var res = await fetchAttendance({ date_from: '2026-05-01' });
+  var cells = buildCalendarCells(year, month, res.data);
+  
+  // DOM rendering happens HERE
+  var html = cells.map(cell => 
+    '<div class="cal-cell ' + cell.dotClass + '">' + cell.day + '</div>'
+  ).join('');
+  document.getElementById('cal-body').innerHTML = html;
+}
+</script>
+```
+
+### Key Rules
+1. **Fetch functions:** Return `{ success, data, error }` objects only
+2. **Render functions:** Return data objects/arrays. Never generate HTML
+3. **Page layer:** Imports fetch + render modules. Handles all DOM manipulation
+4. **No HTML strings in JS:** All HTML generation happens in the page layer
+
+### Benefits
+- **Debuggable:** Inspect data flow separate from HTML generation
+- **Testable:** Functions operate on data, not DOM
+- **Reusable:** Share fetch/render logic across pages
+- **Maintainable:** Clear separation of concerns
+
 ## Common Development Tasks
 
 ### Adding a New Page
