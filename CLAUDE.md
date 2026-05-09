@@ -45,7 +45,14 @@ Then open `http://localhost:5500/` in a browser. You will be redirected to the l
 │       ├── auth.js              # Login/logout logic
 │       ├── dashboard-shared.js  # Shared dashboard utilities
 │       ├── sidebar.js           # Navigation sidebar
-│       └── [page].js            # Page-specific logic (attendance.js, etc.)
+│       ├── fetch/               # API fetch functions (return data only)
+│       │   ├── team.js          # Team API calls
+│       │   ├── attendance.js    # Attendance API calls
+│       │   └── [feature].js     # Feature-specific API calls
+│       └── render/              # Data mapping & rendering (return objects, not HTML)
+│           ├── team.js          # Team data mapping functions
+│           ├── attendance.js    # Attendance data mapping functions
+│           └── [feature].js     # Feature-specific mapping functions
 ├── pages/
 │   ├── login.html               # Public login page
 │   ├── reset-access.html        # Password reset stub
@@ -99,19 +106,79 @@ var data = await apiRequest('/api/login', {
 - 401 responses trigger logout and redirect to login page
 - Each page should check token existence before rendering (guard pages)
 
+### Separation of Concerns: Fetch & Render Pattern
+
+**Standard Practice:** Separate business logic into three layers:
+
+1. **Fetch Layer** (`assets/js/fetch/[feature].js`)
+   - Contains all API call functions
+   - Returns raw data objects `{ success, data, meta, error }`
+   - No HTML generation or DOM manipulation
+   - Examples: `fetchTeams()`, `fetchTeamLeaders()`, `createTeam()`
+
+2. **Render Layer** (`assets/js/render/[feature].js`)
+   - Contains data mapping & transformation functions
+   - Returns data objects (arrays, objects) for rendering
+   - No HTML generation — only data structures
+   - Examples: `mapTeamData()`, `buildTeamRows()`
+
+3. **Page Layer** (HTML `<script>` tag)
+   - Imports both fetch and render modules
+   - Calls fetch functions to get data
+   - Calls render functions to map data
+   - Handles DOM rendering with mapped data
+   - Manages page state and event handlers
+
+**Benefits:**
+- Debug functions by inspecting data flow, not HTML strings
+- Reuse fetch/render logic across multiple pages
+- Easier to test data transformation separately
+- Cleaner separation of API logic, data mapping, and UI rendering
+
+**Example:**
+
+```javascript
+// fetch/team.js
+async function fetchTeams(options) {
+  var result = await apiRequest('/teams' + params);
+  return { success: true, data: result.data || [] };
+}
+
+// render/team.js
+function mapTeamData(teams) {
+  return teams.map(t => ({ id: t.id, name: t.name, ... }));
+}
+
+function buildTeamRows(teamsData, canManage) {
+  return teamsData.map(t => ({ id, href, name, ... })); // Returns object
+}
+
+// page HTML
+<script src="../../assets/js/fetch/team.js"></script>
+<script src="../../assets/js/render/team.js"></script>
+<script>
+async function loadTeams() {
+  var res = await fetchTeams({ page: 1 });
+  var mapped = mapTeamData(res.data);
+  var rows = buildTeamRows(mapped, CAN_MANAGE);
+  renderList(rows); // renderList loops through rows and generates HTML
+}
+</script>
+```
+
 ### Page Structure
 
 Each page follows this pattern:
 
 1. **HTML structure** — navbar, sidebar (if authenticated), main content
-2. **Script imports** — `config.js`, `api.js`, `auth.js`, page-specific JS
-3. **Page-specific JS file** — handles initialization, event listeners, data fetching
+2. **Script imports** — `config.js`, `api.js`, `fetch/[feature].js`, `render/[feature].js`
+3. **Page logic** — initialization, event handlers, data fetching (in HTML `<script>` tag)
 4. **localStorage checks** — verify token/user data exist before loading content
 
 Example guard:
 
 ```javascript
-// In page JS
+// In page script
 var user = JSON.parse(localStorage.getItem('hris_user'));
 var token = localStorage.getItem('hris_token');
 if (!token || !user) {
