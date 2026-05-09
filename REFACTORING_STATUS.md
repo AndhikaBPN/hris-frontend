@@ -37,36 +37,34 @@
 - `pages/team/team-hub.html` ✅ - Uses fetch/team.js, render/team.js
 - `pages/attendance/attendance-staff.html` ✅ - Uses fetch/attendance.js, render/attendance.js
 - `pages/attendance/attendance-teamlead.html` ✅ - Uses fetch/attendance.js, render/attendance.js
+- `pages/attendance/attendance-manager.html` ✅ - Uses fetch/attendance-manager.js, render/attendance-manager.js
+- `pages/team/team-detail.html` ✅ - Uses fetch/team-detail.js, render/team-detail.js
+- `pages/dashboard/dashboard-staff.html` ✅ - Uses fetch/dashboard.js, render/dashboard.js
+- `pages/dashboard/dashboard-teamlead.html` ✅ - Uses fetch/dashboard.js, render/dashboard.js
+- `pages/dashboard/dashboard-manager.html` ✅ - Uses fetch/dashboard.js, render/dashboard.js
+- `pages/dashboard/dashboard-clevel.html` ✅ - Uses fetch/dashboard.js, render/dashboard.js
+
+### Additional Fetch Modules Created (This Session)
+
+- `assets/js/fetch/team-detail.js` - Team detail API calls (fetchTeamDetail, fetchTeamRoster, fetchTeamProjects, fetchTeamActivities, updateTeam)
+
+### Additional Render Modules Enhanced (This Session)
+
+- `assets/js/render/attendance-manager.js` - Added buildSummaryCards(), getStatusLabel(), formatTimeForManager()
+- `assets/js/render/team-detail.js` - Enhanced with buildTeamHeroData(), buildTeamStatsData(), getColorByIndex(), getInitials()
+- `assets/js/fetch/attendance-manager.js` - Updated to support filter parameters (from, to, status, division, page, limit)
 
 ### Documentation Updated
+
 - `CLAUDE.md` - Added comprehensive fetch/render pattern documentation with examples
 
 ## In Progress 🔄
 
-None currently (paused for review)
+None
 
 ## Remaining 📋
 
-### HTML Pages to Refactor (6 files)
-1. `pages/attendance/attendance-manager.html` (301 lines, 3 sections)
-   - Needs: fetch/attendance-manager.js, render/attendance-manager.js, fetch/team.js
-   - Functions: fetchAttendanceSummary, renderSummaryTable, calendar logic, team filters
-   
-2. `pages/team/team-detail.html` (236 lines)
-   - Needs: fetch/team.js, render/team-detail.js
-   - Functions: renderRoster, renderProjects, renderActivity
-
-3. `pages/dashboard/dashboard-staff.html`
-   - Needs: fetch/dashboard.js, render/dashboard.js
-   
-4. `pages/dashboard/dashboard-teamlead.html`
-   - Needs: fetch/dashboard.js, render/dashboard.js
-   
-5. `pages/dashboard/dashboard-manager.html`
-   - Needs: fetch/dashboard.js, render/dashboard.js, fetch/attendance-manager.js, render/attendance-manager.js
-   
-6. `pages/dashboard/dashboard-clevel.html`
-   - Needs: fetch/dashboard.js, render/dashboard.js
+None — All HTML pages refactored ✅
 
 ## Pattern Applied
 
