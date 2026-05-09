@@ -247,7 +247,6 @@ function renderList() {
       '<div class="team-name-cell"><div class="team-icon" style="background:' + t.iconBg + ';color:' + t.iconColor + ';">' + t.icon + '</div><div><div class="team-name-text">' + t.name + '</div><div class="team-name-sub">' + t.division + '</div></div></div>' +
       '<div class="team-lead-cell"><div class="staff-avatar" style="width:28px;height:28px;font-size:10px;background:' + t.leadColor + ';">' + t.leadInitials + '</div><span class="team-lead-name">' + t.leadName + '</span></div>' +
       '<div><span class="members-badge">' + t.members + ' Players</span></div>' +
-      '<div class="team-function">' + t.function + '</div>' +
       actions +
     '</a>';
   }).join('');
@@ -359,7 +358,7 @@ window.addEventListener('load', async function() {
   if (tableHead && !CAN_MANAGE) {
     var actions = tableHead.querySelector('div:last-child');
     if (actions && actions.textContent === 'ACTIONS') actions.remove();
-    tableHead.style.gridTemplateColumns = '2fr 1.5fr 0.8fr 1.2fr';
+    tableHead.style.gridTemplateColumns = '2fr 1.5fr 0.8fr';
   }
 
   if (document.getElementById('team-list')) {
