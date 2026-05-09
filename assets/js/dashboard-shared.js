@@ -148,105 +148,46 @@ var MAX_ROWS = 5;
 var STATUS_CLASS = { complete:'complete', late:'late', pending:'approved', leave:'approved' };
 var STATUS_LABEL = { complete:'● Complete', late:'● Late Entry', pending:'● Pending', leave:'● On Leave' };
 
-function staffCell(p) {
-  return '<div class="staff-cell"><div class="staff-avatar" style="background:' + p.color + ';">' + p.initials + '</div>' +
-    '<div><span class="staff-name">' + p.name + '</span><div class="staff-role">' + p.role + '</div></div></div>';
+/* ── Return data objects, not HTML ── */
+function buildStaffCellData(p) {
+  return {
+    initials: p.initials,
+    name: p.name,
+    role: p.role,
+    color: p.color
+  };
 }
 
-function timeCell(val) {
+function buildTimeCellData(val) {
   var empty = !val || val === '--:--';
-  return '<td class="checkin-time' + (empty ? ' pending-time' : '') + '">' + (val || '--:--') + '</td>';
+  return {
+    time: val || '--:--',
+    isEmpty: empty
+  };
 }
 
-function statusCell(s) {
-  return '<td><span class="badge-status ' + (STATUS_CLASS[s]||'approved') + '">' + (STATUS_LABEL[s]||s) + '</span></td>';
+function buildStatusCellData(s) {
+  return {
+    status: s,
+    class: STATUS_CLASS[s] || 'approved',
+    label: STATUS_LABEL[s] || s
+  };
 }
 
-function leaveStatusBadge(s) {
-  var cls = s === 'approved' ? 'complete' : 'approved';
-  var lbl = s === 'approved' ? '● Approved' : '● Pending';
-  return '<span class="badge-status ' + cls + '">' + lbl + '</span>';
+function buildLeaveStatusData(s) {
+  return {
+    class: s === 'approved' ? 'complete' : 'approved',
+    label: s === 'approved' ? '● Approved' : '● Pending',
+    status: s
+  };
 }
 
-/* ── Render attendance table (generic) ── */
-function renderAttTable(tbodyId, rows, rowFn) {
-  var tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  // TODO backend: ganti rows dengan data dari API endpoint
-  tbody.innerHTML = rows.map(rowFn).join('');
-}
-
-/* ── Render birthday table ── */
-function renderBirthdays(tbodyId, titleId) {
+/* ── Render support (data only, HTML in page layer) ── */
+function setTableTitle(titleId, text) {
   if (titleId) {
-    var titleEl = document.getElementById(titleId);
-    if(titleEl) titleEl.textContent = 'Birthdays This Month 🎂';
+    var el = document.getElementById(titleId);
+    if (el) el.textContent = text;
   }
-  fetchBirthdays(tbodyId);
-}
-
-/* ── Render leave table ── */
-async function renderLeave(tbodyId, titleId, rows) {
-  if (titleId) {
-    var titleEl = document.getElementById(titleId);
-    if(titleEl) titleEl.textContent = 'Leave Requests';
-  }
-
-  if (rows) {
-    var tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
-    tbody.innerHTML = rows.map(function(p) {
-      return '<tr><td>' + staffCell(p) + '</td><td class="att-date">' + p.type + '</td>' +
-        '<td class="att-date">' + p.from + ' – ' + p.to + '</td>' +
-        '<td>' + leaveStatusBadge(p.status) + '</td></tr>';
-    }).join('');
-    return;
-  }
-
-  var result = await apiRequest('/leave/monthly');
-  var fetchedRows = extractListData(result);
-  var tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-
-  if (fetchedRows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = fetchedRows.slice(0, MAX_ROWS).map(function(p) {
-    var name = p.user_name || p.name || 'Unknown';
-    var rawRole = p.user_role || p.role || '';
-    var staffObj = {
-      initials: name.substring(0, 2).toUpperCase(),
-      name: name,
-      role: ROLE_MAP_SHARED[rawRole] || rawRole,
-      color: 'linear-gradient(135deg,#7d5a9a,#b08bc0)'
-    };
-
-    var type = p.leave_type || p.type || '-';
-    var fromDate = p.leave_date_from || p.start_date || p.from_date || p.from || '';
-    var toDate   = p.leave_date_to   || p.end_date   || p.to_date   || p.to   || '';
-    var status = p.status || 'pending';
-
-    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var formatD = function(dStr) {
-      if (!dStr) return '';
-      var d = new Date(dStr.replace(' ', 'T').split('T')[0] + 'T00:00:00Z');
-      if (isNaN(d)) return dStr;
-      return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
-    };
-    var formattedFrom = formatD(fromDate);
-    var formattedTo   = formatD(toDate);
-    var dateRange = formattedFrom && formattedTo && formattedFrom !== formattedTo
-      ? formattedFrom + ' – ' + formattedTo
-      : (formattedFrom || formattedTo || '-');
-
-    return '<tr><td>' + staffCell(staffObj) + '</td><td class="att-date">' + type + '</td>' +
-      '<td class="att-date">' + dateRange + '</td>' +
-      '<td>' + leaveStatusBadge(status) + '</td></tr>';
-  }).join('');
-
-  if (!result.success) console.error('Error fetching leave monthly:', result.error);
 }
 
 /* ── Stat cards helper ── */
@@ -278,19 +219,21 @@ var STATUS_MAP_SHARED = {
   'permit': { label: '● Permit', c: '#2980b9', bg: '#e8f0fc' }
 };
 
-async function fetchAttendance(role, tbodyId) {
+/* ── Refactored: fetchAttendance now returns data only ── */
+async function fetchAttendance(role) {
   var path = role === 'team'
     ? '/attendance/subordinates/today'
     : '/attendance/today?role=' + role;
 
   var result = await apiRequest(path);
-  var rows = extractListData(result);
-  var tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
+  if (!result.success) {
+    console.error('Error fetching ' + role + ' attendance:', result.error);
+    return { success: false, data: [] };
+  }
 
+  var rows = extractListData(result);
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
-    return;
+    return { success: true, data: [] };
   }
 
   if (role === 'team') {
@@ -311,100 +254,87 @@ async function fetchAttendance(role, tbodyId) {
       else if (p.session == 2) grouped[uid].c2 = time;
     });
 
-    var finalRows = Object.values(grouped);
-    tbody.innerHTML = finalRows.slice(0, MAX_ROWS).map(function(u) {
-      var staffObj = {
-        initials: u.name.substring(0, 2).toUpperCase(),
-        name: u.name,
-        role: ROLE_MAP_SHARED[u.role] || u.role,
-        color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
-      };
-      var sc = STATUS_MAP_SHARED[u.status] || { label: '● ' + u.status, c: '#5a6b78', bg: '#f0f2f5' };
-      var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
-      return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(u.c1) + timeCell(u.c2) + stCell + '</tr>';
-    }).join('');
+    return { success: true, data: Object.values(grouped).slice(0, MAX_ROWS) };
   } else {
-    tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
+    var processed = rows.slice(0, MAX_ROWS).map(function(p) {
       var name = p.user_name || p.name || 'Unknown';
       var rawRole = p.user_role || p.role || role;
-      var staffObj = {
-        initials: name.substring(0, 2).toUpperCase(),
-        name: name,
-        role: ROLE_MAP_SHARED[rawRole] || rawRole,
-        color: 'linear-gradient(135deg,#3d5c45,#6dbf80)'
-      };
-
       var clockIn = p.clock_in_time || p.check_in_time || p.clockIn || '--:--';
       var clockOut = p.clock_out_time || p.check_out_time || p.clockOut || '--:--';
 
       if (clockIn.includes(' ')) clockIn = clockIn.split(' ')[1].substring(0, 5);
       if (clockOut.includes(' ')) clockOut = clockOut.split(' ')[1].substring(0, 5);
 
-      var s = p.status || 'pending';
-      var sc = STATUS_MAP_SHARED[s] || { label: '● ' + s, c: '#5a6b78', bg: '#f0f2f5' };
-      var stCell = '<td><span class="badge-status" style="color:'+sc.c+'; background:'+sc.bg+';">' + sc.label + '</span></td>';
-      return '<tr><td>' + staffCell(staffObj) + '</td>' + timeCell(clockIn) + timeCell(clockOut) + stCell + '</tr>';
-    }).join('');
-  }
+      return {
+        name: name,
+        role: ROLE_MAP_SHARED[rawRole] || rawRole,
+        clockIn: clockIn,
+        clockOut: clockOut,
+        status: p.status || 'pending'
+      };
+    });
 
-  if (!result.success) console.error('Error fetching ' + role + ' attendance:', result.error);
+    return { success: true, data: processed };
+  }
 }
 
-async function fetchCount(path, id) {
+/* ── Refactored: Return data only, no DOM manipulation ── */
+async function fetchCount(path) {
   var result = await apiRequest(path);
   if (!result.success) {
     console.error('Error fetching count:', result.error);
-    return;
+    return { success: false, data: 0 };
   }
 
-  var el = document.getElementById(id);
-  if (!el) return;
   var d = extractSingleData(result) || {};
   var val = (d.total !== undefined) ? d.total : 0;
-  el.innerText = val;
+  return { success: true, data: val };
 }
 
-async function fetchBirthdays(tbodyId) {
+async function fetchBirthdays() {
   var result = await apiRequest('/users/birthdays');
-  var rows = extractListData(result);
-  var tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-
-  if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#888;">No Data</td></tr>';
-    return;
+  if (!result.success) {
+    console.error('Error fetching birthdays:', result.error);
+    return { success: false, data: [] };
   }
 
-  tbody.innerHTML = rows.slice(0, MAX_ROWS).map(function(p) {
+  var rows = extractListData(result);
+  if (rows.length === 0) {
+    return { success: true, data: [] };
+  }
+
+  var processed = rows.slice(0, MAX_ROWS).map(function(p) {
     var name = p.name || 'Unknown';
     var rawRole = p.role || '';
-    var staffObj = {
-      initials: name.substring(0, 2).toUpperCase(),
-      name: name,
-      role: ROLE_MAP_SHARED[rawRole] || rawRole,
-      color: 'linear-gradient(135deg,#8e44ad,#bb8fce)'
-    };
     var dob = p.birth_date || '';
     var formattedDate = dob;
     if (dob) {
       var d = new Date(dob);
-      if (!isNaN(d)) formattedDate = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getDate();
+      if (!isNaN(d)) {
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        formattedDate = months[d.getMonth()] + ' ' + d.getDate();
+      }
     }
     var dept = p.team_name || (p.team_id ? 'Team ' + p.team_id : '-');
-    return '<tr><td>' + staffCell(staffObj) + '</td><td class="att-date">' + dept + '</td><td class="checkin-time">' + formattedDate + '</td></tr>';
-  }).join('');
 
-  if (!result.success) console.error('Error fetching birthdays:', result.error);
+    return {
+      name: name,
+      role: ROLE_MAP_SHARED[rawRole] || rawRole,
+      department: dept,
+      birthDate: formattedDate
+    };
+  });
+
+  return { success: true, data: processed };
 }
 
-async function fetchLeaveQuota(id) {
+async function fetchLeaveQuota() {
   var result = await apiRequest('/leave/quota');
-  var el = document.getElementById(id);
-  if (!el) return;
-  if (result.success) {
-    var qData = extractSingleData(result) || {};
-    el.textContent = qData.remaining_quota !== undefined ? qData.remaining_quota : 0;
-  } else {
+  if (!result.success) {
     console.error('Error fetching leave quota:', result.error);
+    return { success: false, data: {} };
   }
+
+  var qData = extractSingleData(result) || {};
+  return { success: true, data: qData };
 }
