@@ -25,6 +25,7 @@ function mapTeamData(teams) {
   return teams.map(function(t, idx) {
     var color = getColorByIndex(idx);
     var initials = getInitials(t.team_lead_name);
+    var memberCount = t.total_member || 0;
     return {
       id: t.id,
       name: t.team_name || '',
@@ -33,7 +34,7 @@ function mapTeamData(teams) {
       leadInitials: initials,
       leadColor: 'linear-gradient(135deg,' + color.bg + ',' + color.text + ')',
       leadRole: '',
-      members: '',
+      members: memberCount + (memberCount === 1 ? ' Member' : ' Members'),
       function: '',
       iconBg: color.bg,
       iconColor: color.text,
