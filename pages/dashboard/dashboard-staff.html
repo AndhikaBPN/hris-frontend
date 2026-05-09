@@ -154,6 +154,8 @@
 <script src="../../assets/js/api.js"></script>
 <script src="../../assets/js/dashboard-shared.js"></script>
 <script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/dashboard.js"></script>
+<script src="../../assets/js/render/dashboard.js"></script>
 <script>
 var ROLE_LABEL = 'STAFF';
 var ROLE_COLOR = '#6b7c8d';
@@ -161,23 +163,100 @@ guardRoute(['staff']);
 
 window.addEventListener('load', function() {
   window.loadComponents().then(function() {
-  var badge = document.getElementById('role-badge');
-  if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
-  var av = document.getElementById('avatar-init');
-  
-  renderLeave('tbody-leave-s');
-  renderBirthdays('tbody-bday-s');
-  fetchLeaveQuota('leave-quota');
-  if(av) av.textContent = 'A';
-  var gs = document.getElementById('greeting-sub');
-  var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
-  initDateGreeting(name);
-  if(gs) gs.innerHTML = 'Keep up your performance.';
-  updateLiveClock();
-  setInterval(updateLiveClock, 1000);
-  animateProgress(8);
+    var badge = document.getElementById('role-badge');
+    if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
+    var av = document.getElementById('avatar-init');
+
+    loadLeaveData();
+    loadBirthdayData();
+    loadLeaveQuota();
+
+    if(av) av.textContent = 'A';
+    var gs = document.getElementById('greeting-sub');
+    var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
+    initDateGreeting(name);
+    if(gs) gs.innerHTML = 'Keep up your performance.';
+    updateLiveClock();
+    setInterval(updateLiveClock, 1000);
+    animateProgress(8);
   });
 });
+
+async function loadLeaveData() {
+  var res = await fetchLeaveRequests();
+  if (res.success) {
+    var rows = buildLeaveRows(res.data);
+    renderLeaveTable(rows);
+  }
+}
+
+async function loadBirthdayData() {
+  var res = await fetchBirthdays();
+  if (res.success) {
+    var rows = buildBirthdayRows(res.data);
+    renderBirthdayTable(rows);
+  }
+}
+
+async function loadLeaveQuota() {
+  var res = await fetchLeaveQuota();
+  if (res.success) {
+    var quota = res.data.quota || res.data.remaining_days || 0;
+    document.getElementById('leave-quota').textContent = quota;
+  }
+}
+
+function renderLeaveTable(rows) {
+  var tbody = document.getElementById('tbody-leave-s');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;">No leave data</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var statusInfo = getStatusLabel(row.status);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + row.name + '</td>' +
+                   '<td>' + row.leaveType + '</td>' +
+                   '<td>' + row.dateRange + '</td>' +
+                   '<td><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function renderBirthdayTable(rows) {
+  var tbody = document.getElementById('tbody-bday-s');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;">No birthdays this month</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + row.name + '</td>' +
+                   '<td>' + row.department + '</td>' +
+                   '<td>' + row.birthDate + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function getStatusLabel(status) {
+  var STATUS_MAP = {
+    'valid': { label: '● Valid', color: '#2e7d4f' },
+    'late': { label: '● Late', color: '#b06000' },
+    'invalid': { label: '● Invalid', color: '#c0392b' },
+    'leave': { label: '● Leave', color: '#2980b9' },
+    'sick-leave': { label: '● Sick Leave', color: '#2980b9' },
+    'permit': { label: '● Permit', color: '#2980b9' },
+    'approved': { label: '● Approved', color: '#2e7d4f' },
+    'pending': { label: '● Pending', color: '#f39c12' }
+  };
+  return STATUS_MAP[status] || { label: '● Pending', color: '#95a5a6' };
+}
 </script>
 </body>
 </html>
