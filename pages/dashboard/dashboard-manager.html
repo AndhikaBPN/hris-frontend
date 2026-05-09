@@ -192,71 +192,188 @@
 <script src="../../assets/js/api.js"></script>
 <script src="../../assets/js/dashboard-shared.js"></script>
 <script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/dashboard.js"></script>
+<script src="../../assets/js/render/dashboard.js"></script>
 <script>
 var ROLE_LABEL = 'MANAGER';
 var ROLE_COLOR = '#2980b9';
 guardRoute(['hrd_manager', 'technical_manager']);
 
+var clockedIn = false;
+var clockInTime = null;
+var durationTimer = null;
+
 window.addEventListener('load', function() {
   window.loadComponents().then(function() {
-  var badge = document.getElementById('role-badge');
-  if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
-  var av = document.getElementById('avatar-init');
-  
-  var clockedIn = false;
-  var clockInTime = null;
-  var durationTimer = null;
+    var badge = document.getElementById('role-badge');
+    if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
+    var av = document.getElementById('avatar-init');
 
-  function doClockIn() {
-    clockedIn = true; clockInTime = new Date();
-    var hh = clockInTime.getHours().toString().padStart(2,'0');
-    var mm = clockInTime.getMinutes().toString().padStart(2,'0');
-    document.getElementById('clockin-display').textContent = hh + ':' + mm;
-    document.getElementById('btn-clockin').disabled = true;
-    document.getElementById('btn-clockin').style.opacity = '0.6';
-    document.getElementById('btn-clockout').disabled = false;
-    document.getElementById('btn-clockout').style.opacity = '1';
-    var msg = document.getElementById('session-msg');
-    msg.textContent = '✓ Clock in successful at ' + hh + ':' + mm;
-    msg.style.color = '#2e7d4f';
-    durationTimer = setInterval(updateDuration, 1000);
-    updateDuration();
-  }
-  function doClockOut() {
-    clearInterval(durationTimer);
-    var now = new Date();
-    var hh = now.getHours().toString().padStart(2,'0');
-    var mm = now.getMinutes().toString().padStart(2,'0');
-    document.getElementById('btn-clockout').disabled = true;
-    document.getElementById('btn-clockout').style.opacity = '0.6';
-    var msg = document.getElementById('session-msg');
-    msg.textContent = '✓ Clocked out at ' + hh + ':' + mm;
-    msg.style.color = '#c0392b';
-  }
-  function updateDuration() {
-    if (!clockInTime) return;
-    var diff = Math.floor((new Date() - clockInTime) / 1000);
-    var h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60);
-    var el = document.getElementById('work-duration');
-    if (el) el.textContent = h + 'h ' + m.toString().padStart(2,'0') + 'm';
-  }
+    loadStaffAttendance();
+    loadManagerAttendance();
+    loadLeaveData();
+    loadBirthdayData();
+    loadLeaveQuota();
 
-  fetchAttendance('staff', 'tbody-staff-m');
-  fetchAttendance('manager', 'tbody-mgr-m');
-  renderLeave('tbody-leave-m');
-  renderBirthdays('tbody-bday-m');
-  fetchLeaveQuota('leave-quota');
-  if(av) av.textContent = 'D';
-  var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
-  initDateGreeting(name);
-  var gs = document.getElementById('greeting-sub');
-  if(gs) gs.innerHTML = 'Managing your team members efficiently.';
-  updateLiveClock();
-  setInterval(updateLiveClock, 1000);
-  animateProgress(8);
+    if(av) av.textContent = 'D';
+    var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
+    initDateGreeting(name);
+    var gs = document.getElementById('greeting-sub');
+    if(gs) gs.innerHTML = 'Managing your team members efficiently.';
+    updateLiveClock();
+    setInterval(updateLiveClock, 1000);
+    animateProgress(8);
   });
 });
-initDateGreeting('Alex');
+
+async function loadStaffAttendance() {
+  var res = await fetchAttendanceToday('staff');
+  if (res.success) {
+    var rows = buildAttendanceRows(res.data, 'staff');
+    renderAttendanceTable(rows, 'tbody-staff-m');
+  }
+}
+
+async function loadManagerAttendance() {
+  var res = await fetchAttendanceToday('manager');
+  if (res.success) {
+    var rows = buildAttendanceRows(res.data, 'manager');
+    renderAttendanceTable(rows, 'tbody-mgr-m');
+  }
+}
+
+async function loadLeaveData() {
+  var res = await fetchLeaveRequests();
+  if (res.success) {
+    var rows = buildLeaveRows(res.data);
+    renderLeaveTable(rows, 'tbody-leave-m');
+  }
+}
+
+async function loadBirthdayData() {
+  var res = await fetchBirthdays();
+  if (res.success) {
+    var rows = buildBirthdayRows(res.data);
+    renderBirthdayTable(rows, 'tbody-bday-m');
+  }
+}
+
+async function loadLeaveQuota() {
+  var res = await fetchLeaveQuota();
+  if (res.success) {
+    var quota = res.data.quota || res.data.remaining_days || 0;
+    document.getElementById('leave-quota').textContent = quota;
+  }
+}
+
+function renderAttendanceTable(rows, tbodyId) {
+  var tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;">No attendance data</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var statusInfo = getStatusLabel(row.status);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + row.name + '</td>' +
+                   '<td>' + (row.checkInTime || row.checkIn1 || '--:--') + '</td>' +
+                   '<td>' + (row.checkOutTime || row.checkIn2 || '--:--') + '</td>' +
+                   '<td><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function renderLeaveTable(rows, tbodyId) {
+  var tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;">No leave data</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var statusInfo = getStatusLabel(row.status);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + row.name + '</td>' +
+                   '<td>' + row.leaveType + '</td>' +
+                   '<td>' + row.dateRange + '</td>' +
+                   '<td><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function renderBirthdayTable(rows, tbodyId) {
+  var tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;">No birthdays this month</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + row.name + '</td>' +
+                   '<td>' + row.department + '</td>' +
+                   '<td>' + row.birthDate + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function getStatusLabel(status) {
+  var STATUS_MAP = {
+    'valid': { label: '● Valid', color: '#2e7d4f' },
+    'late': { label: '● Late', color: '#b06000' },
+    'invalid': { label: '● Invalid', color: '#c0392b' },
+    'leave': { label: '● Leave', color: '#2980b9' },
+    'sick-leave': { label: '● Sick Leave', color: '#2980b9' },
+    'permit': { label: '● Permit', color: '#2980b9' },
+    'approved': { label: '● Approved', color: '#2e7d4f' },
+    'pending': { label: '● Pending', color: '#f39c12' }
+  };
+  return STATUS_MAP[status] || { label: '● Pending', color: '#95a5a6' };
+}
+
+function doClockIn() {
+  clockedIn = true;
+  clockInTime = new Date();
+  var hh = clockInTime.getHours().toString().padStart(2,'0');
+  var mm = clockInTime.getMinutes().toString().padStart(2,'0');
+  document.getElementById('clockin-display').textContent = hh + ':' + mm;
+  document.getElementById('btn-clockin').disabled = true;
+  document.getElementById('btn-clockin').style.opacity = '0.6';
+  document.getElementById('btn-clockout').disabled = false;
+  document.getElementById('btn-clockout').style.opacity = '1';
+  var msg = document.getElementById('session-msg');
+  msg.textContent = '✓ Clock in successful at ' + hh + ':' + mm;
+  msg.style.color = '#2e7d4f';
+  durationTimer = setInterval(updateDuration, 1000);
+  updateDuration();
+}
+
+function doClockOut() {
+  clearInterval(durationTimer);
+  var now = new Date();
+  var hh = now.getHours().toString().padStart(2,'0');
+  var mm = now.getMinutes().toString().padStart(2,'0');
+  document.getElementById('btn-clockout').disabled = true;
+  document.getElementById('btn-clockout').style.opacity = '0.6';
+  var msg = document.getElementById('session-msg');
+  msg.textContent = '✓ Clocked out at ' + hh + ':' + mm;
+  msg.style.color = '#c0392b';
+}
+
+function updateDuration() {
+  if (!clockInTime) return;
+  var diff = Math.floor((new Date() - clockInTime) / 1000);
+  var h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60);
+  var el = document.getElementById('work-duration');
+  if (el) el.textContent = h + 'h ' + m.toString().padStart(2,'0') + 'm';
+}
 </script>
 </body>
 </html>

@@ -28,7 +28,7 @@ async function fetchTeamAttendance(filters) {
 
   if (params) params = '?' + params.substring(1);
 
-  var result = await apiRequest('/attendance/subordinates' + params);
+  var result = await apiRequest('/attendance/subordinates/today' + params);
   if (!result.success) {
     console.error('Error fetching team attendance:', result.error);
     return { success: false, data: [], meta: {} };
