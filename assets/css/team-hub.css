@@ -30,31 +30,29 @@
 
 /* Table head */
 .team-table-head {
-  display:grid; grid-template-columns:2fr 1.5fr 0.8fr 1.2fr 200px;
+  display:grid; grid-template-columns:2fr 1.5fr 0.8fr auto;
   padding:0 1rem 0.7rem; border-bottom:1px solid #f0f2f5; gap:1rem;
   font-size:10px; letter-spacing:1.5px; color:#9aabb7; font-weight:600;
 }
 .team-table-head > :nth-child(3),
-.team-table-head > :nth-child(4),
-.team-table-head > :nth-child(5) {
+.team-table-head > :nth-child(4) {
   text-align:center;
 }
 
 /* Team row */
 .team-row {
-  display:grid; grid-template-columns:2fr 1.5fr 0.8fr 1.2fr 200px;
+  display:grid; grid-template-columns:2fr 1.5fr 0.8fr auto;
   padding:1rem 1rem; border-bottom:1px solid #f8f9fa; gap:1rem;
   align-items:center; cursor:pointer; transition:background 0.1s;
   border-radius:8px; text-decoration:none;
 }
 .team-row--no-actions {
-  grid-template-columns:2fr 1.5fr 0.8fr 1.2fr;
+  grid-template-columns:2fr 1.5fr 0.8fr;
 }
 .team-row:hover { background:#f8fafc; }
 .team-row:last-child { border-bottom:none; }
 .team-row > :nth-child(3),
-.team-row > :nth-child(4),
-.team-row > :nth-child(5) {
+.team-row > :nth-child(4) {
   display:flex; align-items:center; justify-content:center;
 }
 
@@ -67,7 +65,7 @@
 .team-lead-name { font-size:13.5px; color:#2c3e50; }
 .members-badge  { display:inline-flex; align-items:center; padding:4px 12px; border-radius:99px; background:#f0f2f5; color:#4a5568; font-size:12.5px; font-weight:500; border:1px solid #e0e4e8; margin:0 auto; }
 .team-function  { font-size:13px; color:#6b7c8d; text-align:center; }
-.team-actions   { display:flex; justify-content:center; }
+.team-actions   { display:flex; justify-content:center; align-items:center; gap:8px; padding:0 8px; }
 .action-menu-btn { width:28px; height:28px; border-radius:6px; border:none; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#9aabb7; }
 .action-menu-btn:hover { background:#f0f2f5; color:#2c3e50; }
 
