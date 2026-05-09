@@ -241,10 +241,17 @@
 <script src="../../assets/js/api.js"></script>
 <script src="../../assets/js/dashboard-shared.js"></script>
 <script src="../../assets/js/sidebar.js"></script>
-<script src="../../assets/js/team.js"></script>
-<script src="../../assets/js/attendance-manager.js"></script>
+<script src="../../assets/js/fetch/team.js"></script>
+<script src="../../assets/js/fetch/attendance-manager.js"></script>
+<script src="../../assets/js/render/attendance-manager.js"></script>
 <script>
 guardRoute(["hrd_manager", "technical_manager"]);
+
+var currentSummaryMonth = '';
+var teamCurrentPage = 1;
+var personalFilters = { from: '', to: '', status: '' };
+var teamFilters = { from: '', to: '', status: '', division: 'all' };
+
 window.addEventListener("load", function() {
   window.loadComponents().then(function() {
     var badge = document.getElementById("role-badge");
@@ -253,7 +260,6 @@ window.addEventListener("load", function() {
     if (av) av.textContent = "M";
   });
 
-  // Populate summary month filter (12 months, descending)
   var summaryMonthSelect = document.getElementById('filter-summary-month');
   var now = new Date();
   var currentMonth = now.getMonth();
@@ -272,13 +278,13 @@ window.addEventListener("load", function() {
     summaryMonthSelect.appendChild(opt);
   }
 
-  // Fetch attendance summary for current month
-  var currentMonthStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0');
-  summaryMonthSelect.value = currentMonthStr;
-  fetchAttendanceSummary(currentMonthStr);
+  currentSummaryMonth = currentYear + '-' + String(currentMonth + 1).padStart(2, '0');
+  summaryMonthSelect.value = currentSummaryMonth;
+  fetchAttendanceSummary(currentSummaryMonth);
 
-  // Populate team filter with dynamic teams from API
   populateTeamFilter();
+  loadPersonalAttendance();
+  loadTeamAttendance();
 });
 
 async function populateTeamFilter() {
@@ -296,6 +302,226 @@ async function populateTeamFilter() {
     });
   }
 }
+
+async function loadPersonalAttendance() {
+  var res = await fetchPersonalAttendance(personalFilters);
+  if (res.success) {
+    var rows = buildPersonalAttendanceRows(res.data);
+    renderPersonalTable(rows);
+  } else {
+    document.getElementById('personal-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Failed to load data</td></tr>';
+  }
+}
+
+function renderPersonalTable(rows) {
+  var tbody = document.getElementById('personal-tbody');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">No data found</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var statusInfo = getStatusLabel(row.status);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + (row.date || '-') + '</td>' +
+                   '<td>' + (row.shift || '-') + '</td>' +
+                   '<td>' + row.checkInTime + '</td>' +
+                   '<td>' + row.checkOutTime + '</td>' +
+                   '<td>' + (row.duration || '-') + '</td>' +
+                   '<td><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></td>' +
+                   '<td><button class="btn-attachment" onclick="openPhotoModal(\'' + (row.date || '') + '\')">View</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadTeamAttendance() {
+  var filters = {
+    from: teamFilters.from,
+    to: teamFilters.to,
+    status: teamFilters.status,
+    division: teamFilters.division === 'all' ? '' : teamFilters.division,
+    page: teamCurrentPage,
+    limit: 10
+  };
+
+  var res = await fetchTeamAttendance(filters);
+  if (res.success) {
+    var rows = buildTeamAttendanceRows(res.data);
+    renderTeamTable(rows);
+    renderTeamPagination(res.meta);
+  } else {
+    document.getElementById('team-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Failed to load data</td></tr>';
+  }
+}
+
+function renderTeamTable(rows) {
+  var tbody = document.getElementById('team-tbody');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">No data found</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var statusInfo = getStatusLabel(row.status);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + row.name + '</td>' +
+                   '<td>' + (row.division || '-') + '</td>' +
+                   '<td>' + row.checkInSession1 + '</td>' +
+                   '<td>' + row.checkInSession2 + '</td>' +
+                   '<td>' + (row.duration || '-') + '</td>' +
+                   '<td><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></td>' +
+                   '<td><button class="btn-attachment" onclick="openPhotoModal()">View</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function renderTeamPagination(meta) {
+  var paginationWrap = document.getElementById('team-pagination');
+  paginationWrap.innerHTML = '';
+
+  if (!meta || !meta.last_page) return;
+
+  var currentPage = meta.current_page || 1;
+  var lastPage = meta.last_page;
+
+  for (var i = 1; i <= lastPage; i++) {
+    var btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
+    btn.onclick = (function(page) {
+      return function() {
+        teamCurrentPage = page;
+        loadTeamAttendance();
+      };
+    })(i);
+    paginationWrap.appendChild(btn);
+  }
+}
+
+async function fetchAttendanceSummary(month) {
+  currentSummaryMonth = month;
+  var res = await fetchAttendanceSummary(month);
+  if (res.success) {
+    var rows = buildSummaryRows(res.data);
+    renderSummaryTable(rows);
+    updateSummaryCards(res.data);
+  }
+}
+
+function updateSummaryCards(data) {
+  var cards = buildSummaryCards(data);
+  document.getElementById('sum-hadir').textContent = cards.hadir;
+  document.getElementById('sum-late').textContent = cards.late;
+  document.getElementById('sum-absent').textContent = cards.absent;
+  document.getElementById('sum-cuti').textContent = cards.cuti;
+  document.getElementById('sum-rate').textContent = cards.rate + '%';
+}
+
+function renderSummaryTable(rows) {
+  var tbody = document.getElementById('summary-tbody');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">No data found</td></tr>';
+    return;
+  }
+
+  rows.forEach(function(row) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + row.userName + '</td>' +
+                   '<td>' + row.total + '</td>' +
+                   '<td>' + row.valid + '</td>' +
+                   '<td>' + row.late + '</td>' +
+                   '<td>' + row.invalid + '</td>' +
+                   '<td>' + row.leave + '</td>' +
+                   '<td><div style="display:flex;align-items:center;gap:8px;">' +
+                   '<div style="flex:1;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;">' +
+                   '<div style="width:' + row.rate + '%;height:100%;background:' + row.barColor + ';"></div>' +
+                   '</div>' + row.rate + '%</div></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function resetPersonalFilters() {
+  document.getElementById('filter-personal-from').value = '';
+  document.getElementById('filter-personal-to').value = '';
+  document.getElementById('filter-personal-status').value = '';
+  personalFilters = { from: '', to: '', status: '' };
+  loadPersonalAttendance();
+}
+
+function resetTeamFilters() {
+  document.getElementById('filter-team-from').value = '';
+  document.getElementById('filter-team-to').value = '';
+  document.getElementById('filter-team-status').value = '';
+  document.getElementById('filter-division').value = 'all';
+  teamFilters = { from: '', to: '', status: '', division: 'all' };
+  teamCurrentPage = 1;
+  loadTeamAttendance();
+}
+
+function resetSummaryFilters() {
+  var now = new Date();
+  var currentMonth = now.getMonth();
+  var currentYear = now.getFullYear();
+  var currentMonthStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0');
+  document.getElementById('filter-summary-month').value = currentMonthStr;
+  fetchAttendanceSummary(currentMonthStr);
+}
+
+function openPhotoModal(date) {
+  document.getElementById('modal-overlay').style.display = 'flex';
+  if (date) {
+    document.getElementById('modal-subtitle').textContent = date;
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+document.getElementById('filter-personal-from')?.addEventListener('change', function() {
+  personalFilters.from = this.value;
+  loadPersonalAttendance();
+});
+
+document.getElementById('filter-personal-to')?.addEventListener('change', function() {
+  personalFilters.to = this.value;
+  loadPersonalAttendance();
+});
+
+document.getElementById('filter-personal-status')?.addEventListener('change', function() {
+  personalFilters.status = this.value;
+  loadPersonalAttendance();
+});
+
+document.getElementById('filter-team-from')?.addEventListener('change', function() {
+  teamFilters.from = this.value;
+  teamCurrentPage = 1;
+  loadTeamAttendance();
+});
+
+document.getElementById('filter-team-to')?.addEventListener('change', function() {
+  teamFilters.to = this.value;
+  teamCurrentPage = 1;
+  loadTeamAttendance();
+});
+
+document.getElementById('filter-team-status')?.addEventListener('change', function() {
+  teamFilters.status = this.value;
+  teamCurrentPage = 1;
+  loadTeamAttendance();
+});
+
+document.getElementById('filter-division')?.addEventListener('change', function() {
+  teamFilters.division = this.value;
+  teamCurrentPage = 1;
+  loadTeamAttendance();
+});
 </script>
 </body>
 </html>

@@ -2,6 +2,53 @@
   ATTENDANCE MANAGER RENDER FUNCTIONS
 ══════════════════════════════════════════════ */
 
+var STATUS_MAP_MANAGER = {
+  'valid': { label: '● Valid', color: '#2e7d4f' },
+  'late': { label: '● Late', color: '#b06000' },
+  'invalid': { label: '● Invalid', color: '#c0392b' },
+  'leave': { label: '● Leave', color: '#2980b9' },
+  'sick-leave': { label: '● Sick Leave', color: '#2980b9' },
+  'permit': { label: '● Permit', color: '#2980b9' }
+};
+
+function buildSummaryCards(teamAttendanceData) {
+  var stats = {
+    hadir: 0,
+    late: 0,
+    absent: 0,
+    cuti: 0,
+    total: 0
+  };
+
+  teamAttendanceData.forEach(function(r) {
+    stats.total++;
+    if (r.status === 'valid') stats.hadir++;
+    else if (r.status === 'late') stats.late++;
+    else if (r.status === 'leave' || r.status === 'sick-leave' || r.status === 'permit') stats.cuti++;
+    else if (r.status === 'invalid') stats.absent++;
+  });
+
+  var rate = stats.total > 0 ? Math.round(((stats.hadir + stats.late) / stats.total) * 100) : 0;
+
+  return {
+    hadir: stats.hadir,
+    late: stats.late,
+    absent: stats.absent,
+    cuti: stats.cuti,
+    rate: rate
+  };
+}
+
+function getStatusLabel(status) {
+  return STATUS_MAP_MANAGER[status] || { label: '● Pending', color: '#95a5a6' };
+}
+
+function formatTimeForManager(timeStr) {
+  if (!timeStr || timeStr === '--:--') return '--:--';
+  if (timeStr.includes(' ')) return timeStr.split(' ')[1].substring(0, 5);
+  return timeStr;
+}
+
 function buildSummaryRows(summaryData) {
   return summaryData.map(function(r) {
     var total = r.total_valid + r.total_late + r.total_invalid + r.total_leave;
