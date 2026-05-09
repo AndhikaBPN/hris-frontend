@@ -55,12 +55,12 @@ window.loadComponents = function() {
     }
 
     if (teamLink) {
-      if (userRole === 'team_leader' || userRole === 'hrd_manager' || userRole === 'technical_manager' || userRole === 'c_level') teamLink.href = '../team/team-hub.html';
+      if (userRole === 'team_leader' || userRole === 'hrd_manager' || userRole === 'technical_manager' || userRole === 'c_level' || userRole === 'staff') teamLink.href = '../team/team-hub.html';
     }
 
     // Hide unauthorized menus
     if (userRole === 'staff') {
-      document.querySelectorAll('.nav-reports, .nav-admin, .nav-team').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-reports, .nav-admin').forEach(e => e.style.display = 'none');
     } else if (userRole === 'team_leader') {
       document.querySelectorAll('.nav-reports, .nav-admin').forEach(e => e.style.display = 'none');
     } else if (userRole === 'hrd_manager' || userRole === 'technical_manager') {
