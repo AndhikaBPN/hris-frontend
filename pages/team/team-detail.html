@@ -135,8 +135,8 @@ var rosterExpanded = false;
 window.addEventListener("load", function() {
   window.loadComponents();
 
-  var params = new URLSearchParams(window.location.search);
-  currentTeamId = params.get('id');
+  currentTeamId = sessionStorage.getItem('selectedTeamId');
+  sessionStorage.removeItem('selectedTeamId');
 
   if (!currentTeamId) {
     window.location.replace('team-hub.html');

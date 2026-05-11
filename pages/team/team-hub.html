@@ -118,7 +118,7 @@ function renderTeamRow(teamRow) {
       '</div></div>';
   }
 
-  return '<a class="team-row' + (teamRow.classNames ? ' ' + teamRow.classNames : '') + '" href="' + teamRow.href + '">' +
+  return '<a class="team-row' + (teamRow.classNames ? ' ' + teamRow.classNames : '') + '" href="team-detail.html" onclick="sessionStorage.setItem(\'selectedTeamId\',' + teamRow.id + ')">' +
     '<div class="team-name-cell"><div class="team-icon" style="background:' + teamRow.iconBg + ';color:' + teamRow.iconColor + ';">' + teamRow.icon + '</div><div><div class="team-name-text">' + teamRow.name + '</div><div class="team-name-sub">' + teamRow.division + '</div></div></div>' +
     '<div class="team-lead-cell"><div class="staff-avatar" style="width:28px;height:28px;font-size:10px;background:' + teamRow.leadColor + ';">' + teamRow.leadInitials + '</div><span class="team-lead-name">' + teamRow.leadName + '</span></div>' +
     '<div><span class="members-badge">' + teamRow.members + ' Players</span></div>' +
