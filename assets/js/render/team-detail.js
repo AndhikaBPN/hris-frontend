@@ -14,13 +14,16 @@ function getInitials(name) {
 }
 
 function buildTeamHeroData(teamData) {
+  var leadName = teamData.team_lead_name || teamData.lead_name || 'Unknown';
+  var teamName = teamData.team_name || teamData.name || 'Unknown Team';
+
   return {
     label: (teamData.division || 'TEAM').toUpperCase(),
-    name: teamData.team_name || teamData.name || 'Unknown Team',
-    leadName: teamData.lead_name || teamData.team_lead_name || 'Unknown',
+    name: teamName,
+    leadName: leadName,
     leadRole: teamData.lead_role || 'Team Lead',
-    leadInitials: getInitials(teamData.lead_name || teamData.team_lead_name || '?'),
-    leadColor: teamData.lead_color || getColorByIndex(0)
+    leadInitials: getInitials(leadName),
+    leadColor: teamData.lead_color || '#3d5c45'
   };
 }
 

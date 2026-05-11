@@ -15,7 +15,7 @@ async function fetchTeamDetail(teamId) {
 
   return {
     success: true,
-    data: extractSingleData(result)
+    data: result.data || {}
   };
 }
 
