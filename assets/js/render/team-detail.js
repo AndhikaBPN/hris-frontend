@@ -36,36 +36,14 @@ function buildTeamHeroData(teamData) {
   };
 }
 
-function buildTeamStatsData(teamData) {
-  return {
-    totalMembers: teamData.total_member || 0,
-    growth: teamData.growth || '+0 this month',
-    retentionRate: teamData.retention_rate || 0,
-    performanceScore: teamData.performance_score || 0
-  };
-}
 
 function buildRosterPreview(members) {
-  return (members || []).slice(0, 4).map(function(m, i) {
-    return {
-      initials: getInitials(m.name || '?'),
-      color: getColorByIndex(i),
-      name: m.name || 'Unknown',
-      role: m.role_name || m.role || 'Member',
-      joinDate: formatDate(m.created_at || m.join_date),
-      status: m.status || 'active'
-    };
-  });
-}
-
-function buildRosterExpanded(members) {
   return (members || []).map(function(m, i) {
     return {
       initials: getInitials(m.name || '?'),
       color: getColorByIndex(i),
       name: m.name || 'Unknown',
       role: m.role_name || m.role || 'Member',
-      email: m.email || '-',
       joinDate: formatDate(m.created_at || m.join_date),
       status: m.status || 'active'
     };

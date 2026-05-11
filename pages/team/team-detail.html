@@ -42,25 +42,6 @@
       </button>
     </div>
 
-    <!-- STATS -->
-    <div class="detail-stats-row">
-      <div class="card detail-stat-card">
-        <div class="ds-label">TOTAL MEMBERS</div>
-        <div class="ds-value" id="stat-members">0</div>
-        <div class="ds-trend"><svg viewBox="0 0 16 10" fill="none" width="14" height="10"><polyline points="1 9 5 4 9 7 15 1" stroke="#3d5c45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="color:#3d5c45;font-size:12px;" id="stat-growth">+3 this month</span></div>
-      </div>
-      <div class="card detail-stat-card">
-        <div class="ds-label">RETENTION RATE</div>
-        <div class="ds-value" id="stat-retention">—</div>
-        <div class="ds-bar"><div class="ds-bar-fill" id="stat-retention-bar" style="width:0%;"></div></div>
-      </div>
-      <div class="card detail-stat-card">
-        <div class="ds-label">PERFORMANCE SCORE</div>
-        <div class="ds-value" id="stat-perf">—</div>
-        <div class="ds-sub">out of 5.0</div>
-      </div>
-    </div>
-
     <!-- MAIN GRID -->
     <div class="detail-main-grid">
 
@@ -157,7 +138,6 @@ function renderHero() {
   if (!currentTeamData) return;
 
   var heroData = buildTeamHeroData(currentTeamData);
-  var statsData = buildTeamStatsData(currentTeamData);
 
   document.getElementById('hero-label').textContent = heroData.label;
   document.getElementById('hero-name').textContent = heroData.name;
@@ -165,16 +145,10 @@ function renderHero() {
   document.getElementById('hero-avatar').style.background = 'linear-gradient(135deg,' + heroData.leadColor + ',#6dbf80)';
   document.getElementById('hero-lead-name').textContent = heroData.leadName;
   document.getElementById('hero-lead-role').textContent = heroData.leadRole;
-
-  document.getElementById('stat-members').textContent = statsData.totalMembers;
-  document.getElementById('stat-growth').textContent = statsData.growth;
-  document.getElementById('stat-retention').textContent = Math.round(statsData.retentionRate) + '%';
-  document.getElementById('stat-retention-bar').style.width = statsData.retentionRate + '%';
-  document.getElementById('stat-perf').textContent = (statsData.performanceScore || 0).toFixed(1);
 }
 
 function renderRoster() {
-  var rows = rosterExpanded ? buildRosterExpanded(rosterData) : buildRosterPreview(rosterData);
+  var rows = buildRosterPreview(rosterData);
   var tbody = document.getElementById('roster-tbody');
   tbody.innerHTML = '';
 

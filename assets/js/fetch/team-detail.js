@@ -19,57 +19,6 @@ async function fetchTeamDetail(teamId) {
   };
 }
 
-async function fetchTeamRoster(teamId) {
-  if (!teamId) {
-    return { success: false, data: [], error: 'Team ID required' };
-  }
-
-  var result = await apiRequest('/teams/' + teamId + '/members');
-  if (!result.success) {
-    console.error('Error fetching team roster:', result.error);
-    return { success: false, data: [], error: result.error };
-  }
-
-  return {
-    success: true,
-    data: extractListData(result)
-  };
-}
-
-async function fetchTeamProjects(teamId) {
-  if (!teamId) {
-    return { success: false, data: [], error: 'Team ID required' };
-  }
-
-  var result = await apiRequest('/teams/' + teamId + '/projects');
-  if (!result.success) {
-    console.error('Error fetching team projects:', result.error);
-    return { success: false, data: [], error: result.error };
-  }
-
-  return {
-    success: true,
-    data: extractListData(result)
-  };
-}
-
-async function fetchTeamActivities(teamId) {
-  if (!teamId) {
-    return { success: false, data: [], error: 'Team ID required' };
-  }
-
-  var result = await apiRequest('/teams/' + teamId + '/activities');
-  if (!result.success) {
-    console.error('Error fetching team activities:', result.error);
-    return { success: false, data: [], error: result.error };
-  }
-
-  return {
-    success: true,
-    data: extractListData(result)
-  };
-}
-
 async function updateTeam(teamId, data) {
   if (!teamId) {
     return { success: false, error: 'Team ID required' };
