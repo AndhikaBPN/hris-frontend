@@ -15,6 +15,14 @@
 
   <main class="content">
 
+    <!-- BACK -->
+    <div style="width:fit-content;">
+      <button class="btn-back" onclick="window.location.href='team-hub.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+    </div>
+
     <!-- HERO -->
     <div class="team-hero">
       <div class="team-hero-left">
@@ -70,20 +78,6 @@
         </table>
       </div>
 
-      <!-- RIGHT COL -->
-      <div class="detail-right-col">
-        <!-- Active Projects -->
-        <div class="card projects-card">
-          <div class="attendance-header"><h2 class="section-title">Active Projects</h2></div>
-          <div id="projects-list"></div>
-        </div>
-        <!-- Team Activity -->
-        <div class="card activity-card">
-          <div class="attendance-header"><h2 class="section-title">Team Activity</h2></div>
-          <div class="activity-list" id="activity-list"></div>
-        </div>
-      </div>
-
     </div>
   </main>
 </div>
@@ -128,15 +122,14 @@ guardRoute(["hrd_manager", "technical_manager", "c_level", "team_leader", "staff
 var currentTeamId = null;
 var currentTeamData = null;
 var rosterData = [];
-var projectsData = [];
-var activitiesData = [];
 var rosterExpanded = false;
 
 window.addEventListener("load", function() {
   window.loadComponents();
 
-  currentTeamId = sessionStorage.getItem('selectedTeamId');
+  currentTeamId = sessionStorage.getItem('selectedTeamId') || sessionStorage.getItem('currentTeamId');
   sessionStorage.removeItem('selectedTeamId');
+  if (currentTeamId) sessionStorage.setItem('currentTeamId', currentTeamId);
 
   if (!currentTeamId) {
     window.location.replace('team-hub.html');
@@ -152,8 +145,6 @@ async function loadTeamDetail() {
     currentTeamData = res.data;
     renderHero();
     loadTeamRoster();
-    loadTeamProjects();
-    loadTeamActivities();
   } else {
     console.error('Failed to load team detail:', res.error);
   }
@@ -167,21 +158,6 @@ async function loadTeamRoster() {
   }
 }
 
-async function loadTeamProjects() {
-  var res = await fetchTeamProjects(currentTeamId);
-  if (res.success) {
-    projectsData = res.data;
-    renderProjects();
-  }
-}
-
-async function loadTeamActivities() {
-  var res = await fetchTeamActivities(currentTeamId);
-  if (res.success) {
-    activitiesData = res.data;
-    renderActivities();
-  }
-}
 
 function renderHero() {
   if (!currentTeamData) return;
@@ -226,52 +202,6 @@ function renderRoster() {
   });
 }
 
-function renderProjects() {
-  var rows = buildProjectsList(projectsData);
-  var projectsList = document.getElementById('projects-list');
-  projectsList.innerHTML = '';
-
-  if (rows.length === 0) {
-    projectsList.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">No active projects</div>';
-    return;
-  }
-
-  rows.forEach(function(row) {
-    var div = document.createElement('div');
-    div.style.marginBottom = '16px';
-    div.innerHTML = '<div style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">' +
-                    '<div style="font-weight:500;font-size:13px;">' + row.name + '</div>' +
-                    '<div style="font-size:12px;color:#666;">' + row.percentage + '%</div></div>' +
-                    '<div style="height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;">' +
-                    '<div style="height:100%;background:#2e7d4f;width:' + row.percentage + '%;"></div></div>' +
-                    '<div style="font-size:12px;color:#999;margin-top:6px;">' + row.description + '</div>';
-    projectsList.appendChild(div);
-  });
-}
-
-function renderActivities() {
-  var rows = buildActivityList(activitiesData);
-  var activityList = document.getElementById('activity-list');
-  activityList.innerHTML = '';
-
-  if (rows.length === 0) {
-    activityList.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">No recent activity</div>';
-    return;
-  }
-
-  rows.forEach(function(row) {
-    var div = document.createElement('div');
-    div.style.paddingBottom = '12px';
-    div.style.marginBottom = '12px';
-    div.style.borderBottom = '1px solid #e0e0e0';
-    div.innerHTML = '<div style="display:flex;gap:8px;">' +
-                    '<div style="width:20px;height:20px;flex-shrink:0;color:#666;">' + row.icon + '</div>' +
-                    '<div style="flex:1;">' +
-                    '<div style="font-size:13px;line-height:1.5;">' + row.text + '</div>' +
-                    '<div style="font-size:11px;color:#999;margin-top:4px;">' + row.meta + '</div></div></div>';
-    activityList.appendChild(div);
-  });
-}
 
 function expandRoster() {
   rosterExpanded = !rosterExpanded;

@@ -122,6 +122,8 @@
 .hero-lead-role  { font-size:12px; color:#9aabb7; }
 .btn-edit-team { display:inline-flex; align-items:center; gap:7px; padding:9px 16px; background:#3d5c45; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; flex-shrink:0; }
 .btn-edit-team:hover { background:#2f4a36; }
+.btn-back { display:inline-flex; align-items:center; gap:6px; padding:0; background:none; color:#3d5c45; border:none; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; margin-bottom:1rem; }
+.btn-back:hover { color:#2f4a36; }
 
 .detail-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; margin-bottom:1.4rem; }
 .detail-stat-card { padding:1.2rem 1.4rem; }
@@ -132,7 +134,7 @@
 .ds-bar-fill { height:100%; background:#3d5c45; border-radius:99px; transition:width 1s ease; }
 .ds-sub   { font-size:12px; color:#9aabb7; margin-top:4px; }
 
-.detail-main-grid { display:grid; grid-template-columns:1fr 300px; gap:1.2rem; align-items:start; }
+.detail-main-grid { display:grid; grid-template-columns:1fr; gap:1.2rem; align-items:start; }
 .roster-card { padding:1.4rem 1.6rem; }
 .detail-right-col { display:flex; flex-direction:column; gap:1.2rem; }
 .projects-card { padding:1.2rem 1.4rem; }
