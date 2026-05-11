@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const url = require('url');
 
 function parseEnv() {
   try {
@@ -47,7 +48,8 @@ const MIME = {
 http.createServer(function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  var filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+  var pathname = url.parse(req.url).pathname;
+  var filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
   var ext = path.extname(filePath);
 
   fs.readFile(filePath, function(err, data) {
