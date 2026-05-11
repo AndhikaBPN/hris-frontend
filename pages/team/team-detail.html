@@ -49,7 +49,6 @@
       <div class="card roster-card">
         <div class="attendance-header" id="roster-header">
           <h2 class="section-title">Team Roster</h2>
-          <a class="view-all" href="#" onclick="expandRoster();return false;">VIEW ALL</a>
         </div>
         <table class="att-table">
           <thead id="roster-thead">
@@ -57,6 +56,17 @@
           </thead>
           <tbody id="roster-tbody"></tbody>
         </table>
+        <div class="team-pagination" style="padding:16px;border-top:1px solid #e0e0e0;">
+          <div class="pagination-left">
+            <span class="pag-label">LIMIT PER PAGE</span>
+            <select class="pag-select" id="roster-limit-select" onchange="onRosterLimitChange()"><option value="4" selected>4</option><option value="10">10</option><option value="25">25</option><option value="50">50</option></select>
+          </div>
+          <div class="pagination-right">
+            <span class="pag-info" id="roster-pag-info">Page 1 of 1</span>
+            <button class="pag-btn" id="roster-pag-prev" onclick="changeRosterPage(-1)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <button class="pag-btn" id="roster-pag-next" onclick="changeRosterPage(1)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg></button>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -104,6 +114,9 @@ var currentTeamId = null;
 var currentTeamData = null;
 var rosterData = [];
 var rosterExpanded = false;
+var rosterCurrentPage = 1;
+var rosterLimit = 4;
+var rosterLastPage = 1;
 
 window.addEventListener("load", function() {
   window.loadComponents();
@@ -148,33 +161,66 @@ function renderHero() {
 }
 
 function renderRoster() {
-  var rows = buildRosterPreview(rosterData);
+  var allRows = rosterExpanded ? buildRosterExpanded(rosterData) : buildRosterPreview(rosterData);
+
+  rosterLastPage = Math.ceil(allRows.length / rosterLimit) || 1;
+  if (rosterCurrentPage > rosterLastPage) rosterCurrentPage = rosterLastPage;
+
+  var startIdx = (rosterCurrentPage - 1) * rosterLimit;
+  var endIdx = startIdx + rosterLimit;
+  var pageRows = allRows.slice(startIdx, endIdx);
+
   var tbody = document.getElementById('roster-tbody');
   tbody.innerHTML = '';
 
-  if (rows.length === 0) {
+  if (pageRows.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;">No members found</td></tr>';
-    return;
+  } else {
+    pageRows.forEach(function(row) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><div style="display:flex;align-items:center;gap:8px;">' +
+                     '<div style="width:28px;height:28px;border-radius:50%;background:' + row.color + ';color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">' +
+                     row.initials + '</div>' +
+                     '<span>' + row.name + '</span></div></td>' +
+                     '<td>' + row.role + '</td>' +
+                     '<td>' + row.joinDate + '</td>' +
+                     '<td><span style="padding:4px 8px;background:#e8f5ec;color:#2e7d4f;border-radius:4px;font-size:12px;font-weight:500;">' + row.status + '</span></td>';
+      tbody.appendChild(tr);
+    });
   }
 
-  rows.forEach(function(row) {
-    var tr = document.createElement('tr');
-    tr.innerHTML = '<td><div style="display:flex;align-items:center;gap:8px;">' +
-                   '<div style="width:28px;height:28px;border-radius:50%;background:' + row.color + ';color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">' +
-                   row.initials + '</div>' +
-                   '<span>' + row.name + '</span></div></td>' +
-                   '<td>' + row.role + '</td>' +
-                   '<td>' + row.joinDate + '</td>' +
-                   '<td><span style="padding:4px 8px;background:#e8f5ec;color:#2e7d4f;border-radius:4px;font-size:12px;font-weight:500;">' + row.status + '</span></td>';
-    tbody.appendChild(tr);
-  });
+  updateRosterPagination();
+}
+
+function updateRosterPagination() {
+  var info = document.getElementById('roster-pag-info');
+  if (info) info.textContent = 'Page ' + rosterCurrentPage + ' of ' + rosterLastPage;
+  var prev = document.getElementById('roster-pag-prev');
+  var next = document.getElementById('roster-pag-next');
+  if (prev) prev.disabled = rosterCurrentPage <= 1;
+  if (next) next.disabled = rosterCurrentPage >= rosterLastPage;
 }
 
 
 function expandRoster() {
   rosterExpanded = !rosterExpanded;
+  rosterCurrentPage = 1;
   renderRoster();
   return false;
+}
+
+function changeRosterPage(dir) {
+  var newPage = rosterCurrentPage + dir;
+  if (newPage < 1 || newPage > rosterLastPage) return;
+  rosterCurrentPage = newPage;
+  renderRoster();
+}
+
+function onRosterLimitChange() {
+  var limit = parseInt(document.getElementById('roster-limit-select').value || 4);
+  rosterLimit = limit;
+  rosterCurrentPage = 1;
+  renderRoster();
 }
 
 function openEditModal() {
