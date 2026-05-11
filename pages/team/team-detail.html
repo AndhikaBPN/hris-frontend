@@ -26,13 +26,13 @@
     <!-- HERO -->
     <div class="team-hero">
       <div class="team-hero-left">
-        <div class="team-hero-label" id="hero-label">ENGINEERING UNIT</div>
-        <h1 class="team-hero-name" id="hero-name">Engineering Alpha</h1>
+        <div class="team-hero-label" id="hero-label"></div>
+        <h1 class="team-hero-name" id="hero-name"></h1>
         <div class="team-hero-lead">
           <div class="staff-avatar" id="hero-avatar" style="width:30px;height:30px;font-size:11px;background:linear-gradient(135deg,#3d5c45,#6dbf80);">AR</div>
           <div>
-            <div class="hero-lead-name" id="hero-lead-name">Alex Rivera</div>
-            <div class="hero-lead-role" id="hero-lead-role">Lead Technical Architect</div>
+            <div class="hero-lead-name" id="hero-lead-name"></div>
+            <div class="hero-lead-role" id="hero-lead-role"></div>
           </div>
         </div>
       </div>
@@ -143,27 +143,21 @@ async function loadTeamDetail() {
   var res = await fetchTeamDetail(currentTeamId);
   if (res.success) {
     currentTeamData = res.data;
+    rosterData = res.data.members || [];
     renderHero();
-    loadTeamRoster();
+    renderRoster();
   } else {
     console.error('Failed to load team detail:', res.error);
   }
 }
 
-async function loadTeamRoster() {
-  var res = await fetchTeamRoster(currentTeamId);
-  if (res.success) {
-    rosterData = res.data;
-    renderRoster();
-  }
-}
 
 
 function renderHero() {
   if (!currentTeamData) return;
 
   var heroData = buildTeamHeroData(currentTeamData);
-  var statsData = buildTeamStatsData(currentTeamData, rosterData.length);
+  var statsData = buildTeamStatsData(currentTeamData);
 
   document.getElementById('hero-label').textContent = heroData.label;
   document.getElementById('hero-name').textContent = heroData.name;
@@ -196,7 +190,7 @@ function renderRoster() {
                    row.initials + '</div>' +
                    '<span>' + row.name + '</span></div></td>' +
                    '<td>' + row.role + '</td>' +
-                   '<td>' + row.joinDate + '</td>' +
+                   '<td>' + row.createdAt + '</td>' +
                    '<td><span style="padding:4px 8px;background:#e8f5ec;color:#2e7d4f;border-radius:4px;font-size:12px;font-weight:500;">' + row.status + '</span></td>';
     tbody.appendChild(tr);
   });
