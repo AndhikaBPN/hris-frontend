@@ -533,10 +533,7 @@ window.addEventListener('load', async function() {
   await loadShifts(calYear, calMonth);
   await fetchAttendanceData();
 
-  window.loadComponents().then(function() {
-    var badge = document.getElementById('role-badge');
-    if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
-  });
+  window.loadComponents();
 });
 </script>
 </body>

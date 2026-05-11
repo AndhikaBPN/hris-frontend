@@ -253,12 +253,7 @@ var personalFilters = { from: '', to: '', role: 'manager' };
 var teamFilters = { from: '', to: '', role: '', division: 'all', page: 1, limit: 10 };
 
 window.addEventListener("load", function() {
-  window.loadComponents().then(function() {
-    var badge = document.getElementById("role-badge");
-    if (badge) { badge.textContent = "MANAGER"; badge.style.background = "#2980b9"; }
-    var av = document.getElementById("avatar-init");
-    if (av) av.textContent = "M";
-  });
+  window.loadComponents();
 
   var summaryMonthSelect = document.getElementById('filter-summary-month');
   var now = new Date();

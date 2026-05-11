@@ -27,9 +27,9 @@ function buildTeamHeroData(teamData) {
   };
 }
 
-function buildTeamStatsData(teamData, memberCount) {
+function buildTeamStatsData(teamData) {
   return {
-    totalMembers: memberCount || 0,
+    totalMembers: teamData.total_member || 0,
     growth: teamData.growth || '+0 this month',
     retentionRate: teamData.retention_rate || 0,
     performanceScore: teamData.performance_score || 0
@@ -37,27 +37,27 @@ function buildTeamStatsData(teamData, memberCount) {
 }
 
 function buildRosterPreview(members) {
-  return (members || []).slice(0, 4).map(function(m) {
+  return (members || []).slice(0, 4).map(function(m, i) {
     return {
-      initials: m.initials || getInitials(m.name || m.user_name || '?'),
-      color: m.color || getColorByIndex(members.indexOf(m)),
-      name: m.name || m.user_name || 'Unknown',
-      role: m.role || m.user_role || 'Member',
-      joinDate: m.join_date || m.joinDate || '-',
+      initials: getInitials(m.name || '?'),
+      color: getColorByIndex(i),
+      name: m.name || 'Unknown',
+      role: m.role_name || m.role || 'Member',
+      joinDate: m.join_date || '-',
       status: m.status || 'active'
     };
   });
 }
 
 function buildRosterExpanded(members) {
-  return (members || []).map(function(m) {
+  return (members || []).map(function(m, i) {
     return {
-      initials: m.initials || getInitials(m.name || m.user_name || '?'),
-      color: m.color || getColorByIndex(members.indexOf(m)),
-      name: m.name || m.user_name || 'Unknown',
-      role: m.role || m.user_role || 'Member',
-      email: m.email || m.user_email || '-',
-      joinDate: m.join_date || m.joinDate || '-',
+      initials: getInitials(m.name || '?'),
+      color: getColorByIndex(i),
+      name: m.name || 'Unknown',
+      role: m.role_name || m.role || 'Member',
+      email: m.email || '-',
+      joinDate: m.join_date || '-',
       status: m.status || 'active'
     };
   });

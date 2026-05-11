@@ -77,9 +77,31 @@ window.loadComponents = function() {
     });
   });
 
+  const ROLE_LABELS = {
+    c_level: { label: 'C-LEVEL', color: '#8b4513' },
+    hrd_manager: { label: 'HRD', color: '#2980b9' },
+    technical_manager: { label: 'TECHNICAL', color: '#8e44ad' },
+    team_leader: { label: 'TEAM LEAD', color: '#27ae60' },
+    staff: { label: 'STAFF', color: '#3d5c45' }
+  };
+
   const p2 = fetch('../components/navbar.html').then(r => r.text()).then(html => {
     const el = document.getElementById('navbar-placeholder');
     if(el) el.outerHTML = html;
+
+    const roleInfo = ROLE_LABELS[userRole] || { label: userRole.toUpperCase(), color: '#3d5c45' };
+    const badge = document.getElementById('role-badge');
+    if (badge) { badge.textContent = roleInfo.label; badge.style.background = roleInfo.color; }
+
+    let initials = 'U';
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        if (u.name) initials = u.name.split(' ').map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
+      } catch(e) {}
+    }
+    const av = document.getElementById('avatar-init');
+    if (av) av.textContent = initials;
   });
   return Promise.all([p1, p2]);
 };

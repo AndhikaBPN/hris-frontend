@@ -112,17 +112,11 @@ guardRoute(['c_level']);
 
 window.addEventListener('load', function() {
   window.loadComponents().then(function() {
-    var badge = document.getElementById('role-badge');
-    if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
-    var av = document.getElementById('avatar-init');
-
     loadManagerAttendance();
     loadStaffAttendance();
     loadStatCards();
     loadLeaveData();
     loadBirthdayData();
-
-    if(av) av.textContent = 'T';
     initDateGreeting('CEO');
     updateLiveClock();
     setInterval(updateLiveClock, 1000);

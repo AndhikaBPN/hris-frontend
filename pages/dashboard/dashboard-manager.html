@@ -205,10 +205,6 @@ var durationTimer = null;
 
 window.addEventListener('load', function() {
   window.loadComponents().then(function() {
-    var badge = document.getElementById('role-badge');
-    if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
-    var av = document.getElementById('avatar-init');
-
     loadStaffAttendance();
     loadManagerAttendance();
     loadLeaveData();

@@ -163,15 +163,9 @@ guardRoute(['staff']);
 
 window.addEventListener('load', function() {
   window.loadComponents().then(function() {
-    var badge = document.getElementById('role-badge');
-    if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
-    var av = document.getElementById('avatar-init');
-
     loadLeaveData();
     loadBirthdayData();
     loadLeaveQuota();
-
-    if(av) av.textContent = 'A';
     var gs = document.getElementById('greeting-sub');
     var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
     initDateGreeting(name);

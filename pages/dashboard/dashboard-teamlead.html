@@ -175,16 +175,10 @@ guardRoute(['team_leader']);
 
 window.addEventListener('load', function() {
   window.loadComponents().then(function() {
-    var badge = document.getElementById('role-badge');
-    if (badge) { badge.textContent = ROLE_LABEL; badge.style.background = ROLE_COLOR; }
-    var av = document.getElementById('avatar-init');
-
     loadTeamAttendance();
     loadLeaveData();
     loadBirthdayData();
     loadLeaveQuota();
-
-    if(av) av.textContent = 'M';
     var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
     initDateGreeting(name);
     var gs = document.getElementById('greeting-sub');
