@@ -13,6 +13,15 @@ function getInitials(name) {
   return name ? name.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase() : '?';
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  var d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.getDate().toString().padStart(2, '0') + '/' +
+         (d.getMonth() + 1).toString().padStart(2, '0') + '/' +
+         d.getFullYear();
+}
+
 function buildTeamHeroData(teamData) {
   var leadName = teamData.team_lead_name || teamData.lead_name || 'Unknown';
   var teamName = teamData.team_name || teamData.name || 'Unknown Team';
@@ -43,7 +52,7 @@ function buildRosterPreview(members) {
       color: getColorByIndex(i),
       name: m.name || 'Unknown',
       role: m.role_name || m.role || 'Member',
-      joinDate: m.join_date || '-',
+      joinDate: formatDate(m.created_at || m.join_date),
       status: m.status || 'active'
     };
   });
@@ -57,7 +66,7 @@ function buildRosterExpanded(members) {
       name: m.name || 'Unknown',
       role: m.role_name || m.role || 'Member',
       email: m.email || '-',
-      joinDate: m.join_date || '-',
+      joinDate: formatDate(m.created_at || m.join_date),
       status: m.status || 'active'
     };
   });
