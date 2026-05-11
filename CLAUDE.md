@@ -16,13 +16,13 @@ HRIS Frontend is a static HTML/CSS/Vanilla JavaScript web application for Gaming
 ## Running the Application
 
 ```bash
-# Start the development server on localhost:5500
+# Start the development server on localhost:3000
 npm start
 # OR
 node server.js
 ```
 
-Then open `http://localhost:5500/` in a browser. You will be redirected to the login page.
+Then open `http://localhost:3000/` in a browser. You will be redirected to the login page.
 
 **No dependency installation needed** — the application uses CDN-based external libraries (Lucide icons, face-api.js).
 
