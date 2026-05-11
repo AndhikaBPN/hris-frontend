@@ -74,10 +74,10 @@
           <div class="mgr-table-sub">My attendance history</div>
         </div>
         <div class="mgr-controls">
-          <input type="date" class="att-filter" id="filter-personal-from" onchange="fetchPersonalAttendance()" title="From Date">
+          <input type="date" class="att-filter" id="filter-personal-from" title="From Date">
           <span class="date-range-sep">to</span>
-          <input type="date" class="att-filter" id="filter-personal-to" onchange="fetchPersonalAttendance()" title="To Date">
-          <select class="att-filter" id="filter-personal-status" onchange="fetchPersonalAttendance()">
+          <input type="date" class="att-filter" id="filter-personal-to" title="To Date">
+          <select class="att-filter" id="filter-personal-status">
             <option value="">All Status</option>
             <option value="valid">Valid</option>
             <option value="late">Late</option>
@@ -476,7 +476,7 @@ function resetPersonalFilters() {
   document.getElementById('filter-personal-from').value = '';
   document.getElementById('filter-personal-to').value = '';
   document.getElementById('filter-personal-status').value = '';
-  personalFilters = { from: '', to: '', status: '' };
+  personalFilters = { from: '', to: '', status: '', role: 'manager' };
   loadPersonalAttendance();
 }
 
