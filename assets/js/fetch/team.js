@@ -69,6 +69,49 @@ async function getAllTeamLeaders(options) {
   });
 }
 
+async function deleteTeam(teamId) {
+  if (!teamId) {
+    return { success: false, error: 'Team ID required' };
+  }
+
+  var result = await apiRequest('/teams/' + teamId, {
+    method: 'DELETE'
+  });
+
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return {
+    success: true,
+    message: (result.data && result.data.message) || 'Team deleted successfully'
+  };
+}
+
+async function fetchUsers(options) {
+  options = options || {};
+  var page = options.page || 1;
+  var limit = options.limit || 100;
+  var search = options.search || '';
+
+  var params = '?page=' + page + '&limit=' + limit;
+  if (search) params += '&search=' + encodeURIComponent(search);
+
+  var result = await apiRequest('/users' + params);
+
+  if (!result.success) {
+    console.error('Error fetching users:', result.error);
+    return { success: false, data: [], meta: {}, error: result.error };
+  }
+
+  var data = result.data || {};
+  return {
+    success: true,
+    data: Array.isArray(data) ? data : (data.data || []),
+    meta: data.meta || {}
+  };
+}
+
 async function createTeam(data) {
   if (!data || !data.team_name || !data.team_lead_id) {
     return {

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Edit Team</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+
+  <main class="content">
+
+    <!-- BACK -->
+    <div style="width:fit-content;">
+      <button class="btn-back" onclick="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+    </div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header-row" style="margin-bottom:1.4rem;">
+      <div>
+        <h1 class="hub-title">Edit Team</h1>
+        <div class="hub-sub">TEAM CONFIGURATION</div>
+      </div>
+      <button class="btn-create-team" id="btn-save" onclick="submitEditTeam()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>
+        Save Changes
+      </button>
+    </div>
+
+    <!-- ERROR -->
+    <div id="edit-error" class="form-error" style="display:none;margin-bottom:1rem;"></div>
+
+    <!-- TWO COLUMN GRID -->
+    <div class="edit-grid">
+
+      <!-- BASIC INFO CARD -->
+      <div class="card" style="padding:1.4rem 1.6rem;">
+        <h2 style="font-size:14px;font-weight:600;color:#2c3e50;margin:0 0 1.2rem;">Basic Information</h2>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">Team Name <span class="req">*</span></label>
+            <input type="text" class="form-input" id="edit-team-name" placeholder="e.g. Engineering Alpha">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Team Lead <span class="req">*</span></label>
+            <select class="form-input" id="edit-team-lead">
+              <option value="">Select Team Lead</option>
+            </select>
+            <div class="form-hint">Changing the team lead updates the assigned lead for this team.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEAM MEMBERS CARD -->
+      <div class="card" style="padding:1.4rem 1.6rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <h2 style="font-size:14px;font-weight:600;color:#2c3e50;margin:0;">Team Members</h2>
+          <span class="member-count-badge" id="member-count">0 Members</span>
+        </div>
+
+        <!-- Search -->
+        <div class="search-wrap-full" style="margin-bottom:1rem;">
+          <div class="team-search-wrap" style="width:100%;box-sizing:border-box;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" class="team-search-input" id="member-search" placeholder="Search to add members..." oninput="onMemberSearch()" autocomplete="off">
+          </div>
+          <div class="search-dropdown" id="search-dropdown"></div>
+        </div>
+
+        <!-- Members List -->
+        <div id="members-list"></div>
+        <div class="member-empty" id="member-empty" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:38px;height:38px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          No members in this team
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/team.js"></script>
+<script src="../../assets/js/fetch/team-detail.js"></script>
+<script src="../../assets/js/render/team-detail.js"></script>
+<script>
+guardRoute(["hrd_manager", "technical_manager", "c_level"]);
+
+var currentTeamId     = null;
+var currentTeamData   = null;
+var originalMemberIds = [];
+var currentMembers    = [];
+var membersToAdd      = [];
+var membersToRemove   = [];
+var allUsers          = [];
+
+window.addEventListener('load', async function() {
+  window.loadComponents();
+
+  currentTeamId = sessionStorage.getItem('selectedTeamId') || sessionStorage.getItem('currentTeamId');
+  sessionStorage.removeItem('selectedTeamId');
+  if (currentTeamId) sessionStorage.setItem('currentTeamId', currentTeamId);
+
+  if (!currentTeamId) {
+    window.location.replace('team-hub.html');
+    return;
+  }
+
+  var results = await Promise.all([
+    fetchTeamDetail(currentTeamId),
+    getAllTeamLeaders({ limit: 100 }),
+    fetchUsers({ limit: 200 })
+  ]);
+
+  var teamRes    = results[0];
+  var leadersRes = results[1];
+  var usersRes   = results[2];
+
+  if (!teamRes.success) {
+    showError('Failed to load team data: ' + (teamRes.error || 'Unknown error'));
+    return;
+  }
+
+  currentTeamData = teamRes.data;
+  currentMembers = (currentTeamData.members || []).map(function(m) {
+    return { id: m.id, name: m.name || 'Unknown', role_name: m.role_name || m.role || 'Member' };
+  });
+  originalMemberIds = currentMembers.map(function(m) { return m.id; });
+
+  document.getElementById('edit-team-name').value = currentTeamData.team_name || '';
+
+  if (leadersRes.success && leadersRes.data.length > 0) {
+    var leadSelect = document.getElementById('edit-team-lead');
+    leadersRes.data.forEach(function(lead) {
+      var opt = document.createElement('option');
+      opt.value = lead.id;
+      opt.textContent = lead.name;
+      if (lead.id === currentTeamData.team_lead_id) opt.selected = true;
+      leadSelect.appendChild(opt);
+    });
+  }
+
+  if (usersRes.success) {
+    allUsers = usersRes.data;
+  }
+
+  renderMembersList();
+});
+
+/* ── MEMBER RENDER ── */
+function renderMembersList() {
+  var listEl  = document.getElementById('members-list');
+  var emptyEl = document.getElementById('member-empty');
+  var countEl = document.getElementById('member-count');
+  var c = currentMembers.length;
+
+  if (countEl) countEl.textContent = c + ' Member' + (c !== 1 ? 's' : '');
+
+  if (c === 0) {
+    if (listEl)  listEl.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  listEl.innerHTML = currentMembers.map(function(m, i) {
+    var isNew = membersToAdd.indexOf(m.id) !== -1;
+    return '<div class="member-row">' +
+      '<div class="member-avatar" style="background:' + getColorByIndex(i) + ';">' + getInitials(m.name) + '</div>' +
+      '<div class="member-info">' +
+        '<div class="member-name">' + escHtml(m.name) + '</div>' +
+        '<div class="member-role-label">' + escHtml(m.role_name) + '</div>' +
+      '</div>' +
+      (isNew ? '<span class="new-badge">New</span>' : '') +
+      '<button class="tab-close-btn" onclick="removeMember(' + m.id + ')" title="Remove member">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>' +
+    '</div>';
+  }).join('');
+}
+
+/* ── MEMBER SEARCH ── */
+function onMemberSearch() {
+  var query    = (document.getElementById('member-search').value || '').toLowerCase().trim();
+  var dropdown = document.getElementById('search-dropdown');
+
+  if (!query) { dropdown.style.display = 'none'; return; }
+
+  var currentIds = currentMembers.map(function(m) { return m.id; });
+  var filtered = allUsers.filter(function(u) {
+    if (currentIds.indexOf(u.id) !== -1) return false;
+    return (u.name || '').toLowerCase().indexOf(query) !== -1;
+  }).slice(0, 8);
+
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:#9aabb7;">No users found</div>';
+  } else {
+    dropdown.innerHTML = filtered.map(function(u) {
+      var safeName = escAttr(u.name || '');
+      var safeRole = escAttr(u.role_name || u.role || 'Member');
+      return '<div class="search-item" onclick="addMember(' + u.id + ',\'' + safeName + '\',\'' + safeRole + '\')">' +
+        '<div class="member-avatar" style="width:28px;height:28px;font-size:11px;background:#3d5c45;">' + getInitials(u.name) + '</div>' +
+        '<div>' +
+          '<div class="search-item-name">' + escHtml(u.name || '') + '</div>' +
+          '<div class="search-item-role">' + escHtml(u.role_name || u.role || 'Member') + '</div>' +
+        '</div>' +
+        '<div class="search-item-add">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  dropdown.style.display = 'block';
+}
+
+function addMember(id, name, role) {
+  if (currentMembers.find(function(m) { return m.id === id; })) return;
+
+  currentMembers.push({ id: id, name: name, role_name: role });
+
+  if (originalMemberIds.indexOf(id) === -1) {
+    if (membersToAdd.indexOf(id) === -1) membersToAdd.push(id);
+  } else {
+    membersToRemove = membersToRemove.filter(function(rid) { return rid !== id; });
+  }
+
+  document.getElementById('member-search').value = '';
+  document.getElementById('search-dropdown').style.display = 'none';
+  renderMembersList();
+}
+
+function removeMember(id) {
+  currentMembers = currentMembers.filter(function(m) { return m.id !== id; });
+
+  if (originalMemberIds.indexOf(id) !== -1) {
+    if (membersToRemove.indexOf(id) === -1) membersToRemove.push(id);
+  }
+  membersToAdd = membersToAdd.filter(function(aid) { return aid !== id; });
+
+  renderMembersList();
+}
+
+/* ── SUBMIT ── */
+async function submitEditTeam() {
+  var teamName   = (document.getElementById('edit-team-name').value || '').trim();
+  var teamLeadId = parseInt(document.getElementById('edit-team-lead').value || '0');
+
+  if (!teamName)   { showError('Team name is required.'); return; }
+  if (!teamLeadId) { showError('Team lead is required.'); return; }
+
+  hideError();
+
+  var btn = document.getElementById('btn-save');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  var updateData = { team_name: teamName, team_lead_id: teamLeadId };
+
+  if (membersToAdd.length > 0 || membersToRemove.length > 0) {
+    updateData.members = { add: membersToAdd, remove: membersToRemove };
+  }
+
+  var res = await updateTeam(currentTeamId, updateData);
+
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg> Save Changes';
+  }
+
+  if (res.success) {
+    sessionStorage.setItem('currentTeamId', currentTeamId);
+    window.location.href = 'team-detail.html';
+  } else {
+    showError('Failed to save: ' + (res.error || 'Unknown error'));
+  }
+}
+
+/* ── NAVIGATION ── */
+function goBack() {
+  if (sessionStorage.getItem('currentTeamId')) {
+    window.location.href = 'team-detail.html';
+  } else {
+    window.location.href = 'team-hub.html';
+  }
+}
+
+/* ── HELPERS ── */
+function showError(msg) {
+  var el = document.getElementById('edit-error');
+  if (el) { el.textContent = msg; el.style.display = 'block'; el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+function hideError() {
+  var el = document.getElementById('edit-error');
+  if (el) el.style.display = 'none';
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function escAttr(str) {
+  return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+document.addEventListener('click', function(e) {
+  var dropdown = document.getElementById('search-dropdown');
+  var wrap = document.querySelector('.search-wrap-full');
+  if (dropdown && wrap && !wrap.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>

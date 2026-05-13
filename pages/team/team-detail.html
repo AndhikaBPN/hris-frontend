@@ -36,7 +36,7 @@
           </div>
         </div>
       </div>
-      <button class="btn-edit-team" id="btn-edit" onclick="openEditModal()" style="display:none;">
+      <button class="btn-edit-team" id="btn-edit" onclick="openEditTeamModal()" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Edit Team
       </button>
@@ -73,27 +73,68 @@
   </main>
 </div>
 
-<!-- EDIT MODAL -->
-<div class="modal-overlay" id="edit-modal" onclick="closeEditModal()">
-  <div class="modal-box" onclick="event.stopPropagation()">
+
+<!-- TOAST -->
+<div class="toast" id="app-toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span class="toast-text" id="toast-text"></span>
+</div>
+
+<!-- EDIT TEAM MODAL -->
+<div class="modal-overlay" id="edit-team-modal" onclick="closeEditTeamModal()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:800px;width:95%;">
     <div class="modal-header">
-      <div><div class="modal-title">Edit Team</div><div class="modal-subtitle">Perbarui informasi tim</div></div>
-      <button class="modal-close" onclick="closeEditModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <div>
+        <div class="modal-title">Edit Team</div>
+        <div class="modal-subtitle">Update team name, lead, and members</div>
+      </div>
+      <button class="modal-close" onclick="closeEditTeamModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-    <div class="create-form">
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Team Name</label><input type="text" class="form-input" id="ef-name"></div>
-        <div class="form-group"><label class="form-label">Division</label><select class="form-input" id="ef-division"><option>Engineering</option><option>Design</option><option>Product</option><option>HR</option><option>Finance</option><option>Operations</option></select></div>
+    <div style="padding:1.2rem 1.4rem;">
+      <div id="edit-modal-error" class="form-error" style="display:none;margin-bottom:1rem;"></div>
+      <div class="edit-grid">
+        <!-- Basic Info -->
+        <div>
+          <h3 style="font-size:13px;font-weight:600;color:#9aabb7;letter-spacing:1px;margin:0 0 1rem;">BASIC INFORMATION</h3>
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Team Name <span class="req">*</span></label>
+              <input type="text" class="form-input" id="em-team-name" placeholder="e.g. Engineering Alpha">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Team Lead <span class="req">*</span></label>
+              <select class="form-input" id="em-team-lead"><option value="">Select Team Lead</option></select>
+              <div class="form-hint">Changing the team lead updates the assigned lead for this team.</div>
+            </div>
+          </div>
+        </div>
+        <!-- Team Members -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <h3 style="font-size:13px;font-weight:600;color:#9aabb7;letter-spacing:1px;margin:0;">TEAM MEMBERS</h3>
+            <span class="member-count-badge" id="em-member-count">0 Members</span>
+          </div>
+          <div class="search-wrap-full" style="margin-bottom:0.8rem;">
+            <div class="team-search-wrap" style="width:100%;box-sizing:border-box;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" class="team-search-input" id="em-member-search" placeholder="Search to add members..." oninput="onEmMemberSearch()" autocomplete="off">
+            </div>
+            <div class="search-dropdown" id="em-search-dropdown"></div>
+          </div>
+          <div id="em-members-list" style="max-height:220px;overflow-y:auto;"></div>
+          <div class="member-empty" id="em-member-empty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            No members in this team
+          </div>
+        </div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Team Lead</label><select class="form-input" id="ef-lead"><option>Alex Rivera</option><option>Maya Putri</option><option>Andi Hartono</option><option>Diana Nas</option></select></div>
-        <div class="form-group"><label class="form-label">Primary Function</label><input type="text" class="form-input" id="ef-function"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input form-textarea" id="ef-desc"></textarea></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeEditModal()">Batal</button>
-      <button class="btn-submit" onclick="submitEdit()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>Simpan</button>
+      <button class="btn-cancel" onclick="closeEditTeamModal()">Cancel</button>
+      <button class="btn-submit" id="em-btn-save" onclick="submitEditTeamModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>
+        Save Changes
+      </button>
     </div>
   </div>
 </div>
@@ -158,6 +199,9 @@ function renderHero() {
   document.getElementById('hero-avatar').style.background = 'linear-gradient(135deg,' + heroData.leadColor + ',#6dbf80)';
   document.getElementById('hero-lead-name').textContent = heroData.leadName;
   document.getElementById('hero-lead-role').textContent = heroData.leadRole;
+
+  var btnEdit = document.getElementById('btn-edit');
+  if (btnEdit && CAN_MANAGE_TEAM) btnEdit.style.display = 'inline-flex';
 }
 
 function renderRoster() {
@@ -223,38 +267,237 @@ function onRosterLimitChange() {
   renderRoster();
 }
 
-function openEditModal() {
+/* ── ROLE CHECK ── */
+var _detailUser = JSON.parse(localStorage.getItem('hris_user') || '{}');
+var CAN_MANAGE_TEAM = ['hrd_manager', 'technical_manager', 'c_level'].indexOf(_detailUser.role || '') !== -1;
+
+/* ── EDIT TEAM MODAL STATE ── */
+var em_originalMemberIds = [];
+var em_currentMembers    = [];
+var em_membersToAdd      = [];
+var em_membersToRemove   = [];
+var em_allUsers          = [];
+var em_loaded            = false;
+
+var EM_COLORS = ['#3d5c45','#8b6db3','#d9534f','#2980b9','#27ae60','#f39c12'];
+function emColor(i) { return EM_COLORS[i % EM_COLORS.length]; }
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+var _toastTimer = null;
+function showToast(message, type) {
+  var toast   = document.getElementById('app-toast');
+  var iconEl  = document.getElementById('toast-icon');
+  var textEl  = document.getElementById('toast-text');
+  if (!toast) return;
+
+  toast.className = 'toast ' + (type || 'success');
+  textEl.textContent = message;
+
+  if (type === 'error') {
+    iconEl.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+  } else {
+    iconEl.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  }
+
+  toast.classList.add('show');
+
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function() {
+    toast.classList.remove('show');
+  }, 3500);
+}
+
+async function openEditTeamModal() {
   if (!currentTeamData) return;
 
-  document.getElementById('ef-name').value = currentTeamData.team_name || '';
-  document.getElementById('ef-lead').value = currentTeamData.lead_name || '';
-  document.getElementById('edit-modal').style.display = 'flex';
+  document.getElementById('edit-modal-error').style.display = 'none';
+
+  em_currentMembers    = (currentTeamData.members || []).map(function(m) {
+    return { id: m.id, name: m.name || 'Unknown', role_name: m.role_name || m.role || 'Member' };
+  });
+  em_originalMemberIds = em_currentMembers.map(function(m) { return m.id; });
+  em_membersToAdd      = [];
+  em_membersToRemove   = [];
+
+  document.getElementById('em-team-name').value = currentTeamData.team_name || '';
+
+  if (!em_loaded) {
+    var results = await Promise.all([
+      getAllTeamLeaders({ limit: 100 }),
+      fetchUsers({ limit: 200 })
+    ]);
+    var leadersRes = results[0];
+    var usersRes   = results[1];
+
+    if (leadersRes.success && leadersRes.data.length > 0) {
+      var sel = document.getElementById('em-team-lead');
+      sel.innerHTML = '<option value="">Select Team Lead</option>';
+      leadersRes.data.forEach(function(lead) {
+        var opt = document.createElement('option');
+        opt.value = lead.id;
+        opt.textContent = lead.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    if (usersRes.success) em_allUsers = usersRes.data;
+    em_loaded = true;
+  }
+
+  var sel = document.getElementById('em-team-lead');
+  for (var i = 0; i < sel.options.length; i++) {
+    sel.options[i].selected = (parseInt(sel.options[i].value) === currentTeamData.team_lead_id);
+  }
+
+  emRenderMembersList();
+
+  document.getElementById('edit-team-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
-function closeEditModal() {
-  document.getElementById('edit-modal').style.display = 'none';
+function closeEditTeamModal() {
+  document.getElementById('edit-team-modal').classList.remove('open');
+  document.getElementById('em-member-search').value = '';
+  document.getElementById('em-search-dropdown').style.display = 'none';
+  document.body.style.overflow = '';
 }
 
-async function submitEdit() {
-  var updateData = {
-    team_name: document.getElementById('ef-name').value,
-    team_lead_id: currentTeamData.team_lead_id
-  };
+function emRenderMembersList() {
+  var listEl  = document.getElementById('em-members-list');
+  var emptyEl = document.getElementById('em-member-empty');
+  var countEl = document.getElementById('em-member-count');
+  var c = em_currentMembers.length;
 
-  if (!updateData.team_name) {
-    alert('Team name is required');
+  if (countEl) countEl.textContent = c + ' Member' + (c !== 1 ? 's' : '');
+
+  if (c === 0) {
+    if (listEl)  listEl.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'block';
     return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  listEl.innerHTML = em_currentMembers.map(function(m, i) {
+    var isNew = em_membersToAdd.indexOf(m.id) !== -1;
+    return '<div class="member-row">' +
+      '<div class="member-avatar" style="background:' + emColor(i) + ';">' + getInitials(m.name) + '</div>' +
+      '<div class="member-info">' +
+        '<div class="member-name">' + escHtml(m.name) + '</div>' +
+        '<div class="member-role-label">' + escHtml(m.role_name) + '</div>' +
+      '</div>' +
+      (isNew ? '<span class="new-badge">New</span>' : '') +
+      '<button class="tab-close-btn" onclick="emRemoveMember(' + m.id + ')" title="Remove">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>' +
+    '</div>';
+  }).join('');
+}
+
+function onEmMemberSearch() {
+  var query    = (document.getElementById('em-member-search').value || '').toLowerCase().trim();
+  var dropdown = document.getElementById('em-search-dropdown');
+
+  if (!query) { dropdown.style.display = 'none'; return; }
+
+  var currentIds = em_currentMembers.map(function(m) { return m.id; });
+  var filtered = em_allUsers.filter(function(u) {
+    if (currentIds.indexOf(u.id) !== -1) return false;
+    return (u.name || '').toLowerCase().indexOf(query) !== -1;
+  }).slice(0, 8);
+
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:#9aabb7;">No users found</div>';
+  } else {
+    dropdown.innerHTML = filtered.map(function(u) {
+      return '<div class="search-item" onclick="emAddMember(' + u.id + ',\'' + escAttr(u.name || '') + '\',\'' + escAttr(u.role_name || u.role || 'Member') + '\')">' +
+        '<div class="member-avatar" style="width:28px;height:28px;font-size:11px;background:#3d5c45;">' + getInitials(u.name) + '</div>' +
+        '<div>' +
+          '<div class="search-item-name">' + escHtml(u.name || '') + '</div>' +
+          '<div class="search-item-role">' + escHtml(u.role_name || u.role || 'Member') + '</div>' +
+        '</div>' +
+        '<div class="search-item-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>' +
+      '</div>';
+    }).join('');
+  }
+  dropdown.style.display = 'block';
+}
+
+function emAddMember(id, name, role) {
+  if (em_currentMembers.find(function(m) { return m.id === id; })) return;
+  em_currentMembers.push({ id: id, name: name, role_name: role });
+
+  if (em_originalMemberIds.indexOf(id) === -1) {
+    if (em_membersToAdd.indexOf(id) === -1) em_membersToAdd.push(id);
+  } else {
+    em_membersToRemove = em_membersToRemove.filter(function(rid) { return rid !== id; });
+  }
+
+  document.getElementById('em-member-search').value = '';
+  document.getElementById('em-search-dropdown').style.display = 'none';
+  emRenderMembersList();
+}
+
+function emRemoveMember(id) {
+  em_currentMembers = em_currentMembers.filter(function(m) { return m.id !== id; });
+
+  if (em_originalMemberIds.indexOf(id) !== -1) {
+    if (em_membersToRemove.indexOf(id) === -1) em_membersToRemove.push(id);
+  }
+  em_membersToAdd = em_membersToAdd.filter(function(aid) { return aid !== id; });
+  emRenderMembersList();
+}
+
+async function submitEditTeamModal() {
+  var teamName   = (document.getElementById('em-team-name').value || '').trim();
+  var teamLeadId = parseInt(document.getElementById('em-team-lead').value || '0');
+  var errEl      = document.getElementById('edit-modal-error');
+
+  if (!teamName)   { errEl.textContent = 'Team name is required.'; errEl.style.display = 'block'; return; }
+  if (!teamLeadId) { errEl.textContent = 'Team lead is required.'; errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+
+  var btn = document.getElementById('em-btn-save');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  var updateData = { team_name: teamName, team_lead_id: teamLeadId };
+  if (em_membersToAdd.length > 0 || em_membersToRemove.length > 0) {
+    updateData.members = { add: em_membersToAdd, remove: em_membersToRemove };
   }
 
   var res = await updateTeam(currentTeamId, updateData);
+
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg> Save Changes';
+  }
+
   if (res.success) {
-    alert('Team updated successfully');
-    closeEditModal();
+    em_loaded = false;
+    closeEditTeamModal();
     loadTeamDetail();
+    showToast('Team updated successfully', 'success');
   } else {
-    alert('Error: ' + (res.error || 'Update failed'));
+    var msg = 'Failed to save: ' + (res.error || 'Unknown error');
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+    showToast(msg, 'error');
   }
 }
+
+document.addEventListener('click', function(e) {
+  var dropdown = document.getElementById('em-search-dropdown');
+  var wrap = document.querySelector('#edit-team-modal .search-wrap-full');
+  if (dropdown && wrap && !wrap.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeEditTeamModal();
+});
+
 </script>
 </body>
 </html>

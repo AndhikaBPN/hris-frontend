@@ -24,9 +24,21 @@ async function updateTeam(teamId, data) {
     return { success: false, error: 'Team ID required' };
   }
 
+  var payload = {
+    team_name: data.team_name || '',
+    team_lead_id: data.team_lead_id
+  };
+
+  if (data.members && typeof data.members === 'object') {
+    if (!Array.isArray(data.members.add) || !Array.isArray(data.members.remove)) {
+      return { success: false, error: 'Members add and remove must be arrays' };
+    }
+    payload.members = data.members;
+  }
+
   var result = await apiRequest('/teams/' + teamId, {
     method: 'PUT',
-    body: JSON.stringify(data)
+    body: JSON.stringify(payload)
   });
 
   if (!result.success) {
@@ -35,6 +47,7 @@ async function updateTeam(teamId, data) {
 
   return {
     success: true,
-    message: result.data?.message || 'Team updated successfully'
+    message: result.data?.message || 'Team updated successfully',
+    data: result.data
   };
 }
