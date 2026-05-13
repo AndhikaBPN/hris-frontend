@@ -31,7 +31,7 @@
 /* Table head */
 .team-table-head {
   display:grid; grid-template-columns:2fr 1.5fr 0.8fr auto;
-  padding:1rem 7rem 0.7rem 1rem; border-bottom:1px solid #f0f2f5; gap:1rem;
+  padding:1rem 3rem 0.7rem 3rem; border-bottom:1px solid #f0f2f5; gap:1rem;
   align-items:center;
   font-size:10px; letter-spacing:1.5px; color:#9aabb7; font-weight:600;
 }
