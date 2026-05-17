@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sanctuary – Sanctuary – Manager Dashboard</title>
   <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/biometric.css">
 </head>
 <body>
 
@@ -52,7 +53,7 @@
               <div class="pre-time-label">Current Time</div>
               <div class="pre-time-value" id="live-clock">--:-- --</div>
             </div>
-            <button class="clock-now-btn" onclick="activateBiometric()">
+            <button class="clock-now-btn" id="btn-clock-in-now" onclick="activateBiometric()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
               Clock In Now
             </button>
@@ -75,17 +76,21 @@
             </div>
           </div>
           <div class="camera-wrap">
-            <div class="camera-inner">
-              <div class="camera-lens">
-                <div class="lens-ring r1"></div><div class="lens-ring r2"></div><div class="lens-ring r3"></div>
-                <div class="lens-core"></div>
-              </div>
-              <div class="scan-line"></div>
-              <div class="camera-corners">
-                <span class="corner tl"></span><span class="corner tr"></span>
-                <span class="corner bl"></span><span class="corner br"></span>
-              </div>
+            <div class="bio-model-overlay" id="bio-model-overlay">
+              <div class="bio-spinner"></div>
+              <span>Loading AI models...</span>
             </div>
+            <video id="bio-video" class="bio-video" autoplay muted playsinline></video>
+            <canvas id="bio-canvas" class="bio-canvas"></canvas>
+            <div class="camera-corners">
+              <span class="corner tl"></span><span class="corner tr"></span>
+              <span class="corner bl"></span><span class="corner br"></span>
+            </div>
+          </div>
+          <!-- Face detection status -->
+          <div class="bio-status-bar" id="bio-status-bar" style="display:none;">
+            <div class="bio-status-dot scanning" id="bio-status-dot"></div>
+            <span id="bio-status-text">Initializing...</span>
           </div>
           <div class="work-duration-card" style="margin-bottom:1rem;">
             <div class="card-label" style="margin-bottom:4px;">
@@ -194,14 +199,27 @@
 <script src="../../assets/js/sidebar.js"></script>
 <script src="../../assets/js/fetch/dashboard.js"></script>
 <script src="../../assets/js/render/dashboard.js"></script>
+<script src="../../assets/js/fetch/face-api.js"></script>
+<script src="../../assets/js/render/face-api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 <script>
 var ROLE_LABEL = 'MANAGER';
 var ROLE_COLOR = '#2980b9';
 guardRoute(['hrd_manager', 'technical_manager']);
 
 var clockedIn = false;
+var clockedOut = false;
 var clockInTime = null;
 var durationTimer = null;
+
+/* ── Biometric / face-api state ── */
+var BIO_MODEL_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+var bioModelsLoaded = false;
+var bioStream       = null;
+var bioDetectLoop   = null;
+var bioFaceDetected = false;
+var bioVideo        = null;
+var bioCanvas       = null;
 
 window.addEventListener('load', function() {
   window.loadComponents().then(function() {
@@ -216,10 +234,11 @@ window.addEventListener('load', function() {
     initDateGreeting(name);
     var gs = document.getElementById('greeting-sub');
     if(gs) gs.innerHTML = 'Managing your team members efficiently.';
-    updateLiveClock();
-    setInterval(updateLiveClock, 1000);
     animateProgress(8);
   });
+  updateLiveClock();
+  setInterval(updateLiveClock, 1000);
+  checkTodayAttendance();
 });
 
 async function loadStaffAttendance() {
@@ -334,33 +353,315 @@ function getStatusLabel(status) {
   return STATUS_MAP[status] || { label: '● Pending', color: '#95a5a6' };
 }
 
-function doClockIn() {
+async function checkTodayAttendance() {
+  var res       = await fetchMyTodayAttendance();
+  var session   = buildSessionState(res.data || []);
+
+  var btnIn     = document.getElementById('btn-clockin');
+  var btnOut    = document.getElementById('btn-clockout');
+  var btnNow    = document.getElementById('btn-clock-in-now');
+  var preStatus = document.querySelector('#state-pre .pre-status');
+
+  if (session.state === 'complete') {
+    clockedIn = true;
+    if (preStatus) preStatus.textContent = 'SESSION COMPLETE';
+    if (btnNow)  { btnNow.disabled = true; btnNow.style.opacity = '0.5'; btnNow.innerHTML = btnNow.innerHTML.replace(/Clock.*/, 'Session Complete'); }
+    if (btnIn)   { btnIn.disabled  = true;  btnIn.style.opacity  = '0.5'; }
+    if (btnOut)  { btnOut.disabled = true;  btnOut.style.opacity = '0.5'; }
+    return;
+  }
+
+  if (session.state === 'active') {
+    clockedIn = true;
+    var ciDisplay = document.getElementById('clockin-display');
+    if (ciDisplay) ciDisplay.textContent = session.timeParts;
+    clockInTime = session.clockInDate;
+    if (!durationTimer) { durationTimer = setInterval(updateDuration, 1000); updateDuration(); }
+    if (preStatus) preStatus.textContent = 'SESSION ACTIVE';
+    if (btnNow)  { btnNow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Clock Out Now'; }
+    if (btnIn)   { btnIn.disabled  = true;  btnIn.style.opacity  = '0.5'; }
+    if (btnOut)  { btnOut.disabled = false; btnOut.style.opacity = '1'; }
+  } else {
+    if (preStatus) preStatus.textContent = 'READY TO START';
+    if (btnIn)   { btnIn.disabled  = false; btnIn.style.opacity  = '1'; }
+    if (btnOut)  { btnOut.disabled = true;  btnOut.style.opacity = '0.5'; }
+  }
+}
+
+/* ── Override activateBiometric from dashboard-shared.js ── */
+async function activateBiometric() {
+  document.getElementById('state-pre').style.display = 'none';
+  document.getElementById('state-active').style.display = 'flex';
+
+  bioVideo  = document.getElementById('bio-video');
+  bioCanvas = document.getElementById('bio-canvas');
+  document.getElementById('bio-status-bar').style.display = 'flex';
+
+  try {
+    await bioLoadModels();
+    await bioStartCamera();
+    bioStartDetection();
+    await checkTodayAttendance();
+  } catch (err) {
+    bioSetStatus('error', 'Camera error: ' + err.message);
+    console.error('[Bio] init error:', err);
+  }
+}
+
+/* ── Override deactivateBiometric from dashboard-shared.js ── */
+function deactivateBiometric() {
+  bioStopAll();
+  document.getElementById('bio-status-bar').style.display = 'none';
+  document.getElementById('state-active').style.display = 'none';
+  document.getElementById('state-pre').style.display = 'flex';
+}
+
+async function bioLoadModels() {
+  if (bioModelsLoaded) {
+    document.getElementById('bio-model-overlay').style.display = 'none';
+    return;
+  }
+  bioSetStatus('scanning', 'Loading AI models...');
+  await Promise.all([
+    faceapi.nets.ssdMobilenetv1.loadFromUri(BIO_MODEL_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(BIO_MODEL_URL),
+    faceapi.nets.faceRecognitionNet.loadFromUri(BIO_MODEL_URL)
+  ]);
+  bioModelsLoaded = true;
+  document.getElementById('bio-model-overlay').style.display = 'none';
+}
+
+async function bioStartCamera() {
+  bioStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+  });
+  bioVideo.srcObject = bioStream;
+  await new Promise(function(resolve) { bioVideo.onloadedmetadata = resolve; });
+  bioSetStatus('scanning', 'Camera ready — searching for face...');
+}
+
+function bioStartDetection() {
+  var opts = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+
+  bioDetectLoop = setInterval(async function() {
+    if (!bioModelsLoaded || !bioVideo || bioVideo.paused || bioVideo.ended || !bioVideo.videoWidth) return;
+
+    var detection = await faceapi
+      .detectSingleFace(bioVideo, opts)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    var displaySize = { width: bioVideo.videoWidth, height: bioVideo.videoHeight };
+    faceapi.matchDimensions(bioCanvas, displaySize);
+
+    var ctx = bioCanvas.getContext('2d');
+    ctx.clearRect(0, 0, bioCanvas.width, bioCanvas.height);
+
+    if (detection) {
+      var resized = faceapi.resizeResults(detection, displaySize);
+      var box = resized.detection.box;
+
+      ctx.strokeStyle = '#2e7d4f';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+      var bLen = 14;
+      [
+        [box.x, box.y, bLen, 0, 0, bLen],
+        [box.x + box.width, box.y, -bLen, 0, 0, bLen],
+        [box.x, box.y + box.height, bLen, 0, 0, -bLen],
+        [box.x + box.width, box.y + box.height, -bLen, 0, 0, -bLen]
+      ].forEach(function(c) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(c[0], c[1]); ctx.lineTo(c[0] + c[2], c[1] + c[3]);
+        ctx.moveTo(c[0], c[1]); ctx.lineTo(c[0] + c[4], c[1] + c[5]);
+        ctx.stroke();
+      });
+
+      bioFaceDetected = true;
+      bioSetStatus('detected', 'Face detected — ready to clock in');
+    } else {
+      bioFaceDetected = false;
+      bioSetStatus('scanning', 'Searching for face...');
+    }
+  }, 300);
+}
+
+function bioStopAll() {
+  if (bioDetectLoop) { clearInterval(bioDetectLoop); bioDetectLoop = null; }
+  if (bioStream) { bioStream.getTracks().forEach(function(t) { t.stop(); }); bioStream = null; }
+  if (bioCanvas) {
+    var ctx = bioCanvas.getContext('2d');
+    ctx.clearRect(0, 0, bioCanvas.width, bioCanvas.height);
+  }
+  bioFaceDetected = false;
+}
+
+function bioSetStatus(type, text) {
+  var dot    = document.getElementById('bio-status-dot');
+  var textEl = document.getElementById('bio-status-text');
+  if (dot) dot.className = 'bio-status-dot ' + type;
+  if (textEl) textEl.textContent = text;
+}
+
+function captureFaceBase64() {
+  var tmp = document.createElement('canvas');
+  tmp.width  = bioVideo.videoWidth;
+  tmp.height = bioVideo.videoHeight;
+  var ctx = tmp.getContext('2d');
+  ctx.translate(tmp.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(bioVideo, 0, 0);
+  return tmp.toDataURL('image/jpeg', 0.8).split(',')[1];
+}
+
+function getGeoLocation() {
+  return new Promise(function(resolve) {
+    if (!navigator.geolocation) return resolve({ lat: null, lng: null });
+    navigator.geolocation.getCurrentPosition(
+      function(pos) { resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+      function()    { resolve({ lat: null, lng: null }); },
+      { timeout: 5000 }
+    );
+  });
+}
+
+async function verifyFace() {
+  bioSetStatus('scanning', 'Capturing face...');
+  var detection = await faceapi
+    .detectSingleFace(bioVideo, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+    .withFaceLandmarks()
+    .withFaceDescriptor();
+
+  if (!detection || !detection.descriptor) {
+    return { ok: false, error: 'Could not capture face clearly. Try again.' };
+  }
+
+  bioSetStatus('scanning', 'Verifying identity...');
+  var embedRes   = await fetchFaceEmbeddings();
+  var embeddings = embedRes.data;
+  if (!embedRes.success || embeddings.length === 0) {
+    return { ok: false, error: 'No registered face data found. Please register first.' };
+  }
+
+  var liveDescriptor = detection.descriptor;
+  var matched = false;
+  var minDist = Infinity;
+
+  embeddings.forEach(function(item) {
+    var stored = new Float32Array(JSON.parse(item.embedding));
+    var dist = faceapi.euclideanDistance(liveDescriptor, stored);
+    if (dist < minDist) minDist = dist;
+    if (dist < 0.5) matched = true;
+  });
+
+  if (!matched) {
+    return { ok: false, error: 'Face not recognized (dist: ' + minDist.toFixed(3) + '). Please try again.' };
+  }
+
+  return { ok: true };
+}
+
+async function doClockIn() {
+  if (!bioFaceDetected) {
+    var msg = document.getElementById('session-msg');
+    msg.textContent = '✗ Face not detected. Position your face in the camera.';
+    msg.style.color = '#c0392b';
+    return;
+  }
+
+  document.getElementById('btn-clockin').disabled = true;
+  var verify = await verifyFace();
+  if (!verify.ok) {
+    var msg = document.getElementById('session-msg');
+    msg.textContent = '✗ ' + verify.error;
+    msg.style.color = '#c0392b';
+    bioSetStatus('error', verify.error);
+    setTimeout(function() { window.location.reload(); }, 1000);
+    return;
+  }
+
+  bioSetStatus('scanning', 'Getting location...');
+  var geo     = await getGeoLocation();
+  var faceImg = captureFaceBase64();
+
+  bioSetStatus('scanning', 'Submitting attendance...');
+  var attRes = await clockInAttendance(1, geo.lat, geo.lng, faceImg);
+
+  if (!attRes.success) {
+    var msg = document.getElementById('session-msg');
+    msg.textContent = '✗ ' + (attRes.error || 'Failed to record attendance.');
+    msg.style.color = '#c0392b';
+    bioSetStatus('error', 'Attendance failed');
+    document.getElementById('btn-clockin').disabled = false;
+    return;
+  }
+
+  var statusInfo = buildClockStatusInfo(attRes.data.status);
+  bioSetStatus('detected', 'Identity verified ✓');
   clockedIn = true;
   clockInTime = new Date();
   var hh = clockInTime.getHours().toString().padStart(2,'0');
   var mm = clockInTime.getMinutes().toString().padStart(2,'0');
   document.getElementById('clockin-display').textContent = hh + ':' + mm;
   document.getElementById('btn-clockin').disabled = true;
-  document.getElementById('btn-clockin').style.opacity = '0.6';
+  document.getElementById('btn-clockin').style.opacity = '0.5';
   document.getElementById('btn-clockout').disabled = false;
   document.getElementById('btn-clockout').style.opacity = '1';
   var msg = document.getElementById('session-msg');
-  msg.textContent = '✓ Clock in successful at ' + hh + ':' + mm;
+  msg.innerHTML = '✓ Clock in at ' + hh + ':' + mm + ' — <span style="color:' + statusInfo.color + ';font-weight:600;">' + statusInfo.text + '</span>';
   msg.style.color = '#2e7d4f';
-  durationTimer = setInterval(updateDuration, 1000);
-  updateDuration();
+  setTimeout(function() { window.location.reload(); }, 1000);
 }
 
-function doClockOut() {
+async function doClockOut() {
+  if (!bioFaceDetected) {
+    var msg = document.getElementById('session-msg');
+    msg.textContent = '✗ Face not detected. Position your face in the camera.';
+    msg.style.color = '#c0392b';
+    return;
+  }
+
+  document.getElementById('btn-clockout').disabled = true;
+  var verify = await verifyFace();
+  if (!verify.ok) {
+    var msg = document.getElementById('session-msg');
+    msg.textContent = '✗ ' + verify.error;
+    msg.style.color = '#c0392b';
+    bioSetStatus('error', verify.error);
+    setTimeout(function() { window.location.reload(); }, 1000);
+    return;
+  }
+
+  bioSetStatus('scanning', 'Getting location...');
+  var geo     = await getGeoLocation();
+  var faceImg = captureFaceBase64();
+
+  bioSetStatus('scanning', 'Submitting attendance...');
+  var attRes = await clockOutAttendance();
+
+  if (!attRes.success) {
+    var msg = document.getElementById('session-msg');
+    msg.textContent = '✗ ' + (attRes.error || 'Failed to record attendance.');
+    msg.style.color = '#c0392b';
+    bioSetStatus('error', 'Attendance failed');
+    document.getElementById('btn-clockout').disabled = false;
+    return;
+  }
+
+  var statusInfo = buildClockStatusInfo(attRes.data.status);
   clearInterval(durationTimer);
   var now = new Date();
-  var hh = now.getHours().toString().padStart(2,'0');
-  var mm = now.getMinutes().toString().padStart(2,'0');
+  var hh  = now.getHours().toString().padStart(2,'0');
+  var mm  = now.getMinutes().toString().padStart(2,'0');
   document.getElementById('btn-clockout').disabled = true;
-  document.getElementById('btn-clockout').style.opacity = '0.6';
+  document.getElementById('btn-clockout').style.opacity = '0.5';
+  bioStopAll();
   var msg = document.getElementById('session-msg');
-  msg.textContent = '✓ Clocked out at ' + hh + ':' + mm;
-  msg.style.color = '#c0392b';
+  msg.innerHTML = '✓ Clocked out at ' + hh + ':' + mm + ' — <span style="color:' + statusInfo.color + ';font-weight:600;">' + statusInfo.text + '</span>';
+  msg.style.color = '#2c3e50';
+  setTimeout(function() { window.location.reload(); }, 1000);
 }
 
 function updateDuration() {

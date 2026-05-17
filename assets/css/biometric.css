@@ -1,0 +1,348 @@
+/* ══════════════════════════════════════════════
+   BIOMETRIC / FACE-API SHARED STYLES
+══════════════════════════════════════════════ */
+
+/* ── Real webcam inside .camera-wrap (dashboard biometric) ── */
+.bio-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 10px;
+  transform: scaleX(-1);
+}
+
+.bio-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
+/* ── Status bar ── */
+.bio-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7c8a;
+  margin-bottom: 1rem;
+  padding: 6px 10px;
+  background: #f5f7f9;
+  border-radius: 6px;
+  border: 1px solid #e0e5ea;
+}
+
+.bio-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c5cdd5;
+  flex-shrink: 0;
+}
+
+.bio-status-dot.scanning { background: #f39c12; animation: bio-blink 1s infinite; }
+.bio-status-dot.detected { background: #2e7d4f; }
+.bio-status-dot.error    { background: #c0392b; }
+
+@keyframes bio-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+/* ── Model loading overlay (inside camera-wrap) ── */
+.bio-model-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 37, 48, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 13px;
+  gap: 12px;
+  z-index: 20;
+}
+
+/* ── Spinner ── */
+.bio-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #6dbf80;
+  border-radius: 50%;
+  animation: bio-spin 0.75s linear infinite;
+}
+
+@keyframes bio-spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════
+   FACE SAMPLE REGISTRATION PAGE
+══════════════════════════════════════════════ */
+
+.face-sample-wrap {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.face-sample-camera-wrap {
+  background: #1a2530;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 1rem;
+}
+
+.face-sample-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1);
+}
+
+.face-sample-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
+.face-sample-overlay-text {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.face-sample-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 37, 48, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 13px;
+  gap: 12px;
+  z-index: 10;
+}
+
+.btn-capture {
+  width: 100%;
+  height: 44px;
+  background: #2e7d4f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+  transition: background 0.18s;
+}
+
+.btn-capture:hover:not(:disabled) { background: #256040; }
+.btn-capture:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.face-sample-hint {
+  font-size: 12.5px;
+  color: #9aabb7;
+  text-align: center;
+  line-height: 1.65;
+}
+
+/* ── Sample progress dots ── */
+.sample-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sample-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sample-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #dde3ea;
+  background: #f5f7f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #b0bec5;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.sample-dot.active {
+  border-color: #3d5c45;
+  background: #e8f5ec;
+  color: #3d5c45;
+  box-shadow: 0 0 0 3px rgba(61, 92, 69, 0.12);
+}
+
+.sample-dot.done {
+  border-color: #2e7d4f;
+  background: #2e7d4f;
+  color: #fff;
+}
+
+.sample-dot-connector {
+  width: 14px;
+  height: 2px;
+  background: #dde3ea;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.sample-dot-connector.done { background: #2e7d4f; }
+
+.sample-count-label {
+  font-size: 12px;
+  color: #9aabb7;
+  font-weight: 500;
+}
+
+.sample-count-label span {
+  color: #2e7d4f;
+  font-weight: 700;
+}
+
+/* ── Pose instruction card ── */
+.pose-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f5f7f9;
+  border: 1px solid #e0e5ea;
+  border-radius: 8px;
+  padding: 11px 14px;
+  margin-bottom: 1rem;
+}
+
+.pose-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e8f5ec;
+  border: 1px solid #c3e6cb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #2e7d4f;
+}
+
+.pose-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9aabb7;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.pose-instruction {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+/* ── Captured thumbnails ── */
+.sample-thumbs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+  min-height: 58px;
+  align-items: flex-start;
+}
+
+.sample-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #2e7d4f;
+  flex-shrink: 0;
+  position: relative;
+  background: #1a2530;
+}
+
+.sample-thumb canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sample-thumb-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(46, 125, 79, 0.85);
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 1.4;
+}
+
+.sample-thumb-empty {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 2px dashed #dde3ea;
+  flex-shrink: 0;
+  background: #f9fafb;
+}
+
+/* ── Finish button ── */
+.btn-finish {
+  width: 100%;
+  height: 44px;
+  background: #2980b9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+  transition: background 0.18s;
+}
+
+.btn-finish:hover { background: #2471a3; }

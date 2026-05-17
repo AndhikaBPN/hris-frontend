@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Face Registration</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/biometric.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+  <main class="content">
+
+    <div class="page-header-row" style="margin-bottom:1.6rem;">
+      <div>
+        <h1 class="hub-title">Face Registration</h1>
+        <div class="hub-sub">BIOMETRIC SAMPLE ENROLLMENT</div>
+      </div>
+    </div>
+
+    <div class="face-sample-wrap">
+      <div class="card" style="padding:1.6rem;">
+        <h2 style="font-size:14px;font-weight:600;color:#2c3e50;margin:0 0 1.2rem;">Register Face Sample</h2>
+
+        <!-- Step progress dots -->
+        <div class="sample-progress-row">
+          <div class="sample-dots" id="sample-dots"></div>
+          <span class="sample-count-label" id="sample-count-label">
+            <span id="count-num">0</span> / min 3 samples
+          </span>
+        </div>
+
+        <!-- Pose instruction -->
+        <div class="pose-card">
+          <div class="pose-icon" id="pose-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg>
+          </div>
+          <div>
+            <div class="pose-label" id="pose-label">Sample 1 of 5</div>
+            <div class="pose-instruction" id="pose-instruction">Look straight at the camera</div>
+          </div>
+        </div>
+
+        <!-- Camera -->
+        <div class="face-sample-camera-wrap">
+          <div class="face-sample-loading-overlay" id="fs-loading-overlay">
+            <div class="bio-spinner"></div>
+            <span>Loading AI models...</span>
+          </div>
+          <video id="fs-video" class="face-sample-video" autoplay muted playsinline></video>
+          <canvas id="fs-canvas" class="face-sample-canvas"></canvas>
+          <div class="face-sample-overlay-text" id="fs-overlay-text">Initializing camera...</div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="bio-status-bar">
+          <div class="bio-status-dot scanning" id="fs-status-dot"></div>
+          <span id="fs-status-text">Loading face recognition models...</span>
+        </div>
+
+        <!-- Captured thumbnails -->
+        <div class="sample-thumbs" id="sample-thumbs"></div>
+
+        <!-- Capture button -->
+        <button class="btn-capture" id="btn-capture" onclick="captureSample()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M3 9a2 2 0 0 1 2-2h.93a2 2 0 0 0 1.664-.89l.812-1.22A2 2 0 0 1 10.07 4h3.86a2 2 0 0 1 1.664.89l.812 1.22A2 2 0 0 0 18.07 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span id="btn-capture-text">Capture Sample 1</span>
+        </button>
+
+        <!-- Finish button (visible after 3 samples) -->
+        <button class="btn-finish" id="btn-finish" onclick="finishRegistration()" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          Complete Registration
+        </button>
+
+        <p class="face-sample-hint" id="fs-hint">
+          Follow the pose guide for each sample. Different angles improve recognition accuracy.
+        </p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="app-toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span class="toast-text" id="toast-text"></span>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/face-api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<script>
+guardRoute(["hrd_manager", "technical_manager", "c_level", "team_leader", "staff"]);
+
+/* ── Pose sequence (5 poses, min 3 required) ── */
+var POSES = [
+    {
+        label: 'Sample 1 of 5',
+        instruction: 'Look straight at the camera',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg>'
+    },
+    {
+        label: 'Sample 2 of 5',
+        instruction: 'Turn your head slightly to the LEFT',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M15 18l-6-6 6-6"/></svg>'
+    },
+    {
+        label: 'Sample 3 of 5',
+        instruction: 'Turn your head slightly to the RIGHT',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M9 18l6-6-6-6"/></svg>'
+    },
+    {
+        label: 'Sample 4 of 5',
+        instruction: 'Tilt your chin slightly UPWARD',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M18 15l-6-6-6 6"/></svg>'
+    },
+    {
+        label: 'Sample 5 of 5',
+        instruction: 'Look straight at the camera again',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg>'
+    }
+];
+
+var MIN_SAMPLES = 3;
+var MAX_SAMPLES = 5;
+
+var FS_MODEL_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+var fsVideo        = null;
+var fsCanvas       = null;
+var fsDetectLoop   = null;
+var fsFaceDetected = false;
+var fsModelsLoaded = false;
+var sampleCount    = 0;
+var registered     = false;
+
+window.addEventListener('load', function() {
+    window.loadComponents();
+    fsVideo  = document.getElementById('fs-video');
+    fsCanvas = document.getElementById('fs-canvas');
+    renderDots();
+    initFaceSample();
+});
+
+/* ── Render step dots ── */
+function renderDots() {
+    var container = document.getElementById('sample-dots');
+    var html = '';
+    for (var i = 0; i < MAX_SAMPLES; i++) {
+        if (i > 0) {
+            html += '<div class="sample-dot-connector' + (i < sampleCount ? ' done' : '') + '"></div>';
+        }
+        var cls = 'sample-dot';
+        if (i < sampleCount)     cls += ' done';
+        else if (i === sampleCount) cls += ' active';
+        var inner = i < sampleCount
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>'
+            : (i + 1);
+        html += '<div class="' + cls + '">' + inner + '</div>';
+    }
+    container.innerHTML = html;
+
+    document.getElementById('count-num').textContent = sampleCount;
+}
+
+/* ── Update pose UI ── */
+function updatePoseUI() {
+    if (sampleCount >= MAX_SAMPLES) return;
+    var pose = POSES[sampleCount];
+    document.getElementById('pose-label').textContent = pose.label;
+    document.getElementById('pose-instruction').textContent = pose.instruction;
+    document.getElementById('pose-icon').innerHTML = pose.icon;
+    document.getElementById('btn-capture-text').textContent = 'Capture Sample ' + (sampleCount + 1);
+}
+
+/* ── Init ── */
+async function initFaceSample() {
+    try {
+        await fsLoadModels();
+        await fsStartCamera();
+        fsStartDetection();
+    } catch (err) {
+        fsSetStatus('error', 'Initialization failed: ' + err.message);
+        document.getElementById('fs-overlay-text').textContent = 'Camera error';
+        console.error('[FaceSample] init error:', err);
+    }
+}
+
+async function fsLoadModels() {
+  fsSetStatus('scanning', 'Loading AI models...');
+  await Promise.all([
+    faceapi.nets.ssdMobilenetv1.loadFromUri(FS_MODEL_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(FS_MODEL_URL),
+    faceapi.nets.faceRecognitionNet.loadFromUri(FS_MODEL_URL)
+  ]);
+  fsModelsLoaded = true;
+  document.getElementById('fs-loading-overlay').style.display = 'none';
+}
+
+async function fsStartCamera() {
+  var stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+  });
+  fsVideo.srcObject = stream;
+  await new Promise(function(resolve) { fsVideo.onloadedmetadata = resolve; });
+  fsSetStatus('scanning', 'Camera ready — searching for face...');
+  document.getElementById('fs-overlay-text').textContent = 'Align face within frame';
+}
+
+function fsStartDetection() {
+  var opts = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+
+  fsDetectLoop = setInterval(async function() {
+    if (!fsModelsLoaded || !fsVideo || fsVideo.paused || fsVideo.ended || !fsVideo.videoWidth) return;
+
+    var detection = await faceapi
+      .detectSingleFace(fsVideo, opts)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    var displaySize = { width: fsVideo.videoWidth, height: fsVideo.videoHeight };
+    faceapi.matchDimensions(fsCanvas, displaySize);
+
+    var ctx = fsCanvas.getContext('2d');
+    ctx.clearRect(0, 0, fsCanvas.width, fsCanvas.height);
+
+    if (detection) {
+      var resized = faceapi.resizeResults(detection, displaySize);
+      var box = resized.detection.box;
+
+      ctx.strokeStyle = '#2e7d4f';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+      var bLen = 14;
+      [
+        [box.x, box.y, bLen, 0, 0, bLen],
+        [box.x + box.width, box.y, -bLen, 0, 0, bLen],
+        [box.x, box.y + box.height, bLen, 0, 0, -bLen],
+        [box.x + box.width, box.y + box.height, -bLen, 0, 0, -bLen]
+      ].forEach(function(c) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(c[0], c[1]); ctx.lineTo(c[0] + c[2], c[1] + c[3]);
+        ctx.moveTo(c[0], c[1]); ctx.lineTo(c[0] + c[4], c[1] + c[5]);
+        ctx.stroke();
+      });
+
+      fsFaceDetected = true;
+      if (sampleCount < MAX_SAMPLES && !registered) {
+        fsSetStatus('detected', 'Face detected — ready to capture sample ' + (sampleCount + 1));
+        document.getElementById('btn-capture').disabled = false;
+      }
+      document.getElementById('fs-overlay-text').textContent = 'Face detected ✓';
+    } else {
+      fsFaceDetected = false;
+      if (!registered) {
+        fsSetStatus('scanning', 'Searching for face...');
+        document.getElementById('btn-capture').disabled = true;
+      }
+      document.getElementById('fs-overlay-text').textContent = POSES[Math.min(sampleCount, MAX_SAMPLES - 1)].instruction;
+    }
+  }, 300);
+}
+
+/* ── Capture one sample ── */
+async function captureSample() {
+    if (!fsFaceDetected || sampleCount >= MAX_SAMPLES) return;
+
+    var btn = document.getElementById('btn-capture');
+    btn.disabled = true;
+    btn.querySelector('#btn-capture-text').textContent = 'Processing...';
+
+    try {
+        var detection = await faceapi
+        .detectSingleFace(fsVideo, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+        if (!detection || !detection.descriptor) {
+            showToast('Face not captured clearly. Please try again.', 'error');
+            btn.disabled = false;
+            btn.querySelector('#btn-capture-text').textContent = 'Capture Sample ' + (sampleCount + 1);
+            return;
+        }
+
+        var embedding = Array.from(detection.descriptor);
+
+        var res = await saveFaceEmbedding(embedding);
+
+        if (!res.success) {
+            showToast('Failed to save sample: ' + (res.error || 'Unknown error'), 'error');
+            btn.disabled = false;
+            btn.querySelector('#btn-capture-text').textContent = 'Capture Sample ' + (sampleCount + 1);
+            return;
+        }
+
+        /* Save thumbnail */
+        addThumbnail(sampleCount + 1);
+
+        sampleCount++;
+        renderDots();
+
+            showToast('Sample ' + sampleCount + ' saved successfully!', 'success');
+
+            if (sampleCount >= MAX_SAMPLES) {
+                /* Max reached — stop */
+                btn.style.display = 'none';
+                fsSetStatus('detected', 'All 5 samples registered. Click Complete Registration.');
+                document.getElementById('fs-hint').textContent = 'Maximum 5 samples reached. Click Complete Registration to finish.';
+            } else {
+                updatePoseUI();
+                fsSetStatus('scanning', 'Searching for face — follow next pose...');
+            }
+
+        if (sampleCount >= MIN_SAMPLES) {
+            document.getElementById('btn-finish').style.display = 'flex';
+        }
+
+    } catch (err) {
+        showToast('Error during capture: ' + err.message, 'error');
+        console.error('[FaceSample] capture error:', err);
+        btn.disabled = false;
+        btn.querySelector('#btn-capture-text').textContent = 'Capture Sample ' + (sampleCount + 1);
+    }
+}
+
+/* ── Save mirrored thumbnail from current video frame ── */
+function addThumbnail(num) {
+    var thumbsEl = document.getElementById('sample-thumbs');
+
+    var wrapper = document.createElement('div');
+    wrapper.className = 'sample-thumb';
+
+    var c = document.createElement('canvas');
+    c.width = 56;
+    c.height = 56;
+    var ctx = c.getContext('2d');
+    ctx.save();
+    ctx.translate(56, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(fsVideo, 0, 0, 56, 56);
+    ctx.restore();
+
+    var badge = document.createElement('div');
+    badge.className = 'sample-thumb-badge';
+    badge.textContent = '#' + num;
+
+    wrapper.appendChild(c);
+    wrapper.appendChild(badge);
+    thumbsEl.appendChild(wrapper);
+}
+
+/* ── Finish registration ── */
+function finishRegistration() {
+    if (fsDetectLoop) { clearInterval(fsDetectLoop); fsDetectLoop = null; }
+    if (fsVideo && fsVideo.srcObject) {
+        fsVideo.srcObject.getTracks().forEach(function(t) { t.stop(); });
+    }
+
+    registered = true;
+    document.getElementById('btn-capture').style.display = 'none';
+    document.getElementById('btn-finish').style.display = 'none';
+    fsSetStatus('detected', 'Registration complete — ' + sampleCount + ' samples saved.');
+    document.getElementById('fs-overlay-text').textContent = 'Registration complete ✓';
+    document.getElementById('fs-hint').textContent = sampleCount + ' face samples registered. You can now use biometric clock-in.';
+    showToast('Face registration complete! ' + sampleCount + ' samples saved.', 'success');
+}
+
+/* ── Helpers ── */
+function fsSetStatus(type, text) {
+    var dot    = document.getElementById('fs-status-dot');
+    var textEl = document.getElementById('fs-status-text');
+    if (dot) dot.className = 'bio-status-dot ' + type;
+    if (textEl) textEl.textContent = text;
+}
+
+var _toastTimer = null;
+function showToast(message, type) {
+    var toast  = document.getElementById('app-toast');
+    var iconEl = document.getElementById('toast-icon');
+    var textEl = document.getElementById('toast-text');
+    if (!toast) return;
+    if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+    toast.className = 'toast ' + (type || 'success');
+    textEl.textContent = message;
+    iconEl.innerHTML = type === 'error'
+        ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+        : '<polyline points="20 6 9 17 4 12"/>';
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() { toast.classList.add('show'); });
+    });
+    _toastTimer = setTimeout(function() {
+        toast.classList.remove('show');
+        _toastTimer = null;
+    }, 3500);
+}
+
+window.addEventListener('beforeunload', function() {
+    if (fsDetectLoop) clearInterval(fsDetectLoop);
+    if (fsVideo && fsVideo.srcObject) {
+        fsVideo.srcObject.getTracks().forEach(function(t) { t.stop(); });
+    }
+});
+</script>
+</body>
+</html>

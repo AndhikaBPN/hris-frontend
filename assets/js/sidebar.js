@@ -58,6 +58,9 @@ window.loadComponents = function() {
       if (userRole === 'team_leader' || userRole === 'hrd_manager' || userRole === 'technical_manager' || userRole === 'c_level' || userRole === 'staff') teamLink.href = '../team/team-hub.html';
     }
 
+    const faceSampleLink = document.querySelector('.nav-face-sample');
+    if (faceSampleLink) faceSampleLink.href = '../face-sample/face-sample.html';
+
     // Hide unauthorized menus
     if (userRole === 'staff') {
       document.querySelectorAll('.nav-reports, .nav-admin').forEach(e => e.style.display = 'none');
