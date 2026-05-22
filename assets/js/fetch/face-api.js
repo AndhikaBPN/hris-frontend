@@ -20,14 +20,15 @@ async function saveFaceEmbedding(embedding) {
   return { success: result.success, error: result.error };
 }
 
-async function clockInAttendance(session, lat, lng, faceImg) {
+async function clockInAttendance(session, lat, lng, faceImg, distanceToOffice) {
   var result = await apiRequest('/attendance/clock-in', {
     method: 'POST',
     body: JSON.stringify({
-      session:    session,
-      latitude:   lat,
-      longitude:  lng,
-      face_image: faceImg
+      session:            session,
+      latitude:           lat,
+      longitude:          lng,
+      face_image:         faceImg,
+      distance_to_office: distanceToOffice !== undefined ? distanceToOffice : null
     })
   });
   if (!result.success) {

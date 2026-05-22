@@ -666,7 +666,6 @@
       bioSetStatus('scanning', 'Checking location...');
       var officeRes = await fetchOfficeLocations();
       var locCheck = findNearestOffice(officeRes.data, geo.lat, geo.lng);
-      console.log(geo.lat, geo.lng);
 
       if (!locCheck.valid) {
         var msg = document.getElementById('session-msg');
@@ -675,14 +674,16 @@
           : 'Could not get your GPS location.';
         msg.textContent = '✗ Location invalid. ' + detail;
         msg.style.color = '#c0392b';
-        bioSetStatus('error', 'Out of office range');
+        bioSetStatus('error', 'Out of office range — ' + (locCheck.distance !== null ? locCheck.distance + 'm' : 'no GPS'));
         document.getElementById('btn-clockin').disabled = false;
         setTimeout(function () { window.location.reload(); }, 1000);
         return;
       }
 
+      bioSetStatus('detected', 'Location valid — ' + locCheck.distance + 'm from office');
+
       bioSetStatus('scanning', 'Submitting attendance...');
-      var attRes = await clockInAttendance(1, geo.lat, geo.lng, faceImg);
+      var attRes = await clockInAttendance(1, geo.lat, geo.lng, faceImg, locCheck.distance);
 
       if (!attRes.success) {
         var msg = document.getElementById('session-msg');
