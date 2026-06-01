@@ -82,6 +82,11 @@
           <option value="team_leader">Team Leader</option>
           <option value="staff">Staff</option>
         </select>
+        <select class="pag-select" id="status-filter" style="min-width:130px;">
+          <option value="">All Status</option>
+          <option value="1">Active</option>
+          <option value="0">Inactive</option>
+        </select>
       </div>
 
       <!-- TABLE -->
@@ -174,8 +179,9 @@ guardRoute(['c_level', 'hrd_manager']);
 /* ── STATE ── */
 var currentPage  = 1;
 var currentLimit = 10;
-var currentSearch     = '';
-var currentRoleFilter = '';
+var currentSearch       = '';
+var currentRoleFilter   = '';
+var currentStatusFilter = '';
 var lastPage     = 1;
 var totalRecords = 0;
 var _searchDebounceTimer = null;
@@ -189,10 +195,11 @@ async function loadPage() {
   if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="emp-empty">Loading...</td></tr>';
 
   var res = await fetchEmployees({
-    page:   currentPage,
-    limit:  currentLimit,
-    search: currentSearch,
-    role:   currentRoleFilter
+    page:      currentPage,
+    limit:     currentLimit,
+    search:    currentSearch,
+    role:      currentRoleFilter,
+    is_active: currentStatusFilter
   });
 
   if (!res.success) {
@@ -402,6 +409,12 @@ document.getElementById('emp-search').addEventListener('input', function() {
 
 document.getElementById('role-filter').addEventListener('change', function() {
   currentRoleFilter = this.value;
+  currentPage = 1;
+  loadPage();
+});
+
+document.getElementById('status-filter').addEventListener('change', function() {
+  currentStatusFilter = this.value;
   currentPage = 1;
   loadPage();
 });

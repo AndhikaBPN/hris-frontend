@@ -33,13 +33,36 @@
           <div class="profile-header-name" id="hero-name">Loading...</div>
         </div>
         <div class="profile-sidebar-body">
-          <div class="profile-sidebar-email" id="hero-email">—</div>
           <div class="profile-sidebar-badges">
             <span id="hero-role-badge"></span>
             <span id="hero-status-badge"></span>
           </div>
           <div class="profile-divider"></div>
           <div class="profile-meta-list">
+            <div class="profile-meta-row" id="sidebar-email-row" style="display:none;">
+              <span class="profile-meta-label">Email</span>
+              <span class="profile-meta-value" id="sidebar-email" style="word-break:break-all;font-size:12px;">—</span>
+            </div>
+            <div class="profile-meta-row" id="sidebar-phone-row" style="display:none;">
+              <span class="profile-meta-label">Phone</span>
+              <span class="profile-meta-value" id="sidebar-phone" style="font-size:12px;">—</span>
+            </div>
+            <div class="profile-meta-row" id="sidebar-birth-row" style="display:none;">
+              <span class="profile-meta-label">Birth Date</span>
+              <span class="profile-meta-value" id="sidebar-birth" style="font-size:12px;">—</span>
+            </div>
+            <div class="profile-meta-row" id="sidebar-gender-row" style="display:none;">
+              <span class="profile-meta-label">Gender</span>
+              <span class="profile-meta-value" id="sidebar-gender" style="font-size:12px;">—</span>
+            </div>
+            <div class="profile-meta-row" id="sidebar-religion-row" style="display:none;">
+              <span class="profile-meta-label">Religion</span>
+              <span class="profile-meta-value" id="sidebar-religion" style="font-size:12px;">—</span>
+            </div>
+            <div class="profile-meta-row">
+              <span class="profile-meta-label">Status</span>
+              <span class="profile-meta-value" id="sidebar-status-meta">—</span>
+            </div>
             <div class="profile-meta-row">
               <span class="profile-meta-label">Team</span>
               <span class="profile-meta-value" id="sidebar-team">—</span>
@@ -164,8 +187,7 @@ function renderDetail(d) {
   }
 
   /* ── Sidebar identity ── */
-  setText('hero-name',  d.name);
-  setText('hero-email', d.email);
+  setText('hero-name', d.name);
 
   var heroRole = document.getElementById('hero-role-badge');
   if (heroRole) heroRole.innerHTML = '<span class="emp-role-badge ' + d.roleBadge.colorClass + '">' + escHtml(d.roleBadge.label) + '</span>';
@@ -178,6 +200,23 @@ function renderDetail(d) {
 
   setText('sidebar-team',    teamVal);
   setText('sidebar-manager', managerVal);
+
+  /* ── Sidebar meta rows ── */
+  function setSidebarRow(rowId, valId, value) {
+    var row = document.getElementById(rowId);
+    var el  = document.getElementById(valId);
+    if (!row || !el) return;
+    if (value && value !== '—') { row.style.display = ''; el.textContent = value; }
+    else                        { row.style.display = 'none'; }
+  }
+  setSidebarRow('sidebar-email-row',    'sidebar-email',    d.email);
+  setSidebarRow('sidebar-phone-row',    'sidebar-phone',    d.phone);
+  setSidebarRow('sidebar-birth-row',    'sidebar-birth',    d.birthDateDisplay);
+  setSidebarRow('sidebar-gender-row',   'sidebar-gender',   d.gender ? d.gender.charAt(0).toUpperCase() + d.gender.slice(1) : null);
+  setSidebarRow('sidebar-religion-row', 'sidebar-religion', d.religion);
+
+  var statusMetaEl = document.getElementById('sidebar-status-meta');
+  if (statusMetaEl) statusMetaEl.innerHTML = '<span class="emp-status-badge ' + d.statusBadge.colorClass + '">' + d.statusBadge.label + '</span>';
 
   /* ── Form fields ── */
   setField('d-name',       d.name);

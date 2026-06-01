@@ -9,9 +9,12 @@ async function fetchEmployees(options) {
   var search = options.search || '';
   var role   = options.role   || '';
 
+  var isActive = options.is_active;
+
   var params = '?page=' + page + '&limit=' + limit + '&order_by=name&sorting=asc';
-  if (search) params += '&search=' + encodeURIComponent(search);
-  if (role)   params += '&role='   + encodeURIComponent(role);
+  if (search)                  params += '&search='    + encodeURIComponent(search);
+  if (role)                    params += '&role='      + encodeURIComponent(role);
+  if (isActive !== undefined && isActive !== '') params += '&is_active=' + isActive;
 
   var result = await apiRequest('/users' + params);
 

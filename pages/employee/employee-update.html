@@ -19,7 +19,7 @@
 
     <button class="back-btn" onclick="window.location.href='employee-management.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
-      Back to Employee Management
+      Back
     </button>
 
     <div class="page-header-row" style="margin-bottom:1.4rem;">
@@ -58,6 +58,26 @@
                 <span class="profile-meta-value" id="active-label">Active</span>
               </div>
             </div>
+            <div class="profile-meta-row" id="preview-email-row" style="display:none;">
+              <span class="profile-meta-label">Email</span>
+              <span class="profile-meta-value" id="preview-email" style="word-break:break-all;font-size:12px;"></span>
+            </div>
+            <div class="profile-meta-row" id="preview-phone-row" style="display:none;">
+              <span class="profile-meta-label">Phone</span>
+              <span class="profile-meta-value" id="preview-phone" style="font-size:12px;"></span>
+            </div>
+            <div class="profile-meta-row" id="preview-birth-row" style="display:none;">
+              <span class="profile-meta-label">Birth Date</span>
+              <span class="profile-meta-value" id="preview-birth" style="font-size:12px;"></span>
+            </div>
+            <div class="profile-meta-row" id="preview-gender-row" style="display:none;">
+              <span class="profile-meta-label">Gender</span>
+              <span class="profile-meta-value" id="preview-gender" style="font-size:12px;"></span>
+            </div>
+            <div class="profile-meta-row" id="preview-religion-row" style="display:none;">
+              <span class="profile-meta-label">Religion</span>
+              <span class="profile-meta-value" id="preview-religion" style="font-size:12px;"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -73,7 +93,7 @@
         <div class="detail-grid">
           <div class="detail-field">
             <span class="detail-label">Email <i class="req">*</i></span>
-            <input type="email" class="detail-input" id="f-email" placeholder="john@company.com">
+            <input type="email" class="detail-input" id="f-email" placeholder="john@company.com" oninput="updateSidebarPreview()">
           </div>
           <div class="detail-field">
             <span class="detail-label">Password</span>
@@ -108,15 +128,15 @@
         <div class="detail-grid">
           <div class="detail-field">
             <span class="detail-label">Full Name <i class="req">*</i></span>
-            <input type="text" class="detail-input" id="f-name" placeholder="Alphabet characters only">
+            <input type="text" class="detail-input" id="f-name" placeholder="Alphabet characters only" oninput="updateSidebarPreview()">
           </div>
           <div class="detail-field">
             <span class="detail-label">Birth Date</span>
-            <input type="date" class="detail-input" id="f-birth-date">
+            <input type="date" class="detail-input" id="f-birth-date" onchange="updateSidebarPreview()">
           </div>
           <div class="detail-field">
             <span class="detail-label">Gender</span>
-            <select class="detail-input" id="f-gender">
+            <select class="detail-input" id="f-gender" onchange="updateSidebarPreview()">
               <option value="">Select Gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -124,7 +144,7 @@
           </div>
           <div class="detail-field">
             <span class="detail-label">Religion</span>
-            <select class="detail-input" id="f-religion">
+            <select class="detail-input" id="f-religion" onchange="updateSidebarPreview()">
               <option value="">Select Religion</option>
               <option value="Islam">Islam</option>
               <option value="Kristen">Kristen</option>
@@ -136,7 +156,7 @@
           </div>
           <div class="detail-field">
             <span class="detail-label">Phone <i class="req">*</i></span>
-            <input type="text" class="detail-input" id="f-phone" placeholder="08xx or +62xx (10–16 digits)">
+            <input type="text" class="detail-input" id="f-phone" placeholder="08xx or +62xx (10–16 digits)" oninput="updateSidebarPreview()">
           </div>
           <div class="detail-field full-width">
             <span class="detail-label">Address <i class="req">*</i></span>
@@ -242,6 +262,48 @@ async function loadEmployee() {
     await ensureManagersLoaded();
     document.getElementById('f-manager').value = d.managerId || '';
   }
+
+  updateSidebarPreview();
+}
+
+/* ── Live sidebar preview ── */
+function updateSidebarPreview() {
+  var name = document.getElementById('f-name').value.trim();
+  var nameEl = document.getElementById('sidebar-name');
+  if (nameEl && name) nameEl.textContent = name;
+
+  var email = document.getElementById('f-email').value.trim();
+  var emailRow = document.getElementById('preview-email-row');
+  var emailEl  = document.getElementById('preview-email');
+  if (email) { emailRow.style.display = ''; emailEl.textContent = email; }
+  else        { emailRow.style.display = 'none'; }
+
+  var phone = document.getElementById('f-phone').value.trim();
+  var phoneRow = document.getElementById('preview-phone-row');
+  var phoneEl  = document.getElementById('preview-phone');
+  if (phone) { phoneRow.style.display = ''; phoneEl.textContent = phone; }
+  else        { phoneRow.style.display = 'none'; }
+
+  var birth = document.getElementById('f-birth-date').value;
+  var birthRow = document.getElementById('preview-birth-row');
+  var birthEl  = document.getElementById('preview-birth');
+  if (birth) {
+    var parts = birth.split('-');
+    birthRow.style.display = '';
+    birthEl.textContent = parts[2] + '/' + parts[1] + '/' + parts[0];
+  } else { birthRow.style.display = 'none'; }
+
+  var gender = document.getElementById('f-gender').value;
+  var genderRow = document.getElementById('preview-gender-row');
+  var genderEl  = document.getElementById('preview-gender');
+  if (gender) { genderRow.style.display = ''; genderEl.textContent = gender.charAt(0).toUpperCase() + gender.slice(1); }
+  else         { genderRow.style.display = 'none'; }
+
+  var religion = document.getElementById('f-religion').value;
+  var religionRow = document.getElementById('preview-religion-row');
+  var religionEl  = document.getElementById('preview-religion');
+  if (religion) { religionRow.style.display = ''; religionEl.textContent = religion; }
+  else           { religionRow.style.display = 'none'; }
 }
 
 /* ── Status badge live update ── */
@@ -322,10 +384,11 @@ async function submitUpdate() {
   btn.disabled = true;
   btn.textContent = 'Saving...';
 
+  var ROLE_ID_MAP = { c_level: '1', hrd_manager: '2', technical_manager: '3', team_leader: '4', staff: '5' };
   var formData = new FormData();
   formData.append('name',      document.getElementById('f-name').value.trim());
   formData.append('email',     document.getElementById('f-email').value.trim());
-  formData.append('role',      document.getElementById('f-role').value);
+  formData.append('role_id',   ROLE_ID_MAP[document.getElementById('f-role').value] || '');
   formData.append('is_active', document.getElementById('f-is-active').checked ? '1' : '0');
 
   var password = document.getElementById('f-password').value;

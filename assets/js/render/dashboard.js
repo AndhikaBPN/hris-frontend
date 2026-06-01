@@ -83,7 +83,10 @@ function buildBirthdayRows(records) {
         formattedDate = months[d.getMonth()] + ' ' + d.getDate();
       }
     }
-    var dept = p.team_name || (p.team_id ? 'Team ' + p.team_id : '-');
+    var isLeader = p.role === 'team_leader';
+    var teamName = isLeader ? (p.led_team_name || p.team_name) : (p.team_name || p.led_team_name);
+    var teamId   = isLeader ? (p.led_team_id   || p.team_id)   : (p.team_id   || p.led_team_id);
+    var dept = teamName || (teamId ? 'Team ' + teamId : '-');
 
     return {
       name: name,

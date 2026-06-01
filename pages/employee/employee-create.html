@@ -19,7 +19,7 @@
 
     <button class="back-btn" onclick="window.location.href='employee-management.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
-      Back to Employee Management
+      Back
     </button>
 
     <div class="page-header-row" style="margin-bottom:1.4rem;">
@@ -29,21 +29,59 @@
       </div>
     </div>
 
-    <div class="emp-create-wrap">
-      <div class="detail-card">
+    <div class="detail-layout">
 
-        <!-- Photo Upload -->
-        <div class="emp-photo-area">
+      <!-- ══ LEFT: Profile Sidebar ══ -->
+      <div class="profile-sidebar">
+        <div class="profile-sidebar-header">
           <div class="profile-avatar-lg emp-photo-trigger" id="photo-preview" onclick="document.getElementById('photo-input').click()" title="Click to upload photo">
             <span id="avatar-content">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;opacity:0.45;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </span>
           </div>
-          <div class="emp-photo-hint">Click to upload photo <span>(optional)</span></div>
+          <div class="profile-header-name" id="sidebar-name" style="color:#a0aab4;font-style:italic;">New Employee</div>
           <input type="file" id="photo-input" accept="image/jpeg,image/png,image/jpg,image/webp" style="display:none;" onchange="handlePhotoChange(this)">
         </div>
+        <div class="profile-sidebar-body">
+          <div class="profile-sidebar-badges">
+            <span id="sidebar-role-badge"></span>
+            <span id="sidebar-status-badge">
+              <span class="emp-status-badge status-active">Active</span>
+            </span>
+          </div>
+          <div class="profile-divider"></div>
+          <div class="emp-photo-hint" style="font-size:11px;text-align:center;margin-bottom:16px;">Click photo to upload</div>
+          <div class="profile-meta-list">
+            <div class="profile-meta-row">
+              <span class="profile-meta-label">Status</span>
+              <span class="profile-meta-value"><span class="emp-status-badge status-active">Active</span></span>
+            </div>
+            <div class="profile-meta-row" id="preview-email-row" style="display:none;">
+              <span class="profile-meta-label">Email</span>
+              <span class="profile-meta-value" id="preview-email" style="word-break:break-all;font-size:12px;"></span>
+            </div>
+            <div class="profile-meta-row" id="preview-phone-row" style="display:none;">
+              <span class="profile-meta-label">Phone</span>
+              <span class="profile-meta-value" id="preview-phone" style="font-size:12px;"></span>
+            </div>
+            <div class="profile-meta-row" id="preview-birth-row" style="display:none;">
+              <span class="profile-meta-label">Birth Date</span>
+              <span class="profile-meta-value" id="preview-birth" style="font-size:12px;"></span>
+            </div>
+            <div class="profile-meta-row" id="preview-gender-row" style="display:none;">
+              <span class="profile-meta-label">Gender</span>
+              <span class="profile-meta-value" id="preview-gender" style="font-size:12px;"></span>
+            </div>
+            <div class="profile-meta-row" id="preview-religion-row" style="display:none;">
+              <span class="profile-meta-label">Religion</span>
+              <span class="profile-meta-value" id="preview-religion" style="font-size:12px;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <div class="detail-section-sep"></div>
+      <!-- ══ RIGHT: Form Card ══ -->
+      <div class="detail-card">
 
         <!-- Account Information -->
         <div class="detail-section-title">
@@ -53,7 +91,7 @@
         <div class="detail-grid">
           <div class="detail-field">
             <span class="detail-label">Email <i class="req">*</i></span>
-            <input type="email" class="detail-input" id="f-email" placeholder="john@company.com">
+            <input type="email" class="detail-input" id="f-email" placeholder="john@company.com" oninput="updatePreview()">
           </div>
           <div class="detail-field">
             <span class="detail-label">Password <i class="req">*</i></span>
@@ -88,15 +126,15 @@
         <div class="detail-grid">
           <div class="detail-field">
             <span class="detail-label">Full Name <i class="req">*</i></span>
-            <input type="text" class="detail-input" id="f-name" placeholder="Alphabet characters only">
+            <input type="text" class="detail-input" id="f-name" placeholder="Alphabet characters only" oninput="updatePreview()">
           </div>
           <div class="detail-field">
             <span class="detail-label">Birth Date</span>
-            <input type="date" class="detail-input" id="f-birth-date">
+            <input type="date" class="detail-input" id="f-birth-date" onchange="updatePreview()">
           </div>
           <div class="detail-field">
             <span class="detail-label">Gender</span>
-            <select class="detail-input" id="f-gender">
+            <select class="detail-input" id="f-gender" onchange="updatePreview()">
               <option value="">Select Gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -104,7 +142,7 @@
           </div>
           <div class="detail-field">
             <span class="detail-label">Religion</span>
-            <select class="detail-input" id="f-religion">
+            <select class="detail-input" id="f-religion" onchange="updatePreview()">
               <option value="">Select Religion</option>
               <option value="Islam">Islam</option>
               <option value="Kristen">Kristen</option>
@@ -116,7 +154,7 @@
           </div>
           <div class="detail-field">
             <span class="detail-label">Phone <i class="req">*</i></span>
-            <input type="text" class="detail-input" id="f-phone" placeholder="08xx or +62xx (10–16 digits)">
+            <input type="text" class="detail-input" id="f-phone" placeholder="08xx or +62xx (10–16 digits)" oninput="updatePreview()">
           </div>
           <div class="detail-field full-width">
             <span class="detail-label">Address <i class="req">*</i></span>
@@ -168,11 +206,88 @@ function handlePhotoChange(input) {
   reader.readAsDataURL(_photoFile);
 }
 
-/* ── Role → show/hide manager dropdown ── */
+/* ── Live sidebar preview ── */
+function updatePreview() {
+  var name  = document.getElementById('f-name').value.trim();
+  var email = document.getElementById('f-email').value.trim();
+  var phone = document.getElementById('f-phone').value.trim();
+
+  var nameEl = document.getElementById('sidebar-name');
+  if (name) {
+    nameEl.textContent = name;
+    nameEl.style.color = '';
+    nameEl.style.fontStyle = '';
+
+    /* initials avatar (only if no photo) */
+    if (!_photoFile) {
+      var parts    = name.split(' ').filter(Boolean);
+      var initials = parts.length >= 2
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : name.slice(0, 2).toUpperCase();
+      var avatarEl  = document.getElementById('photo-preview');
+      var contentEl = document.getElementById('avatar-content');
+      if (contentEl.querySelector('svg') || contentEl.textContent.trim() === '') {
+        avatarEl.style.background = '#2e7d4f';
+        avatarEl.style.color      = '#fff';
+        contentEl.textContent     = initials;
+      }
+    }
+  } else {
+    nameEl.textContent   = 'New Employee';
+    nameEl.style.color   = '#a0aab4';
+    nameEl.style.fontStyle = 'italic';
+    if (!_photoFile) {
+      var avatarEl  = document.getElementById('photo-preview');
+      var contentEl = document.getElementById('avatar-content');
+      avatarEl.style.background = '';
+      avatarEl.style.color      = '';
+      contentEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;opacity:0.45;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+    }
+  }
+
+  var emailRow = document.getElementById('preview-email-row');
+  var emailEl  = document.getElementById('preview-email');
+  if (email) { emailRow.style.display = ''; emailEl.textContent = email; }
+  else        { emailRow.style.display = 'none'; }
+
+  var phoneRow = document.getElementById('preview-phone-row');
+  var phoneEl  = document.getElementById('preview-phone');
+  if (phone) { phoneRow.style.display = ''; phoneEl.textContent = phone; }
+  else        { phoneRow.style.display = 'none'; }
+
+  var birth = document.getElementById('f-birth-date').value;
+  var birthRow = document.getElementById('preview-birth-row');
+  var birthEl  = document.getElementById('preview-birth');
+  if (birth) {
+    var parts = birth.split('-');
+    birthRow.style.display = '';
+    birthEl.textContent = parts[2] + '/' + parts[1] + '/' + parts[0];
+  } else { birthRow.style.display = 'none'; }
+
+  var gender = document.getElementById('f-gender').value;
+  var genderRow = document.getElementById('preview-gender-row');
+  var genderEl  = document.getElementById('preview-gender');
+  if (gender) { genderRow.style.display = ''; genderEl.textContent = gender.charAt(0).toUpperCase() + gender.slice(1); }
+  else         { genderRow.style.display = 'none'; }
+
+  var religion = document.getElementById('f-religion').value;
+  var religionRow = document.getElementById('preview-religion-row');
+  var religionEl  = document.getElementById('preview-religion');
+  if (religion) { religionRow.style.display = ''; religionEl.textContent = religion; }
+  else           { religionRow.style.display = 'none'; }
+}
+
+/* ── Role → show/hide manager + live badge ── */
 document.getElementById('f-role').addEventListener('change', async function() {
   var show = (this.value === 'team_leader' || this.value === 'staff');
   document.getElementById('manager-group').style.display = show ? '' : 'none';
   if (show) await ensureManagersLoaded();
+
+  var badge = buildRoleBadgeData(this.value);
+  var el    = document.getElementById('sidebar-role-badge');
+  if (el) el.innerHTML = this.value
+    ? '<span class="emp-role-badge ' + badge.colorClass + '">' + badge.label + '</span>'
+    : '';
 });
 
 async function ensureManagersLoaded() {
@@ -236,10 +351,11 @@ async function submitCreate() {
   btn.textContent = 'Saving...';
 
   var formData = new FormData();
+  var ROLE_ID_MAP = { c_level: '1', hrd_manager: '2', technical_manager: '3', team_leader: '4', staff: '5' };
   formData.append('name',     document.getElementById('f-name').value.trim());
   formData.append('email',    document.getElementById('f-email').value.trim());
   formData.append('password', document.getElementById('f-password').value);
-  formData.append('role',     document.getElementById('f-role').value);
+  formData.append('role_id',  ROLE_ID_MAP[document.getElementById('f-role').value] || '');
 
   var birthDate = document.getElementById('f-birth-date').value;
   if (birthDate) formData.append('birth_date', birthDate);
