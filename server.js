@@ -57,7 +57,12 @@ http.createServer(function(req, res) {
       res.writeHead(404);
       return res.end('Not found');
     }
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'text/plain' });
+    var headers = { 'Content-Type': MIME[ext] || 'text/plain' };
+    /* Prevent browser from caching CSS/JS during development */
+    if (ext === '.css' || ext === '.js') {
+      headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 
