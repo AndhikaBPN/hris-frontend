@@ -9,7 +9,7 @@ async function fetchEmployees(options) {
   var search = options.search || '';
   var role   = options.role   || '';
 
-  var params = '?page=' + page + '&limit=' + limit;
+  var params = '?page=' + page + '&limit=' + limit + '&order_by=name&sorting=asc';
   if (search) params += '&search=' + encodeURIComponent(search);
   if (role)   params += '&role='   + encodeURIComponent(role);
 

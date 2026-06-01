@@ -19,7 +19,7 @@
     <!-- BACK BUTTON -->
     <button class="back-btn" onclick="window.location.href='employee-management.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
-      Back to Employee Management
+      Back
     </button>
 
     <div class="detail-layout">
@@ -74,6 +74,22 @@
             <input type="text" class="detail-input" id="d-birth-date" disabled>
           </div>
           <div class="detail-field">
+            <span class="detail-label">Gender</span>
+            <input type="text" class="detail-input" id="d-gender" disabled>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Phone</span>
+            <input type="text" class="detail-input" id="d-phone" disabled>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Religion</span>
+            <input type="text" class="detail-input" id="d-religion" disabled>
+          </div>
+          <div class="detail-field full-width">
+            <span class="detail-label">Address</span>
+            <input type="text" class="detail-input" id="d-address" disabled>
+          </div>
+          <div class="detail-field">
             <span class="detail-label">Account Status</span>
             <div class="detail-badge-field">
               <span id="d-status">—</span>
@@ -89,12 +105,6 @@
           Employment Details
         </div>
         <div class="detail-grid">
-          <div class="detail-field full-width">
-            <span class="detail-label">Role</span>
-            <div class="detail-badge-field">
-              <span id="d-role">—</span>
-            </div>
-          </div>
           <div class="detail-field">
             <span class="detail-label">Reports To (Manager)</span>
             <input type="text" class="detail-input" id="d-manager" disabled>
@@ -102,6 +112,12 @@
           <div class="detail-field">
             <span class="detail-label">Team</span>
             <input type="text" class="detail-input" id="d-team" disabled>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Role</span>
+            <div class="detail-badge-field">
+              <span id="d-role">—</span>
+            </div>
           </div>
         </div>
 
@@ -167,6 +183,10 @@ function renderDetail(d) {
   setField('d-name',       d.name);
   setField('d-email',      d.email);
   setField('d-birth-date', d.birthDateDisplay);
+  setField('d-gender',     d.gender ? d.gender.charAt(0).toUpperCase() + d.gender.slice(1) : null);
+  setField('d-phone',      d.phone);
+  setField('d-religion',   d.religion);
+  setField('d-address',    d.address);
   setField('d-manager',    managerVal);
   setField('d-team',       teamVal);
 

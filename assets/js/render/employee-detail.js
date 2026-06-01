@@ -22,7 +22,11 @@ function mapEmployeeDetailData(raw) {
     managerName:  raw.manager_name || null,
     teamId:       raw.team_id      || null,
     teamName:     raw.team_name    || null,
-    photoProfile: raw.photo_profile || null,
+    photoProfile: raw.photo_profile ? (getBaseUrl() + '/' + raw.photo_profile) : null,
+    gender:       raw.gender   || null,
+    phone:        raw.phone    || null,
+    address:      raw.address  || null,
+    religion:     raw.religion || null,
 
     /* display helpers */
     initials:    getInitials(raw.name || ''),
