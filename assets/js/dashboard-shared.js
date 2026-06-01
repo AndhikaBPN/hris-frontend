@@ -120,9 +120,16 @@ function initDateGreeting(name) {
   var h = new Date().getHours();
   var greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
   var el = document.getElementById('greeting-text');
-  if (el) el.textContent = greet + ', ' + name + '.';
+  if (el) el.textContent = name ? greet + ', ' + name + '.' : greet + '.';
   var de = document.getElementById('today-date');
   if (de) de.textContent = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+}
+
+function getFirstName() {
+  try {
+    var u = JSON.parse(localStorage.getItem('hris_user') || '{}');
+    return (u.name || '').split(' ')[0] || '';
+  } catch (e) { return ''; }
 }
 
 /* ── Progress bar animate ── */

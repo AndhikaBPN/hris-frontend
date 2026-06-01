@@ -14,14 +14,10 @@
 <div class="main-wrap">
   <div id="navbar-placeholder"></div>
   <main class="content">
-    <div class="greeting-row">
+    <div class="page-header-row">
       <div>
-        <h1 class="greeting" id="greeting-text">Good morning.</h1>
-        <p class="greeting-sub" id="greeting-sub"></p>
-      </div>
-      <div class="date-block">
-        <div class="date-label">TODAY'S DATE</div>
-        <div class="date-value" id="today-date"></div>
+        <h1 class="hub-title" id="greeting-text">Good morning.</h1>
+        <div class="hub-sub" id="greeting-sub"></div>
       </div>
     </div>
 
@@ -196,12 +192,11 @@ window.addEventListener('load', function() {
     loadLeaveData();
     loadBirthdayData();
     loadLeaveQuota();
-    var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
-    initDateGreeting(name);
-    var gs = document.getElementById('greeting-sub');
-    if (gs) gs.innerHTML = 'Managing your team members efficiently.';
     animateProgress(8);
   });
+  initDateGreeting(getFirstName());
+  var gs = document.getElementById('greeting-sub');
+  if (gs) gs.textContent = 'MANAGING YOUR TEAM EFFICIENTLY';
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
   checkTodayAttendance();

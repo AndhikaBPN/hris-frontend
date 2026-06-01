@@ -142,7 +142,12 @@ body {
   display: flex; flex-direction: column; gap: 1.6rem;
 }
 
-/* GREETING */
+/* PAGE HEADER (shared across all pages) */
+.page-header-row { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:0.4rem; }
+.hub-title { font-size:2.4rem; font-weight:400; color:#2c3e50; letter-spacing:-0.5px; line-height:1; }
+.hub-sub   { font-size:11px; letter-spacing:2px; color:#9aabb7; font-weight:600; margin-top:4px; }
+
+/* GREETING (legacy — kept for backwards compat) */
 .greeting-row {
   display: flex; align-items: flex-start;
   justify-content: space-between;

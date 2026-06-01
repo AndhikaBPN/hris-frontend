@@ -14,14 +14,10 @@
 <div class="main-wrap">
   <div id="navbar-placeholder"></div>
   <main class="content">
-    <div class="greeting-row">
+    <div class="page-header-row">
       <div>
-        <h1 class="greeting" id="greeting-text">Good morning.</h1>
-        <p class="greeting-sub" id="greeting-sub"></p>
-      </div>
-      <div class="date-block">
-        <div class="date-label">TODAY'S DATE</div>
-        <div class="date-value" id="today-date"></div>
+        <h1 class="hub-title" id="greeting-text">Good morning.</h1>
+        <div class="hub-sub" id="greeting-sub"></div>
       </div>
     </div>
 
@@ -179,14 +175,14 @@ var bioVideo = null;
 var bioCanvas = null;
 
 window.addEventListener('load', function() {
+  initDateGreeting(getFirstName());
+  var gs = document.getElementById('greeting-sub');
+  if (gs) gs.textContent = 'KEEP UP YOUR PERFORMANCE';
+
   window.loadComponents().then(function() {
     loadLeaveData();
     loadBirthdayData();
     loadLeaveQuota();
-    var name = JSON.parse(localStorage.getItem('hris_user')).name.split(' ')[0];
-    initDateGreeting(name);
-    var gs = document.getElementById('greeting-sub');
-    if (gs) gs.innerHTML = 'Keep up your performance.';
     animateProgress(8);
   });
   updateLiveClock();

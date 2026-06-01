@@ -15,16 +15,16 @@
 <div id="navbar-placeholder"></div>
   <main class="content">
 
-    <!-- GREETING ROW -->
-    <div class="greeting-row">
+    <!-- PAGE HEADER -->
+    <div class="page-header-row">
       <div>
-        <h1 class="greeting" id="greeting-text">Good morning.</h1>
-        <p class="greeting-sub">Employee Management &mdash; manage accounts &amp; roles</p>
+        <h1 class="hub-title">Employee Management</h1>
+        <div class="hub-sub">USER ACCOUNTS &amp; ROLES</div>
       </div>
-      <div class="date-block">
-        <div class="date-label">TODAY'S DATE</div>
-        <div class="date-value" id="today-date"></div>
-      </div>
+      <button class="btn-create-team" id="btn-add-employee" style="display:none;" onclick="openEmpModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Add Employee
+      </button>
     </div>
 
     <!-- STAT CARDS -->
@@ -66,10 +66,6 @@
           <div class="section-title">Employee Directory</div>
           <div class="emp-card-sub">Manage user accounts and roles</div>
         </div>
-        <button class="btn-create-team" id="btn-add-employee" style="display:none;" onclick="openEmpModal()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-          Add Employee
-        </button>
       </div>
 
       <!-- TOOLBAR: search + role filter -->
@@ -663,15 +659,6 @@ document.addEventListener('keydown', function(e) {
    INIT
 ══════════════════════════════════════════════ */
 window.addEventListener('load', async function() {
-  /* greeting */
-  var hour = new Date().getHours();
-  var greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  var greetEl = document.getElementById('greeting-text');
-  if (greetEl) greetEl.textContent = greet + '.';
-
-  var dateEl = document.getElementById('today-date');
-  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
   /* show add button */
   var btn = document.getElementById('btn-add-employee');
   if (btn) btn.style.display = 'inline-flex';
