@@ -61,12 +61,17 @@ window.loadComponents = function() {
     const faceSampleLink = document.querySelector('.nav-face-sample');
     if (faceSampleLink) faceSampleLink.href = '../face-sample/face-sample.html';
 
+    const empLink = document.querySelector('.nav-employee');
+    if (empLink) empLink.href = '../employee/employee-management.html';
+
     // Hide unauthorized menus
     if (userRole === 'staff') {
-      document.querySelectorAll('.nav-reports, .nav-admin').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee').forEach(e => e.style.display = 'none');
     } else if (userRole === 'team_leader') {
-      document.querySelectorAll('.nav-reports, .nav-admin').forEach(e => e.style.display = 'none');
-    } else if (userRole === 'hrd_manager' || userRole === 'technical_manager') {
+      document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee').forEach(e => e.style.display = 'none');
+    } else if (userRole === 'technical_manager') {
+      document.querySelectorAll('.nav-admin, .nav-employee').forEach(e => e.style.display = 'none');
+    } else if (userRole === 'hrd_manager') {
       document.querySelectorAll('.nav-admin').forEach(e => e.style.display = 'none');
     }
 
