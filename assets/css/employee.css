@@ -44,7 +44,16 @@
   max-width: 360px;
 }
 
-/* ── Table: remove scroll, let pagination handle it ── */
+/* ── Table: reset display overrides from att-table scroll hack ── */
+.emp-table {
+  table-layout: auto;
+}
+
+.emp-table thead {
+  display: table-header-group;
+  width: auto;
+}
+
 .emp-table tbody {
   display: table-row-group;
   max-height: none;
@@ -53,6 +62,7 @@
 
 .emp-table tbody tr {
   display: table-row;
+  width: auto;
 }
 
 .emp-table td:last-child {

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Employee Detail</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+  <link rel="stylesheet" href="../../assets/css/employee.css">
+  <style>
+    .detail-wrap {
+      max-width: 720px;
+    }
+
+    /* Back button */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      color: #6b7c8d;
+      text-decoration: none;
+      margin-bottom: 1.4rem;
+      padding: 6px 0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: color 0.15s;
+    }
+    .back-btn:hover { color: #3d5c45; }
+
+    /* Profile hero card */
+    .profile-hero {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+      margin-bottom: 1.6rem;
+      padding: 1.4rem 1.6rem;
+      background: #fff;
+      border: 1px solid #e8ecf0;
+      border-radius: 14px;
+    }
+
+    .profile-avatar-wrap {
+      flex-shrink: 0;
+    }
+
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      overflow: hidden;
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .profile-hero-info { flex: 1; min-width: 0; }
+
+    .profile-hero-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .profile-hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .profile-hero-email {
+      font-size: 13px;
+      color: #7a8fa0;
+    }
+
+    /* Detail form card */
+    .detail-card {
+      background: #fff;
+      border: 1px solid #e8ecf0;
+      border-radius: 14px;
+      padding: 1.6rem;
+    }
+
+    .detail-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      color: #9aabb7;
+      text-transform: uppercase;
+      margin-bottom: 1.4rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid #f0f2f5;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem 1.6rem;
+    }
+
+    .detail-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .detail-field.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #9aabb7;
+      text-transform: uppercase;
+    }
+
+    .detail-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #e8ecf0;
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: #4a5568;
+      background: #f8fafc;
+      cursor: default;
+      box-sizing: border-box;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .detail-input:disabled {
+      opacity: 1;
+      -webkit-text-fill-color: #4a5568;
+    }
+
+    .detail-badge-field {
+      display: flex;
+      align-items: center;
+      padding: 9px 14px;
+      border: 1px solid #e8ecf0;
+      border-radius: 8px;
+      background: #f8fafc;
+      min-height: 42px;
+    }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f2f5 25%, #e8ecf0 50%, #f0f2f5 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      height: 18px;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    @media (max-width: 640px) {
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-field.full-width { grid-column: 1; }
+      .profile-hero { flex-direction: column; text-align: center; }
+      .profile-hero-meta { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+  <main class="content">
+    <div class="detail-wrap">
+
+      <!-- BACK BUTTON -->
+      <button class="back-btn" onclick="window.location.href='employee-management.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Employee Management
+      </button>
+
+      <!-- PROFILE HERO -->
+      <div class="profile-hero" id="profile-hero">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" id="profile-avatar" style="background:#e0ebe5;color:#3d5c45;">
+            <span id="avatar-content">—</span>
+          </div>
+        </div>
+        <div class="profile-hero-info">
+          <div class="profile-hero-name" id="hero-name">Loading...</div>
+          <div class="profile-hero-meta">
+            <span class="profile-hero-email" id="hero-email">—</span>
+            <span id="hero-role-badge"></span>
+            <span id="hero-status-badge"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAIL CARD -->
+      <div class="detail-card">
+        <div class="detail-card-title">Employee Information</div>
+        <div class="detail-grid">
+
+          <!-- Full Name -->
+          <div class="detail-field">
+            <span class="detail-label">Full Name</span>
+            <input type="text" class="detail-input" id="d-name" disabled>
+          </div>
+
+          <!-- Email -->
+          <div class="detail-field">
+            <span class="detail-label">Email</span>
+            <input type="email" class="detail-input" id="d-email" disabled>
+          </div>
+
+          <!-- Birth Date -->
+          <div class="detail-field">
+            <span class="detail-label">Birth Date</span>
+            <input type="text" class="detail-input" id="d-birth-date" disabled>
+          </div>
+
+          <!-- Role -->
+          <div class="detail-field">
+            <span class="detail-label">Role</span>
+            <div class="detail-badge-field" id="d-role-wrap">
+              <span id="d-role">—</span>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="detail-field">
+            <span class="detail-label">Status</span>
+            <div class="detail-badge-field" id="d-status-wrap">
+              <span id="d-status">—</span>
+            </div>
+          </div>
+
+          <!-- Manager -->
+          <div class="detail-field">
+            <span class="detail-label">Reports To (Manager)</span>
+            <input type="text" class="detail-input" id="d-manager" disabled>
+          </div>
+
+          <!-- Team -->
+          <div class="detail-field">
+            <span class="detail-label">Team</span>
+            <input type="text" class="detail-input" id="d-team" disabled>
+          </div>
+
+          <!-- Role ID -->
+          <div class="detail-field">
+            <span class="detail-label">Role ID</span>
+            <input type="text" class="detail-input" id="d-role-id" disabled>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/render/team.js"></script>
+<script src="../../assets/js/render/employee.js"></script>
+<script src="../../assets/js/fetch/employee-detail.js"></script>
+<script src="../../assets/js/render/employee-detail.js"></script>
+<script>
+guardRoute(['c_level', 'hrd_manager']);
+
+var currentEmployeeId = null;
+
+/* ══════════════════════════════════════════════
+   LOAD DETAIL
+══════════════════════════════════════════════ */
+async function loadDetail() {
+  var res = await fetchEmployeeDetail(currentEmployeeId);
+
+  if (!res.success) {
+    document.getElementById('hero-name').textContent = 'Employee not found';
+    return;
+  }
+
+  var d = mapEmployeeDetailData(res.data);
+  renderDetail(d);
+}
+
+/* ══════════════════════════════════════════════
+   RENDER DETAIL
+══════════════════════════════════════════════ */
+function renderDetail(d) {
+  /* hero avatar */
+  var avatarEl = document.getElementById('profile-avatar');
+  var avatarContent = document.getElementById('avatar-content');
+
+  if (d.photoProfile) {
+    avatarEl.style.background = 'transparent';
+    avatarContent.innerHTML = '<img src="' + escHtml(d.photoProfile) + '" alt="' + escHtml(d.name) + '">';
+  } else {
+    avatarEl.style.background = d.avatarBg;
+    avatarEl.style.color      = d.avatarColor;
+    avatarContent.textContent = d.initials;
+  }
+
+  /* hero info */
+  var heroName = document.getElementById('hero-name');
+  var heroEmail = document.getElementById('hero-email');
+  if (heroName)  heroName.textContent  = d.name;
+  if (heroEmail) heroEmail.textContent = d.email;
+
+  var heroRole = document.getElementById('hero-role-badge');
+  if (heroRole) heroRole.innerHTML = '<span class="emp-role-badge ' + d.roleBadge.colorClass + '">' + escHtml(d.roleBadge.label) + '</span>';
+
+  var heroStatus = document.getElementById('hero-status-badge');
+  if (heroStatus) heroStatus.innerHTML = '<span class="emp-status-badge ' + d.statusBadge.colorClass + '">' + d.statusBadge.label + '</span>';
+
+  /* form fields */
+  setField('d-name',       d.name);
+  setField('d-email',      d.email);
+  setField('d-birth-date', d.birthDateDisplay);
+  setField('d-role-id',    d.roleId !== null ? String(d.roleId) : '—');
+
+  /* manager */
+  var managerVal = d.managerName
+    ? d.managerName
+    : (d.managerId ? 'ID: ' + d.managerId : '—');
+  setField('d-manager', managerVal);
+
+  /* team */
+  var teamVal = d.teamName
+    ? d.teamName
+    : (d.teamId ? 'ID: ' + d.teamId : '—');
+  setField('d-team', teamVal);
+
+  /* role badge */
+  var roleWrap = document.getElementById('d-role');
+  if (roleWrap) roleWrap.innerHTML = '<span class="emp-role-badge ' + d.roleBadge.colorClass + '">' + escHtml(d.roleBadge.label) + '</span>';
+
+  /* status badge */
+  var statusWrap = document.getElementById('d-status');
+  if (statusWrap) statusWrap.innerHTML = '<span class="emp-status-badge ' + d.statusBadge.colorClass + '">' + d.statusBadge.label + '</span>';
+}
+
+function setField(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.value = value !== null && value !== undefined ? String(value) : '—';
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+window.addEventListener('load', function() {
+  currentEmployeeId = sessionStorage.getItem('selectedEmployeeId') || sessionStorage.getItem('currentEmployeeId');
+  sessionStorage.removeItem('selectedEmployeeId');
+  if (currentEmployeeId) sessionStorage.setItem('currentEmployeeId', currentEmployeeId);
+
+  if (!currentEmployeeId) {
+    window.location.replace('employee-management.html');
+    return;
+  }
+
+  loadDetail();
+  window.loadComponents();
+});
+</script>
+</body>
+</html>
