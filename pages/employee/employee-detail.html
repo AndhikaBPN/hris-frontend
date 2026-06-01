@@ -8,88 +8,142 @@
   <link rel="stylesheet" href="../../assets/css/team-hub.css">
   <link rel="stylesheet" href="../../assets/css/employee.css">
   <style>
-    .detail-wrap {
-      max-width: 720px;
-    }
-
-    /* Back button */
+    /* ── Back button ── */
     .back-btn {
       display: inline-flex;
       align-items: center;
       gap: 7px;
       font-size: 13px;
       color: #6b7c8d;
-      text-decoration: none;
-      margin-bottom: 1.4rem;
-      padding: 6px 0;
       cursor: pointer;
       background: none;
       border: none;
+      padding: 6px 0;
+      margin-bottom: 1.4rem;
       transition: color 0.15s;
     }
     .back-btn:hover { color: #3d5c45; }
 
-    /* Profile hero card */
-    .profile-hero {
-      display: flex;
-      align-items: center;
-      gap: 1.4rem;
-      margin-bottom: 1.6rem;
-      padding: 1.4rem 1.6rem;
+    /* ── Two-column layout ── */
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    /* ══ LEFT: Profile Sidebar ══ */
+    .profile-sidebar {
       background: #fff;
       border: 1px solid #e8ecf0;
       border-radius: 14px;
+      overflow: hidden;
+      position: sticky;
+      top: 1.5rem;
+    }
+
+    .profile-sidebar-header {
+      height: 80px;
+      background: linear-gradient(135deg, #3d5c45 0%, #4a7c59 60%, #5a9468 100%);
+      position: relative;
     }
 
     .profile-avatar-wrap {
-      flex-shrink: 0;
+      position: absolute;
+      bottom: -36px;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
-    .profile-avatar {
+    .profile-avatar-lg {
       width: 72px;
       height: 72px;
       border-radius: 50%;
+      border: 3px solid #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       overflow: hidden;
+      background: #e0ebe5;
+      color: #3d5c45;
     }
 
-    .profile-avatar img {
+    .profile-avatar-lg img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 50%;
     }
 
-    .profile-hero-info { flex: 1; min-width: 0; }
+    .profile-sidebar-body {
+      padding: 46px 1.4rem 1.4rem;
+      text-align: center;
+    }
 
-    .profile-hero-name {
-      font-size: 20px;
+    .profile-sidebar-name {
+      font-size: 17px;
       font-weight: 700;
       color: #2c3e50;
-      margin-bottom: 5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      margin-bottom: 4px;
+      word-break: break-word;
     }
 
-    .profile-hero-meta {
+    .profile-sidebar-email {
+      font-size: 12.5px;
+      color: #9aabb7;
+      margin-bottom: 14px;
+      word-break: break-all;
+    }
+
+    .profile-sidebar-badges {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      justify-content: center;
+      gap: 8px;
       flex-wrap: wrap;
+      margin-bottom: 18px;
     }
 
-    .profile-hero-email {
-      font-size: 13px;
-      color: #7a8fa0;
+    .profile-divider {
+      height: 1px;
+      background: #f0f2f5;
+      margin-bottom: 16px;
     }
 
-    /* Detail form card */
+    .profile-meta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .profile-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .profile-meta-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      color: #9aabb7;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .profile-meta-value {
+      font-size: 12.5px;
+      color: #4a5568;
+      font-weight: 500;
+      text-align: right;
+    }
+
+    /* ══ RIGHT: Info Card ══ */
     .detail-card {
       background: #fff;
       border: 1px solid #e8ecf0;
@@ -97,22 +151,32 @@
       padding: 1.6rem;
     }
 
-    .detail-card-title {
-      font-size: 13px;
+    .detail-section-title {
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 1.2px;
+      letter-spacing: 1.3px;
       color: #9aabb7;
       text-transform: uppercase;
-      margin-bottom: 1.4rem;
-      padding-bottom: 0.8rem;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.7rem;
       border-bottom: 1px solid #f0f2f5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .detail-section-title svg {
+      opacity: 0.6;
     }
 
     .detail-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.2rem 1.6rem;
+      gap: 1.1rem 1.6rem;
+      margin-bottom: 1.6rem;
     }
+
+    .detail-grid:last-child { margin-bottom: 0; }
 
     .detail-field {
       display: flex;
@@ -120,66 +184,74 @@
       gap: 5px;
     }
 
-    .detail-field.full-width {
-      grid-column: 1 / -1;
-    }
+    .detail-field.full-width { grid-column: 1 / -1; }
 
     .detail-label {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: 0.9px;
       color: #9aabb7;
       text-transform: uppercase;
     }
 
     .detail-input {
       width: 100%;
-      padding: 10px 14px;
-      border: 1px solid #e8ecf0;
+      padding: 9px 12px;
+      border: 1px solid #edf0f3;
       border-radius: 8px;
       font-size: 13.5px;
-      color: #4a5568;
+      color: #2c3e50;
       background: #f8fafc;
       cursor: default;
       box-sizing: border-box;
       outline: none;
       font-family: inherit;
+      transition: none;
     }
 
     .detail-input:disabled {
       opacity: 1;
-      -webkit-text-fill-color: #4a5568;
+      -webkit-text-fill-color: #2c3e50;
+    }
+
+    .detail-input.muted:disabled {
+      -webkit-text-fill-color: #9aabb7;
     }
 
     .detail-badge-field {
       display: flex;
       align-items: center;
-      padding: 9px 14px;
-      border: 1px solid #e8ecf0;
+      padding: 8px 12px;
+      border: 1px solid #edf0f3;
       border-radius: 8px;
       background: #f8fafc;
-      min-height: 42px;
+      min-height: 40px;
     }
 
-    /* Loading skeleton */
-    .skeleton {
-      background: linear-gradient(90deg, #f0f2f5 25%, #e8ecf0 50%, #f0f2f5 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-      border-radius: 6px;
-      height: 18px;
+    /* Section separator */
+    .detail-section-sep {
+      height: 1px;
+      background: #f0f2f5;
+      margin: 1.4rem 0;
     }
 
-    @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+    /* ── Responsive ── */
+    @media (max-width: 960px) {
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
+      .profile-sidebar {
+        position: static;
+      }
+      .profile-sidebar-header { height: 64px; }
+      .profile-avatar-wrap { bottom: -30px; }
+      .profile-avatar-lg { width: 60px; height: 60px; font-size: 20px; }
+      .profile-sidebar-body { padding-top: 40px; }
     }
 
     @media (max-width: 640px) {
       .detail-grid { grid-template-columns: 1fr; }
       .detail-field.full-width { grid-column: 1; }
-      .profile-hero { flex-direction: column; text-align: center; }
-      .profile-hero-meta { justify-content: center; }
     }
   </style>
 </head>
@@ -189,92 +261,108 @@
 <div class="main-wrap">
 <div id="navbar-placeholder"></div>
   <main class="content">
-    <div class="detail-wrap">
 
-      <!-- BACK BUTTON -->
-      <button class="back-btn" onclick="window.location.href='employee-management.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to Employee Management
-      </button>
+    <!-- BACK BUTTON -->
+    <button class="back-btn" onclick="window.location.href='employee-management.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Employee Management
+    </button>
 
-      <!-- PROFILE HERO -->
-      <div class="profile-hero" id="profile-hero">
+    <div class="detail-layout">
+
+      <!-- ══ LEFT: Profile Sidebar ══ -->
+      <div class="profile-sidebar">
+        <div class="profile-sidebar-header"></div>
         <div class="profile-avatar-wrap">
-          <div class="profile-avatar" id="profile-avatar" style="background:#e0ebe5;color:#3d5c45;">
+          <div class="profile-avatar-lg" id="profile-avatar">
             <span id="avatar-content">—</span>
           </div>
         </div>
-        <div class="profile-hero-info">
-          <div class="profile-hero-name" id="hero-name">Loading...</div>
-          <div class="profile-hero-meta">
-            <span class="profile-hero-email" id="hero-email">—</span>
+        <div class="profile-sidebar-body">
+          <div class="profile-sidebar-name" id="hero-name">Loading...</div>
+          <div class="profile-sidebar-email" id="hero-email">—</div>
+          <div class="profile-sidebar-badges">
             <span id="hero-role-badge"></span>
             <span id="hero-status-badge"></span>
+          </div>
+          <div class="profile-divider"></div>
+          <div class="profile-meta-list">
+            <div class="profile-meta-row">
+              <span class="profile-meta-label">Role ID</span>
+              <span class="profile-meta-value" id="sidebar-role-id">—</span>
+            </div>
+            <div class="profile-meta-row">
+              <span class="profile-meta-label">Team</span>
+              <span class="profile-meta-value" id="sidebar-team">—</span>
+            </div>
+            <div class="profile-meta-row">
+              <span class="profile-meta-label">Manager</span>
+              <span class="profile-meta-value" id="sidebar-manager">—</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- DETAIL CARD -->
+      <!-- ══ RIGHT: Info Card ══ -->
       <div class="detail-card">
-        <div class="detail-card-title">Employee Information</div>
-        <div class="detail-grid">
 
-          <!-- Full Name -->
+        <!-- Section: Personal Info -->
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Personal Information
+        </div>
+        <div class="detail-grid">
           <div class="detail-field">
             <span class="detail-label">Full Name</span>
             <input type="text" class="detail-input" id="d-name" disabled>
           </div>
-
-          <!-- Email -->
           <div class="detail-field">
-            <span class="detail-label">Email</span>
+            <span class="detail-label">Email Address</span>
             <input type="email" class="detail-input" id="d-email" disabled>
           </div>
-
-          <!-- Birth Date -->
           <div class="detail-field">
             <span class="detail-label">Birth Date</span>
             <input type="text" class="detail-input" id="d-birth-date" disabled>
           </div>
-
-          <!-- Role -->
           <div class="detail-field">
-            <span class="detail-label">Role</span>
-            <div class="detail-badge-field" id="d-role-wrap">
-              <span id="d-role">—</span>
-            </div>
-          </div>
-
-          <!-- Status -->
-          <div class="detail-field">
-            <span class="detail-label">Status</span>
-            <div class="detail-badge-field" id="d-status-wrap">
+            <span class="detail-label">Account Status</span>
+            <div class="detail-badge-field">
               <span id="d-status">—</span>
             </div>
           </div>
+        </div>
 
-          <!-- Manager -->
+        <div class="detail-section-sep"></div>
+
+        <!-- Section: Employment Info -->
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          Employment Details
+        </div>
+        <div class="detail-grid">
           <div class="detail-field">
-            <span class="detail-label">Reports To (Manager)</span>
-            <input type="text" class="detail-input" id="d-manager" disabled>
+            <span class="detail-label">Role</span>
+            <div class="detail-badge-field">
+              <span id="d-role">—</span>
+            </div>
           </div>
-
-          <!-- Team -->
-          <div class="detail-field">
-            <span class="detail-label">Team</span>
-            <input type="text" class="detail-input" id="d-team" disabled>
-          </div>
-
-          <!-- Role ID -->
           <div class="detail-field">
             <span class="detail-label">Role ID</span>
             <input type="text" class="detail-input" id="d-role-id" disabled>
           </div>
-
+          <div class="detail-field">
+            <span class="detail-label">Reports To (Manager)</span>
+            <input type="text" class="detail-input" id="d-manager" disabled>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Team</span>
+            <input type="text" class="detail-input" id="d-team" disabled>
+          </div>
         </div>
-      </div>
 
+      </div>
     </div>
+
   </main>
 </div>
 
@@ -292,29 +380,19 @@ guardRoute(['c_level', 'hrd_manager']);
 
 var currentEmployeeId = null;
 
-/* ══════════════════════════════════════════════
-   LOAD DETAIL
-══════════════════════════════════════════════ */
 async function loadDetail() {
   var res = await fetchEmployeeDetail(currentEmployeeId);
-
   if (!res.success) {
     document.getElementById('hero-name').textContent = 'Employee not found';
     return;
   }
-
-  var d = mapEmployeeDetailData(res.data);
-  renderDetail(d);
+  renderDetail(mapEmployeeDetailData(res.data));
 }
 
-/* ══════════════════════════════════════════════
-   RENDER DETAIL
-══════════════════════════════════════════════ */
 function renderDetail(d) {
-  /* hero avatar */
+  /* ── Avatar ── */
   var avatarEl = document.getElementById('profile-avatar');
   var avatarContent = document.getElementById('avatar-content');
-
   if (d.photoProfile) {
     avatarEl.style.background = 'transparent';
     avatarContent.innerHTML = '<img src="' + escHtml(d.photoProfile) + '" alt="' + escHtml(d.name) + '">';
@@ -324,11 +402,9 @@ function renderDetail(d) {
     avatarContent.textContent = d.initials;
   }
 
-  /* hero info */
-  var heroName = document.getElementById('hero-name');
-  var heroEmail = document.getElementById('hero-email');
-  if (heroName)  heroName.textContent  = d.name;
-  if (heroEmail) heroEmail.textContent = d.email;
+  /* ── Sidebar identity ── */
+  setText('hero-name',  d.name);
+  setText('hero-email', d.email);
 
   var heroRole = document.getElementById('hero-role-badge');
   if (heroRole) heroRole.innerHTML = '<span class="emp-role-badge ' + d.roleBadge.colorClass + '">' + escHtml(d.roleBadge.label) + '</span>';
@@ -336,45 +412,43 @@ function renderDetail(d) {
   var heroStatus = document.getElementById('hero-status-badge');
   if (heroStatus) heroStatus.innerHTML = '<span class="emp-status-badge ' + d.statusBadge.colorClass + '">' + d.statusBadge.label + '</span>';
 
-  /* form fields */
+  var managerVal = d.managerName || (d.managerId ? 'ID: ' + d.managerId : '—');
+  var teamVal    = d.teamName    || (d.teamId    ? 'ID: ' + d.teamId    : '—');
+
+  setText('sidebar-role-id', d.roleId !== null ? String(d.roleId) : '—');
+  setText('sidebar-team',    teamVal);
+  setText('sidebar-manager', managerVal);
+
+  /* ── Form fields ── */
   setField('d-name',       d.name);
   setField('d-email',      d.email);
   setField('d-birth-date', d.birthDateDisplay);
   setField('d-role-id',    d.roleId !== null ? String(d.roleId) : '—');
+  setField('d-manager',    managerVal);
+  setField('d-team',       teamVal);
 
-  /* manager */
-  var managerVal = d.managerName
-    ? d.managerName
-    : (d.managerId ? 'ID: ' + d.managerId : '—');
-  setField('d-manager', managerVal);
+  /* ── Badge fields ── */
+  var roleEl = document.getElementById('d-role');
+  if (roleEl) roleEl.innerHTML = '<span class="emp-role-badge ' + d.roleBadge.colorClass + '">' + escHtml(d.roleBadge.label) + '</span>';
 
-  /* team */
-  var teamVal = d.teamName
-    ? d.teamName
-    : (d.teamId ? 'ID: ' + d.teamId : '—');
-  setField('d-team', teamVal);
-
-  /* role badge */
-  var roleWrap = document.getElementById('d-role');
-  if (roleWrap) roleWrap.innerHTML = '<span class="emp-role-badge ' + d.roleBadge.colorClass + '">' + escHtml(d.roleBadge.label) + '</span>';
-
-  /* status badge */
-  var statusWrap = document.getElementById('d-status');
-  if (statusWrap) statusWrap.innerHTML = '<span class="emp-status-badge ' + d.statusBadge.colorClass + '">' + d.statusBadge.label + '</span>';
+  var statusEl = document.getElementById('d-status');
+  if (statusEl) statusEl.innerHTML = '<span class="emp-status-badge ' + d.statusBadge.colorClass + '">' + d.statusBadge.label + '</span>';
 }
 
 function setField(id, value) {
   var el = document.getElementById(id);
-  if (el) el.value = value !== null && value !== undefined ? String(value) : '—';
+  if (el) el.value = (value !== null && value !== undefined && value !== '') ? String(value) : '—';
+}
+
+function setText(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = (value !== null && value !== undefined) ? String(value) : '—';
 }
 
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ══════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════ */
 window.addEventListener('load', function() {
   currentEmployeeId = sessionStorage.getItem('selectedEmployeeId') || sessionStorage.getItem('currentEmployeeId');
   sessionStorage.removeItem('selectedEmployeeId');
