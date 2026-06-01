@@ -101,3 +101,38 @@ async function deleteEmployee(id) {
     error: null
   };
 }
+
+/* ── FormData helper — used for photo uploads (no Content-Type override) ── */
+async function _apiFormData(path, method, formData) {
+  var token = localStorage.getItem('hris_token');
+  var headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  try {
+    var response = await fetch(getApiUrl(path), { method: method, headers: headers, body: formData });
+    if (response.status === 401) {
+      handleUnauthorized();
+      return { success: false, data: null, error: 'Unauthorized. Please login again.' };
+    }
+    var data = await response.json().catch(function() { return {}; });
+    if (!response.ok) return { success: false, data: null, error: data.message || 'Request failed.' };
+    return { success: true, data: data, error: null };
+  } catch (err) {
+    return { success: false, data: null, error: err.message || 'Network error' };
+  }
+}
+
+async function createEmployeeWithPhoto(formData) {
+  var result = await _apiFormData('/users', 'POST', formData);
+  if (!result.success) return { success: false, data: null, message: result.error, error: result.error };
+  var resData = result.data || {};
+  return { success: true, data: resData.data || {}, message: resData.message || 'Employee created successfully', error: null };
+}
+
+async function updateEmployeeWithPhoto(id, formData) {
+  if (!id) return { success: false, data: null, message: 'Employee ID required', error: 'Missing ID' };
+  formData.append('_method', 'PUT');
+  var result = await _apiFormData('/users/' + id, 'POST', formData);
+  if (!result.success) return { success: false, data: null, message: result.error, error: result.error };
+  var resData = result.data || {};
+  return { success: true, data: resData.data || {}, message: resData.message || 'Employee updated successfully', error: null };
+}

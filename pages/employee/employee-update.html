@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Edit Employee</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+  <link rel="stylesheet" href="../../assets/css/employee.css">
+  <link rel="stylesheet" href="../../assets/css/employee-detail.css">
+  <link rel="stylesheet" href="../../assets/css/employee-create.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+  <main class="content">
+
+    <button class="back-btn" onclick="window.location.href='employee-management.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Employee Management
+    </button>
+
+    <div class="page-header-row" style="margin-bottom:1.4rem;">
+      <div>
+        <h1 class="hub-title">Edit Employee</h1>
+        <div class="hub-sub">UPDATE ACCOUNT</div>
+      </div>
+    </div>
+
+    <div class="detail-layout">
+
+      <!-- ══ LEFT: Profile Sidebar ══ -->
+      <div class="profile-sidebar">
+        <div class="profile-sidebar-header">
+          <div class="profile-avatar-lg emp-photo-trigger" id="photo-preview" onclick="document.getElementById('photo-input').click()" title="Click to change photo">
+            <span id="avatar-content">—</span>
+          </div>
+          <div class="profile-header-name" id="sidebar-name">Loading...</div>
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/jpg,image/webp" style="display:none;" onchange="handlePhotoChange(this)">
+        </div>
+        <div class="profile-sidebar-body">
+          <div class="profile-sidebar-badges">
+            <span id="sidebar-role-badge"></span>
+            <span id="sidebar-status-badge"></span>
+          </div>
+          <div class="profile-divider"></div>
+          <div class="emp-photo-hint" style="font-size:11px;text-align:center;margin-bottom:16px;">Click photo to change</div>
+          <div class="profile-meta-list">
+            <div class="profile-meta-row">
+              <span class="profile-meta-label">Status</span>
+              <div style="display:flex;align-items:center;gap:7px;">
+                <label class="emp-toggle" style="margin:0;">
+                  <input type="checkbox" id="f-is-active" onchange="updateStatusBadge()">
+                  <span class="emp-toggle-slider"></span>
+                </label>
+                <span class="profile-meta-value" id="active-label">Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ RIGHT: Form Card ══ -->
+      <div class="detail-card">
+
+        <!-- Account Information -->
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Account Information
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field">
+            <span class="detail-label">Email <i class="req">*</i></span>
+            <input type="email" class="detail-input" id="f-email" placeholder="john@company.com">
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Password</span>
+            <input type="password" class="detail-input" id="f-password" placeholder="Leave blank to keep current">
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Role <i class="req">*</i></span>
+            <select class="detail-input" id="f-role">
+              <option value="">Select Role</option>
+              <option value="c_level">C-Level</option>
+              <option value="hrd_manager">HRD Manager</option>
+              <option value="technical_manager">Tech Manager</option>
+              <option value="team_leader">Team Leader</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+          <div class="detail-field" id="manager-group" style="display:none;">
+            <span class="detail-label">Reports To (Manager)</span>
+            <select class="detail-input" id="f-manager">
+              <option value="">Select Manager (optional)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="detail-section-sep"></div>
+
+        <!-- Personal Information -->
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Personal Information
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field">
+            <span class="detail-label">Full Name <i class="req">*</i></span>
+            <input type="text" class="detail-input" id="f-name" placeholder="Alphabet characters only">
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Birth Date</span>
+            <input type="date" class="detail-input" id="f-birth-date">
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Gender</span>
+            <select class="detail-input" id="f-gender">
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Religion</span>
+            <select class="detail-input" id="f-religion">
+              <option value="">Select Religion</option>
+              <option value="Islam">Islam</option>
+              <option value="Kristen">Kristen</option>
+              <option value="Katolik">Katolik</option>
+              <option value="Buddha">Buddha</option>
+              <option value="Hindu">Hindu</option>
+              <option value="Konghucu">Konghucu</option>
+            </select>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Phone <i class="req">*</i></span>
+            <input type="text" class="detail-input" id="f-phone" placeholder="08xx or +62xx (10–16 digits)">
+          </div>
+          <div class="detail-field full-width">
+            <span class="detail-label">Address <i class="req">*</i></span>
+            <input type="text" class="detail-input" id="f-address" placeholder="Min. 10, max. 255 characters">
+          </div>
+        </div>
+
+        <div id="form-error" class="emp-form-error"></div>
+
+        <div class="emp-form-actions">
+          <button class="btn-cancel" onclick="window.location.href='employee-management.html'">Cancel</button>
+          <button class="btn-submit" id="btn-submit" onclick="submitUpdate()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>
+            Save Changes
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/render/team.js"></script>
+<script src="../../assets/js/render/employee.js"></script>
+<script src="../../assets/js/fetch/employee.js"></script>
+<script src="../../assets/js/fetch/employee-detail.js"></script>
+<script src="../../assets/js/render/employee-detail.js"></script>
+<script>
+guardRoute(['c_level', 'hrd_manager']);
+
+var _employeeId   = null;
+var _managersCache = null;
+var _photoFile    = null;
+
+/* ── Photo preview ── */
+function handlePhotoChange(input) {
+  if (!input.files || !input.files[0]) return;
+  _photoFile = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('photo-preview');
+    var content = document.getElementById('avatar-content');
+    preview.style.background = 'transparent';
+    content.innerHTML = '<img src="' + e.target.result + '" alt="preview" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  };
+  reader.readAsDataURL(_photoFile);
+}
+
+/* ── Load and pre-fill existing data ── */
+async function loadEmployee() {
+  var res = await fetchEmployeeDetail(_employeeId);
+  if (!res.success) {
+    document.getElementById('sidebar-name').textContent = 'Employee not found';
+    return;
+  }
+
+  var raw = res.data;
+  var d   = mapEmployeeDetailData(raw);
+
+  /* Sidebar avatar */
+  var avatarEl = document.getElementById('photo-preview');
+  var avatarContent = document.getElementById('avatar-content');
+  if (d.photoProfile) {
+    avatarEl.style.background = 'transparent';
+    avatarContent.innerHTML = '<img src="' + d.photoProfile + '" alt="' + d.name + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  } else {
+    avatarEl.style.background = d.avatarBg;
+    avatarEl.style.color      = d.avatarColor;
+    avatarContent.textContent = d.initials;
+  }
+  document.getElementById('sidebar-name').textContent = d.name;
+
+  var roleBadgeEl = document.getElementById('sidebar-role-badge');
+  if (roleBadgeEl) roleBadgeEl.innerHTML = '<span class="emp-role-badge ' + d.roleBadge.colorClass + '">' + d.roleBadge.label + '</span>';
+
+  var statusBadgeEl = document.getElementById('sidebar-status-badge');
+  if (statusBadgeEl) statusBadgeEl.innerHTML = '<span class="emp-status-badge ' + d.statusBadge.colorClass + '">' + d.statusBadge.label + '</span>';
+
+  /* Form pre-fill */
+  document.getElementById('f-email').value      = d.email !== '—' ? d.email : '';
+  document.getElementById('f-role').value        = d.role  || '';
+  document.getElementById('f-name').value        = d.name  !== '—' ? d.name : '';
+  document.getElementById('f-birth-date').value  = raw.birth_date || '';
+  document.getElementById('f-gender').value      = raw.gender   || '';
+  document.getElementById('f-religion').value    = raw.religion || '';
+  document.getElementById('f-phone').value       = raw.phone    || '';
+  document.getElementById('f-address').value     = raw.address  || '';
+
+  var isActive = d.isActive;
+  document.getElementById('f-is-active').checked = isActive;
+  document.getElementById('active-label').textContent = isActive ? 'Active' : 'Inactive';
+
+  /* Manager dropdown */
+  var showMgr = (d.role === 'team_leader' || d.role === 'staff');
+  document.getElementById('manager-group').style.display = showMgr ? '' : 'none';
+  if (showMgr) {
+    await ensureManagersLoaded();
+    document.getElementById('f-manager').value = d.managerId || '';
+  }
+}
+
+/* ── Status badge live update ── */
+function updateStatusBadge() {
+  var isActive = document.getElementById('f-is-active').checked;
+  document.getElementById('active-label').textContent = isActive ? 'Active' : 'Inactive';
+  var badge = buildStatusBadgeData(isActive);
+  var el    = document.getElementById('sidebar-status-badge');
+  if (el) el.innerHTML = '<span class="emp-status-badge ' + badge.colorClass + '">' + badge.label + '</span>';
+}
+
+/* ── Role → show/hide manager + live badge ── */
+document.getElementById('f-role').addEventListener('change', async function() {
+  var show = (this.value === 'team_leader' || this.value === 'staff');
+  document.getElementById('manager-group').style.display = show ? '' : 'none';
+  if (show) await ensureManagersLoaded();
+  var badge = buildRoleBadgeData(this.value);
+  var el    = document.getElementById('sidebar-role-badge');
+  if (el) el.innerHTML = '<span class="emp-role-badge ' + badge.colorClass + '">' + badge.label + '</span>';
+});
+
+async function ensureManagersLoaded() {
+  if (_managersCache) { populateManagers(_managersCache); return; }
+  var res = await fetchManagers();
+  if (res.success) { _managersCache = res.data; populateManagers(res.data); }
+}
+
+function populateManagers(managers) {
+  var sel     = document.getElementById('f-manager');
+  var current = sel.value;
+  sel.innerHTML = '<option value="">Select Manager (optional)</option>';
+  (managers || []).forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.name + ' (' + (ROLE_BADGE_MAP[m.role] ? ROLE_BADGE_MAP[m.role].label : m.role) + ')';
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
+/* ── Validation ── */
+function showError(msg) {
+  var el = document.getElementById('form-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function clearError() { document.getElementById('form-error').style.display = 'none'; }
+
+function validateForm() {
+  var name     = document.getElementById('f-name').value.trim();
+  var email    = document.getElementById('f-email').value.trim();
+  var password = document.getElementById('f-password').value;
+  var role     = document.getElementById('f-role').value;
+  var phone    = document.getElementById('f-phone').value.trim();
+  var address  = document.getElementById('f-address').value.trim();
+
+  if (!name)                                   { showError('Full name is required'); return false; }
+  if (!/^[a-zA-Z\s]+$/.test(name))            { showError('Full name must contain letters and spaces only'); return false; }
+  if (!email)                                  { showError('Email is required'); return false; }
+  if (password && password.length < 8)         { showError('Password must be at least 8 characters'); return false; }
+  if (!role)                                   { showError('Role is required'); return false; }
+  if (!phone)                                  { showError('Phone number is required'); return false; }
+  if (!/^(08|\+62)/.test(phone))              { showError('Phone must start with 08 or +62'); return false; }
+  if (phone.length < 10 || phone.length > 16) { showError('Phone must be 10–16 characters'); return false; }
+  if (!address)                                { showError('Address is required'); return false; }
+  if (address.length < 10)                     { showError('Address must be at least 10 characters'); return false; }
+  if (address.length > 255)                    { showError('Address must be at most 255 characters'); return false; }
+  return true;
+}
+
+/* ── Submit ── */
+async function submitUpdate() {
+  clearError();
+  if (!validateForm()) return;
+
+  var btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  var formData = new FormData();
+  formData.append('name',      document.getElementById('f-name').value.trim());
+  formData.append('email',     document.getElementById('f-email').value.trim());
+  formData.append('role',      document.getElementById('f-role').value);
+  formData.append('is_active', document.getElementById('f-is-active').checked ? '1' : '0');
+
+  var password = document.getElementById('f-password').value;
+  if (password) formData.append('password', password);
+
+  var birthDate = document.getElementById('f-birth-date').value;
+  if (birthDate) formData.append('birth_date', birthDate);
+
+  var gender = document.getElementById('f-gender').value;
+  if (gender) formData.append('gender', gender);
+
+  var religion = document.getElementById('f-religion').value;
+  if (religion) formData.append('religion', religion);
+
+  formData.append('phone',   document.getElementById('f-phone').value.trim());
+  formData.append('address', document.getElementById('f-address').value.trim());
+
+  var role      = document.getElementById('f-role').value;
+  var managerId = document.getElementById('f-manager').value;
+  if (managerId && (role === 'team_leader' || role === 'staff')) {
+    formData.append('manager_id', managerId);
+  }
+
+  if (_photoFile) formData.append('photo_profile', _photoFile);
+
+  var res = await updateEmployeeWithPhoto(_employeeId, formData);
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg> Save Changes';
+
+  if (res.success) {
+    sessionStorage.setItem('emp_toast_msg',  res.message || 'Employee updated successfully');
+    sessionStorage.setItem('emp_toast_type', 'success');
+    window.location.href = 'employee-management.html';
+  } else {
+    showError(res.message || res.error || 'An error occurred');
+  }
+}
+
+window.addEventListener('load', function() {
+  _employeeId = sessionStorage.getItem('editEmployeeId');
+  if (!_employeeId) {
+    window.location.replace('employee-management.html');
+    return;
+  }
+  loadEmployee();
+  window.loadComponents();
+});
+</script>
+</body>
+</html>

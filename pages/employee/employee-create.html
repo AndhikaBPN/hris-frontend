@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Add Employee</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+  <link rel="stylesheet" href="../../assets/css/employee.css">
+  <link rel="stylesheet" href="../../assets/css/employee-detail.css">
+  <link rel="stylesheet" href="../../assets/css/employee-create.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+  <main class="content">
+
+    <button class="back-btn" onclick="window.location.href='employee-management.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Employee Management
+    </button>
+
+    <div class="page-header-row" style="margin-bottom:1.4rem;">
+      <div>
+        <h1 class="hub-title">Add Employee</h1>
+        <div class="hub-sub">CREATE NEW ACCOUNT</div>
+      </div>
+    </div>
+
+    <div class="emp-create-wrap">
+      <div class="detail-card">
+
+        <!-- Photo Upload -->
+        <div class="emp-photo-area">
+          <div class="profile-avatar-lg emp-photo-trigger" id="photo-preview" onclick="document.getElementById('photo-input').click()" title="Click to upload photo">
+            <span id="avatar-content">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;opacity:0.45;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </span>
+          </div>
+          <div class="emp-photo-hint">Click to upload photo <span>(optional)</span></div>
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/jpg,image/webp" style="display:none;" onchange="handlePhotoChange(this)">
+        </div>
+
+        <div class="detail-section-sep"></div>
+
+        <!-- Account Information -->
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Account Information
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field">
+            <span class="detail-label">Email <i class="req">*</i></span>
+            <input type="email" class="detail-input" id="f-email" placeholder="john@company.com">
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Password <i class="req">*</i></span>
+            <input type="password" class="detail-input" id="f-password" placeholder="Min. 8 characters">
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Role <i class="req">*</i></span>
+            <select class="detail-input" id="f-role">
+              <option value="">Select Role</option>
+              <option value="c_level">C-Level</option>
+              <option value="hrd_manager">HRD Manager</option>
+              <option value="technical_manager">Tech Manager</option>
+              <option value="team_leader">Team Leader</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+          <div class="detail-field" id="manager-group" style="display:none;">
+            <span class="detail-label">Reports To (Manager)</span>
+            <select class="detail-input" id="f-manager">
+              <option value="">Select Manager (optional)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="detail-section-sep"></div>
+
+        <!-- Personal Information -->
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Personal Information
+        </div>
+        <div class="detail-grid">
+          <div class="detail-field">
+            <span class="detail-label">Full Name <i class="req">*</i></span>
+            <input type="text" class="detail-input" id="f-name" placeholder="Alphabet characters only">
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Birth Date</span>
+            <input type="date" class="detail-input" id="f-birth-date">
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Gender</span>
+            <select class="detail-input" id="f-gender">
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Religion</span>
+            <select class="detail-input" id="f-religion">
+              <option value="">Select Religion</option>
+              <option value="Islam">Islam</option>
+              <option value="Kristen">Kristen</option>
+              <option value="Katolik">Katolik</option>
+              <option value="Buddha">Buddha</option>
+              <option value="Hindu">Hindu</option>
+              <option value="Konghucu">Konghucu</option>
+            </select>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Phone <i class="req">*</i></span>
+            <input type="text" class="detail-input" id="f-phone" placeholder="08xx or +62xx (10–16 digits)">
+          </div>
+          <div class="detail-field full-width">
+            <span class="detail-label">Address <i class="req">*</i></span>
+            <input type="text" class="detail-input" id="f-address" placeholder="Min. 10, max. 255 characters">
+          </div>
+        </div>
+
+        <div id="form-error" class="emp-form-error"></div>
+
+        <div class="emp-form-actions">
+          <button class="btn-cancel" onclick="window.location.href='employee-management.html'">Cancel</button>
+          <button class="btn-submit" id="btn-submit" onclick="submitCreate()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            Create Employee
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/render/team.js"></script>
+<script src="../../assets/js/render/employee.js"></script>
+<script src="../../assets/js/fetch/employee.js"></script>
+<script>
+guardRoute(['c_level', 'hrd_manager']);
+
+var _managersCache = null;
+var _photoFile = null;
+
+/* ── Photo preview ── */
+function handlePhotoChange(input) {
+  if (!input.files || !input.files[0]) return;
+  _photoFile = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('photo-preview');
+    var content = document.getElementById('avatar-content');
+    preview.style.background = 'transparent';
+    content.innerHTML = '<img src="' + e.target.result + '" alt="preview" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  };
+  reader.readAsDataURL(_photoFile);
+}
+
+/* ── Role → show/hide manager dropdown ── */
+document.getElementById('f-role').addEventListener('change', async function() {
+  var show = (this.value === 'team_leader' || this.value === 'staff');
+  document.getElementById('manager-group').style.display = show ? '' : 'none';
+  if (show) await ensureManagersLoaded();
+});
+
+async function ensureManagersLoaded() {
+  if (_managersCache) { populateManagers(_managersCache); return; }
+  var res = await fetchManagers();
+  if (res.success) { _managersCache = res.data; populateManagers(res.data); }
+}
+
+function populateManagers(managers) {
+  var sel = document.getElementById('f-manager');
+  var current = sel.value;
+  sel.innerHTML = '<option value="">Select Manager (optional)</option>';
+  (managers || []).forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.name + ' (' + (ROLE_BADGE_MAP[m.role] ? ROLE_BADGE_MAP[m.role].label : m.role) + ')';
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
+/* ── Validation ── */
+function showError(msg) {
+  var el = document.getElementById('form-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function clearError() { document.getElementById('form-error').style.display = 'none'; }
+
+function validateForm() {
+  var name     = document.getElementById('f-name').value.trim();
+  var email    = document.getElementById('f-email').value.trim();
+  var password = document.getElementById('f-password').value;
+  var role     = document.getElementById('f-role').value;
+  var phone    = document.getElementById('f-phone').value.trim();
+  var address  = document.getElementById('f-address').value.trim();
+
+  if (!name)                                   { showError('Full name is required'); return false; }
+  if (!/^[a-zA-Z\s]+$/.test(name))            { showError('Full name must contain letters and spaces only'); return false; }
+  if (!email)                                  { showError('Email is required'); return false; }
+  if (!password)                               { showError('Password is required'); return false; }
+  if (password.length < 8)                     { showError('Password must be at least 8 characters'); return false; }
+  if (!role)                                   { showError('Role is required'); return false; }
+  if (!phone)                                  { showError('Phone number is required'); return false; }
+  if (!/^(08|\+62)/.test(phone))              { showError('Phone must start with 08 or +62'); return false; }
+  if (phone.length < 10 || phone.length > 16) { showError('Phone must be 10–16 characters'); return false; }
+  if (!address)                                { showError('Address is required'); return false; }
+  if (address.length < 10)                     { showError('Address must be at least 10 characters'); return false; }
+  if (address.length > 255)                    { showError('Address must be at most 255 characters'); return false; }
+  return true;
+}
+
+/* ── Submit ── */
+async function submitCreate() {
+  clearError();
+  if (!validateForm()) return;
+
+  var btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  var formData = new FormData();
+  formData.append('name',     document.getElementById('f-name').value.trim());
+  formData.append('email',    document.getElementById('f-email').value.trim());
+  formData.append('password', document.getElementById('f-password').value);
+  formData.append('role',     document.getElementById('f-role').value);
+
+  var birthDate = document.getElementById('f-birth-date').value;
+  if (birthDate) formData.append('birth_date', birthDate);
+
+  var gender = document.getElementById('f-gender').value;
+  if (gender) formData.append('gender', gender);
+
+  var religion = document.getElementById('f-religion').value;
+  if (religion) formData.append('religion', religion);
+
+  formData.append('phone',   document.getElementById('f-phone').value.trim());
+  formData.append('address', document.getElementById('f-address').value.trim());
+
+  var role      = document.getElementById('f-role').value;
+  var managerId = document.getElementById('f-manager').value;
+  if (managerId && (role === 'team_leader' || role === 'staff')) {
+    formData.append('manager_id', managerId);
+  }
+
+  if (_photoFile) formData.append('photo_profile', _photoFile);
+
+  var res = await createEmployeeWithPhoto(formData);
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg> Create Employee';
+
+  if (res.success) {
+    sessionStorage.setItem('emp_toast_msg',  res.message || 'Employee created successfully');
+    sessionStorage.setItem('emp_toast_type', 'success');
+    window.location.href = 'employee-management.html';
+  } else {
+    showError(res.message || res.error || 'An error occurred');
+  }
+}
+
+window.addEventListener('load', function() {
+  window.loadComponents();
+});
+</script>
+</body>
+</html>
