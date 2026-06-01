@@ -39,3 +39,5 @@ agentdb.rvf
 agentdb.rvf.lock
 .claude
 claude.md
+.agents
+skills-lock.json
