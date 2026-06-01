@@ -29,7 +29,7 @@
       display: grid;
       grid-template-columns: 280px 1fr;
       gap: 1.5rem;
-      align-items: start;
+      align-items: stretch;
     }
 
     /* ══ LEFT: Profile Sidebar ══ */
@@ -40,27 +40,26 @@
       overflow: hidden;
       position: sticky;
       top: 1.5rem;
+      display: flex;
+      flex-direction: column;
     }
 
     .profile-sidebar-header {
-      height: 80px;
       background: linear-gradient(135deg, #3d5c45 0%, #4a7c59 60%, #5a9468 100%);
-      position: relative;
-    }
-
-    .profile-avatar-wrap {
-      position: absolute;
-      bottom: -36px;
-      left: 50%;
-      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 1.4rem 24px;
+      gap: 12px;
     }
 
     .profile-avatar-lg {
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      border: 3px solid #fff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      border: 3px solid rgba(255,255,255,0.85);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -70,6 +69,7 @@
       overflow: hidden;
       background: #e0ebe5;
       color: #3d5c45;
+      flex-shrink: 0;
     }
 
     .profile-avatar-lg img {
@@ -79,17 +79,20 @@
       border-radius: 50%;
     }
 
-    .profile-sidebar-body {
-      padding: 46px 1.4rem 1.4rem;
+    .profile-header-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
       text-align: center;
+      word-break: break-word;
     }
 
-    .profile-sidebar-name {
-      font-size: 17px;
-      font-weight: 700;
-      color: #2c3e50;
-      margin-bottom: 4px;
-      word-break: break-word;
+    .profile-sidebar-body {
+      padding: 1.2rem 1.4rem 1.4rem;
+      text-align: center;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .profile-sidebar-email {
@@ -97,6 +100,7 @@
       color: #9aabb7;
       margin-bottom: 14px;
       word-break: break-all;
+      margin-top: 2px;
     }
 
     .profile-sidebar-badges {
@@ -239,14 +243,10 @@
     @media (max-width: 960px) {
       .detail-layout {
         grid-template-columns: 1fr;
+        align-items: start;
       }
-      .profile-sidebar {
-        position: static;
-      }
-      .profile-sidebar-header { height: 64px; }
-      .profile-avatar-wrap { bottom: -30px; }
+      .profile-sidebar { position: static; }
       .profile-avatar-lg { width: 60px; height: 60px; font-size: 20px; }
-      .profile-sidebar-body { padding-top: 40px; }
     }
 
     @media (max-width: 640px) {
@@ -272,14 +272,13 @@
 
       <!-- ══ LEFT: Profile Sidebar ══ -->
       <div class="profile-sidebar">
-        <div class="profile-sidebar-header"></div>
-        <div class="profile-avatar-wrap">
+        <div class="profile-sidebar-header">
           <div class="profile-avatar-lg" id="profile-avatar">
             <span id="avatar-content">—</span>
           </div>
+          <div class="profile-header-name" id="hero-name">Loading...</div>
         </div>
         <div class="profile-sidebar-body">
-          <div class="profile-sidebar-name" id="hero-name">Loading...</div>
           <div class="profile-sidebar-email" id="hero-email">—</div>
           <div class="profile-sidebar-badges">
             <span id="hero-role-badge"></span>
@@ -287,10 +286,6 @@
           </div>
           <div class="profile-divider"></div>
           <div class="profile-meta-list">
-            <div class="profile-meta-row">
-              <span class="profile-meta-label">Role ID</span>
-              <span class="profile-meta-value" id="sidebar-role-id">—</span>
-            </div>
             <div class="profile-meta-row">
               <span class="profile-meta-label">Team</span>
               <span class="profile-meta-value" id="sidebar-team">—</span>
@@ -340,15 +335,11 @@
           Employment Details
         </div>
         <div class="detail-grid">
-          <div class="detail-field">
+          <div class="detail-field full-width">
             <span class="detail-label">Role</span>
             <div class="detail-badge-field">
               <span id="d-role">—</span>
             </div>
-          </div>
-          <div class="detail-field">
-            <span class="detail-label">Role ID</span>
-            <input type="text" class="detail-input" id="d-role-id" disabled>
           </div>
           <div class="detail-field">
             <span class="detail-label">Reports To (Manager)</span>
@@ -415,7 +406,6 @@ function renderDetail(d) {
   var managerVal = d.managerName || (d.managerId ? 'ID: ' + d.managerId : '—');
   var teamVal    = d.teamName    || (d.teamId    ? 'ID: ' + d.teamId    : '—');
 
-  setText('sidebar-role-id', d.roleId !== null ? String(d.roleId) : '—');
   setText('sidebar-team',    teamVal);
   setText('sidebar-manager', managerVal);
 
@@ -423,7 +413,6 @@ function renderDetail(d) {
   setField('d-name',       d.name);
   setField('d-email',      d.email);
   setField('d-birth-date', d.birthDateDisplay);
-  setField('d-role-id',    d.roleId !== null ? String(d.roleId) : '—');
   setField('d-manager',    managerVal);
   setField('d-team',       teamVal);
 
