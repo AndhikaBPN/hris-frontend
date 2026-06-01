@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Master Shift</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+  <link rel="stylesheet" href="../../assets/css/shift.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+<main class="content">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header-row">
+    <div>
+      <h1 class="hub-title">Shift Schedule</h1>
+      <div class="hub-sub">SHIFT SCHEDULE MANAGEMENT</div>
+    </div>
+  </div>
+
+  <!-- ══ TOP CARD: Schedule Creator ══ -->
+  <div class="card" style="margin-bottom:20px;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="section-title" style="margin-bottom:0;">Schedule Creator</div>
+      <div id="sel-date-count" class="shift-sel-count" style="display:none;"></div>
+    </div>
+
+    <!-- Edit mode banner -->
+    <div class="edit-mode-banner" id="edit-mode-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span id="edit-banner-text">0 shifts selected for editing</span>
+      <button class="btn-cancel-edit" onclick="cancelEditMode()">Cancel</button>
+    </div>
+
+    <!-- Employee Multi-Select -->
+    <div class="emp-ms-wrap" id="emp-ms-wrap">
+      <div class="emp-ms-trigger" id="emp-ms-trigger" onclick="toggleEmpDropdown()">
+        <div class="emp-ms-tags" id="emp-ms-tags">
+          <span class="emp-ms-placeholder" id="emp-ms-placeholder">Select staff or team leaders...</span>
+        </div>
+        <svg class="emp-ms-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="emp-ms-dropdown" id="emp-ms-dropdown" style="display:none;">
+        <div class="emp-ms-search">
+          <input type="text" id="emp-ms-search-input" placeholder="Search by name..." oninput="filterEmpList(this.value)">
+        </div>
+        <div class="emp-ms-list" id="emp-ms-list">
+          <div style="padding:12px 14px;color:#9aabb7;font-size:12px;">Loading employees...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar header -->
+    <div class="shift-cal-header">
+      <h2 class="shift-cal-month" id="shift-cal-month"></h2>
+      <div class="shift-cal-nav">
+        <button class="shift-cal-nav-btn" onclick="shiftChangeMonth(-1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="shift-cal-nav-btn" onclick="shiftChangeMonth(1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Day headers -->
+    <div class="shift-cal-grid" style="margin-bottom:3px;">
+      <div class="shift-cal-day-label">SUN</div>
+      <div class="shift-cal-day-label">MON</div>
+      <div class="shift-cal-day-label">TUE</div>
+      <div class="shift-cal-day-label">WED</div>
+      <div class="shift-cal-day-label">THU</div>
+      <div class="shift-cal-day-label">FRI</div>
+      <div class="shift-cal-day-label">SAT</div>
+    </div>
+
+    <!-- Calendar body -->
+    <div class="shift-cal-grid" id="shift-cal-body"></div>
+
+    <div style="font-size:11px;color:#9aabb7;margin-top:8px;text-align:right;">
+      Click date to select · Click again to deselect · Past dates are locked
+    </div>
+
+    <!-- Actions -->
+    <div class="shift-top-actions">
+      <button class="btn-shift-clear" onclick="clearTopCard()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Clear
+      </button>
+      <a class="btn-shift-import" href="../../docs/shift_schedule_import_sample.xlsx" download="shift_schedule_import_sample.xlsx" style="text-decoration:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Sample File
+      </a>
+      <button class="btn-shift-import" onclick="openImportModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import Excel
+      </button>
+      <button class="btn-shift-save" id="btn-save" onclick="saveShifts()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ BOTTOM CARD: Shift List ══ -->
+  <div class="card">
+    <div class="section-title" style="margin-bottom:16px;">Shift Schedule List</div>
+
+    <!-- Filters -->
+    <div class="shift-list-filters">
+      <span class="shift-filter-label">Date</span>
+      <input type="date" id="filter-date-from" class="shift-date-input" onchange="applyListFilters()">
+      <span class="shift-filter-label">–</span>
+      <input type="date" id="filter-date-to" class="shift-date-input" onchange="applyListFilters()">
+      <input type="text" id="filter-team" class="shift-date-input" placeholder="Filter team..." oninput="applyListFilters()" style="min-width:120px;">
+      <button class="btn-filter-reset" onclick="resetListFilters()">⟳ Reset</button>
+    </div>
+
+    <!-- Selected rows bar -->
+    <div class="sel-rows-bar" id="sel-rows-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span id="sel-rows-text">0 selected</span>
+      <button class="btn-edit-selected" onclick="loadSelectedForEdit()">Edit Selected</button>
+      <button class="btn-clear-sel" onclick="clearRowSelection()">Cancel</button>
+    </div>
+
+    <!-- Table -->
+    <div style="overflow-x:auto;">
+      <table class="shift-table">
+        <thead>
+          <tr>
+            <th class="shift-check-col">
+              <input type="checkbox" id="select-all-cb" onchange="toggleSelectAll(this.checked)" style="width:14px;height:14px;accent-color:#e67e00;cursor:pointer;">
+            </th>
+            <th>NAME</th>
+            <th>DATE</th>
+            <th>SHIFT</th>
+            <th>TEAM</th>
+            <th class="shift-actions-col">ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="shift-list-tbody">
+          <tr><td colspan="6" class="shift-empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="shift-pag">
+      <span class="shift-pag-info" id="shift-pag-info"></span>
+      <button class="shift-pag-btn" id="shift-pag-prev" disabled onclick="changeListPage(-1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="shift-pag-btn" id="shift-pag-next" disabled onclick="changeListPage(1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ══ IMPORT MODAL ══ -->
+<div class="import-modal-overlay" id="import-modal" onclick="onImportOverlayClick(event)">
+  <div class="import-modal-box" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div class="import-modal-title">Import Shift Schedule</div>
+        <div class="import-modal-sub">Upload Excel file (.xlsx / .xls) to bulk-import</div>
+      </div>
+      <button onclick="closeImportModal()" style="background:none;border:none;cursor:pointer;color:#9aabb7;padding:4px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="import-drop-zone" id="import-drop-zone" onclick="document.getElementById('import-file-input').click()">
+      <div class="import-drop-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5a6a7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px;display:block;margin:0 auto;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div class="import-drop-text">Click to select file or drag &amp; drop here</div>
+      <div class="import-drop-hint">.xlsx or .xls · Max 5 MB</div>
+    </div>
+    <input type="file" id="import-file-input" accept=".xlsx,.xls" style="display:none;" onchange="onImportFileSelected(this)">
+
+    <div class="import-file-selected" id="import-file-selected">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span id="import-file-name-text"></span>
+    </div>
+
+    <div class="import-modal-footer">
+      <button class="btn-import-cancel" onclick="closeImportModal()">Cancel</button>
+      <button class="btn-import-upload" id="btn-import-upload" disabled onclick="doImportUpload()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:inline;vertical-align:middle;margin-right:5px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE CONFIRM MODAL ══ -->
+<div class="modal-overlay" id="delete-modal" onclick="closeDeleteModal()">
+  <div class="modal-box del-confirm-box" onclick="event.stopPropagation()" style="max-width:400px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" style="color:#d9534f;">Delete Shift</div>
+        <div class="modal-subtitle">This action cannot be undone</div>
+      </div>
+      <button class="modal-close" onclick="closeDeleteModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="padding:18px 24px;">
+      <div style="background:#fff5f5;border:1px solid #f5c6cb;border-radius:8px;padding:14px 16px;font-size:13px;color:#721c24;" id="delete-confirm-msg">
+        Are you sure you want to delete this shift?
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-submit" id="btn-confirm-del" style="background:#d9534f;" onclick="confirmDelete()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="app-toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span class="toast-text" id="toast-text"></span>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/shift.js"></script>
+<script src="../../assets/js/render/shift.js"></script>
+<script>
+guardRoute(['c_level', 'hrd_manager', 'technical_manager']);
+
+/* ════════════════════════════════
+   STATE
+════════════════════════════════ */
+var calYear, calMonth;
+var TODAY_STR      = '';
+var selectedDates  = {};       // { 'YYYY-MM-DD': 'morning'|'afternoon'|'night'|'dayoff'|'' }
+var selectedEmployees = [];    // [{ id, name, role }]
+var editingRows    = [];        // rows being edited from bottom list
+var allStaff       = [];        // loaded staff + team_leaders
+var filteredStaff  = [];
+var empDropdownOpen = false;
+
+var shiftListData  = [];        // current page rows (mapped)
+var listPage       = 1;
+var listLastPage   = 1;
+var listTotal      = 0;
+var LIST_LIMIT     = 15;
+var listFilters    = { start_date: '', end_date: '', team: '' };
+var selectedRowIdxSet = new Set();
+
+var masterShifts    = [];
+var DAYOFF_SHIFT_ID = 6;
+var _deleteTargetIdx = null;
+var _toastTimer = null;
+
+/* ════════════════════════════════
+   UTILITIES
+════════════════════════════════ */
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function getTodayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ════════════════════════════════
+   CALENDAR — TOP CARD
+════════════════════════════════ */
+var SHIFT_OPTS = []; /* populated from /api/shifts on load */
+
+function shiftChangeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderShiftCal();
+}
+
+function renderShiftCal() {
+  var MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+  var labelEl = document.getElementById('shift-cal-month');
+  if (labelEl) labelEl.textContent = MONTHS[calMonth] + ' ' + calYear;
+
+  var today        = getTodayStr();
+  var firstWeekday = new Date(calYear, calMonth, 1).getDay();
+  var daysInMonth  = new Date(calYear, calMonth+1, 0).getDate();
+
+  var html = '';
+  for (var i = 0; i < firstWeekday; i++) {
+    html += '<div class="shift-cal-cell empty"></div>';
+  }
+
+  for (var d = 1; d <= daysInMonth; d++) {
+    var dateStr = calYear + '-' + pad(calMonth+1) + '-' + pad(d);
+    var isToday = dateStr === today;
+    var isPast  = dateStr < today;
+    var isSel   = Object.prototype.hasOwnProperty.call(selectedDates, dateStr);
+    var isEdit  = editingRows.some(function(r) { return r.date === dateStr; });
+
+    var cls = 'shift-cal-cell';
+    if (isPast)  cls += ' past';
+    if (isToday) cls += ' today';
+    if (isSel && !isEdit) cls += ' selected';
+    if (isEdit)  cls += ' in-edit';
+
+    var numHtml = '<span class="cell-day-num">' + d + '</span>';
+
+    var dropHtml = '';
+    if ((isSel || isEdit) && !isPast) {
+      var cur = selectedDates[dateStr] || '';
+      dropHtml = '<select class="cell-shift-select" onclick="event.stopPropagation()" onchange="onCellShiftChange(\'' + dateStr + '\',this.value)">'
+        + '<option value="">Pick shift...</option>';
+      SHIFT_OPTS.forEach(function(o) {
+        var isSel = cur !== '' && cur !== undefined && cur == o.value;
+        dropHtml += '<option value="' + o.value + '"' + (isSel ? ' selected' : '') + '>' + o.label + '</option>';
+      });
+      dropHtml += '</select>';
+    }
+
+    var onclk = isPast ? '' : 'onShiftCalDay(\'' + dateStr + '\')';
+    html += '<div class="' + cls + '" onclick="' + onclk + '">' + numHtml + dropHtml + '</div>';
+  }
+
+  var body = document.getElementById('shift-cal-body');
+  if (body) body.innerHTML = html;
+
+  updateSelDateCount();
+  updateSaveBtn();
+}
+
+function onShiftCalDay(dateStr) {
+  if (Object.prototype.hasOwnProperty.call(selectedDates, dateStr)) {
+    delete selectedDates[dateStr];
+  } else {
+    selectedDates[dateStr] = '';
+  }
+  renderShiftCal();
+}
+
+function onCellShiftChange(dateStr, val) {
+  selectedDates[dateStr] = val ? parseInt(val, 10) : '';
+  updateSaveBtn();
+}
+
+function updateSelDateCount() {
+  var keys = Object.keys(selectedDates);
+  var countEl = document.getElementById('sel-date-count');
+  if (!countEl) return;
+  if (keys.length > 0) {
+    countEl.style.display = '';
+    countEl.textContent = keys.length + ' date' + (keys.length > 1 ? 's' : '') + ' selected';
+  } else {
+    countEl.style.display = 'none';
+  }
+}
+
+function updateSaveBtn() {
+  var btn = document.getElementById('btn-save');
+  if (!btn) return;
+  var hasEmp   = selectedEmployees.length > 0;
+  var hasDates = Object.keys(selectedDates).some(function(k) { return selectedDates[k] !== '' && selectedDates[k] !== undefined; });
+  btn.disabled = !(hasEmp && hasDates);
+  var isEdit   = editingRows.length > 0;
+  btn.innerHTML = (isEdit
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Update'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save');
+}
+
+/* ════════════════════════════════
+   EMPLOYEE MULTI-SELECT
+════════════════════════════════ */
+function toggleEmpDropdown() {
+  empDropdownOpen = !empDropdownOpen;
+  var dd      = document.getElementById('emp-ms-dropdown');
+  var trigger = document.getElementById('emp-ms-trigger');
+  if (dd)      dd.style.display = empDropdownOpen ? 'block' : 'none';
+  if (trigger) trigger.classList.toggle('open', empDropdownOpen);
+  if (empDropdownOpen) {
+    var inp = document.getElementById('emp-ms-search-input');
+    if (inp) { inp.value = ''; filterEmpList(''); inp.focus(); }
+  }
+}
+
+function closeEmpDropdown() {
+  empDropdownOpen = false;
+  var dd      = document.getElementById('emp-ms-dropdown');
+  var trigger = document.getElementById('emp-ms-trigger');
+  if (dd)      dd.style.display = 'none';
+  if (trigger) trigger.classList.remove('open');
+}
+
+function filterEmpList(query) {
+  query = (query || '').toLowerCase().trim();
+  filteredStaff = query
+    ? allStaff.filter(function(e) { return (e.name || '').toLowerCase().indexOf(query) !== -1; })
+    : allStaff.slice();
+  renderEmpList();
+}
+
+function renderEmpList() {
+  var list = document.getElementById('emp-ms-list');
+  if (!list) return;
+  if (filteredStaff.length === 0) {
+    list.innerHTML = '<div style="padding:12px 14px;color:#9aabb7;font-size:12px;">No employees found</div>';
+    return;
+  }
+  list.innerHTML = filteredStaff.map(function(e) {
+    var isChecked  = selectedEmployees.some(function(s) { return s.id === e.id; });
+    var roleLabel  = e.role === 'team_leader' ? 'Team Lead' : 'Staff';
+    var safeId   = JSON.stringify(e.id);
+    var safeName = escHtml(e.name).replace(/'/g, '&#39;');
+    return '<div class="emp-ms-item' + (isChecked ? ' checked' : '') + '" onclick="toggleEmployee(' + safeId + ',\'' + safeName + '\',\'' + e.role + '\')">'
+      + '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' onclick="event.stopPropagation();toggleEmployee(' + safeId + ',\'' + safeName + '\',\'' + e.role + '\')">'
+      + '<span class="emp-ms-item-name">' + escHtml(e.name) + '</span>'
+      + '<span class="emp-ms-item-role">' + roleLabel + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+function toggleEmployee(id, name, role) {
+  var idx = selectedEmployees.findIndex(function(e) { return e.id === id; });
+  if (idx >= 0) {
+    selectedEmployees.splice(idx, 1);
+  } else {
+    selectedEmployees.push({ id: id, name: name, role: role });
+  }
+  renderEmpTags();
+  renderEmpList();
+  updateSaveBtn();
+}
+
+function renderEmpTags() {
+  var tagsEl      = document.getElementById('emp-ms-tags');
+  var placeholder = document.getElementById('emp-ms-placeholder');
+  if (!tagsEl) return;
+  if (selectedEmployees.length === 0) {
+    tagsEl.innerHTML = '';
+    if (placeholder) placeholder.style.display = '';
+    return;
+  }
+  if (placeholder) placeholder.style.display = 'none';
+  tagsEl.innerHTML = selectedEmployees.map(function(e) {
+    return '<span class="emp-ms-tag">'
+      + escHtml(e.name)
+      + '<span class="emp-ms-tag-x" onclick="event.stopPropagation();removeEmployee(' + JSON.stringify(e.id) + ')">×</span>'
+      + '</span>';
+  }).join('');
+}
+
+function removeEmployee(id) {
+  selectedEmployees = selectedEmployees.filter(function(e) { return e.id !== id; });
+  renderEmpTags();
+  renderEmpList();
+  updateSaveBtn();
+}
+
+/* ════════════════════════════════
+   SAVE / CLEAR
+════════════════════════════════ */
+function clearTopCard() {
+  selectedDates     = {};
+  selectedEmployees = [];
+  editingRows       = [];
+  renderEmpTags();
+  renderEmpList();
+  renderShiftCal();
+  updateEditBanner();
+  clearRowSelection();
+}
+
+function cancelEditMode() {
+  editingRows = [];
+  selectedDates = {};
+  updateEditBanner();
+  renderShiftCal();
+  clearRowSelection();
+}
+
+function updateEditBanner() {
+  var banner = document.getElementById('edit-mode-banner');
+  var text   = document.getElementById('edit-banner-text');
+  if (!banner) return;
+  if (editingRows.length > 0) {
+    banner.classList.add('show');
+    if (text) text.textContent = editingRows.length + ' shift' + (editingRows.length > 1 ? 's' : '') + ' selected for editing';
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+async function saveShifts() {
+  var hasEmp     = selectedEmployees.length > 0;
+  var datesReady = Object.keys(selectedDates).filter(function(k) { return selectedDates[k] !== '' && selectedDates[k] !== undefined; });
+  if (!hasEmp)                 { showToast('Select at least one employee.', 'error'); return; }
+  if (datesReady.length === 0) { showToast('Assign a shift type to at least one date.', 'error'); return; }
+
+  var btn = document.getElementById('btn-save');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  var isEdit = editingRows.length > 0;
+
+  try {
+    if (isEdit) {
+      /* UPDATE: build array { id, shift_id, is_day_off } per editingRow */
+      var updates = [];
+      editingRows.forEach(function(row) {
+        var newShiftId = selectedDates[row.date];
+        if (newShiftId === '' || newShiftId === undefined) return;
+        updates.push({
+          id:         row.id,
+          shift_id:   newShiftId,
+          is_day_off: newShiftId === DAYOFF_SHIFT_ID ? 1 : 0
+        });
+      });
+      if (updates.length === 0) { showToast('No changes to save.', 'error'); return; }
+
+      var res = await updateShiftSchedulesBulk(updates);
+      if (res.success) {
+        var updated = (res.data && res.data.updated) ? res.data.updated : updates.length;
+        showToast('Updated ' + updated + ' shift(s) successfully.', 'success');
+        clearTopCard();
+        loadShiftList();
+      } else {
+        showToast(res.error || 'Update failed.', 'error');
+      }
+    } else {
+      /* CREATE: group dates by shift_id → bulk POST per group */
+      var groups = {};
+      datesReady.forEach(function(k) {
+        var sid = selectedDates[k];
+        if (!groups[sid]) groups[sid] = [];
+        groups[sid].push(k);
+      });
+
+      var userIds = selectedEmployees.map(function(e) { return e.id; });
+      var created = 0;
+      var errors  = [];
+      var groupKeys = Object.keys(groups);
+
+      for (var i = 0; i < groupKeys.length; i++) {
+        var shiftId = parseInt(groupKeys[i], 10);
+        var payload = {
+          user_ids:   userIds,
+          dates:      groups[groupKeys[i]],
+          shift_id:   shiftId,
+          is_day_off: shiftId === DAYOFF_SHIFT_ID ? 1 : 0
+        };
+        var r = await createShiftSchedulesBulk(payload);
+        if (r.success) {
+          var d = (r.data && r.data.data) ? r.data.data : (r.data || {});
+          created += d.created || 0;
+          if (d.errors && d.errors.length) errors = errors.concat(d.errors);
+        } else {
+          errors.push(r.error || 'Failed for shift ' + shiftId);
+        }
+      }
+
+      if (errors.length > 0 && created === 0) {
+        showToast(errors[0], 'error');
+      } else if (errors.length > 0) {
+        showToast('Saved ' + created + ' record(s). Warning: ' + errors[0], 'error');
+      } else {
+        showToast('Saved ' + created + ' schedule(s) successfully.', 'success');
+      }
+      clearTopCard();
+      loadShiftList();
+    }
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    updateSaveBtn();
+  }
+}
+
+/* ════════════════════════════════
+   IMPORT MODAL
+════════════════════════════════ */
+function openImportModal() {
+  var modal = document.getElementById('import-modal');
+  if (modal) modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('import-file-selected').classList.remove('show');
+  document.getElementById('btn-import-upload').disabled = true;
+  var inp = document.getElementById('import-file-input');
+  if (inp) inp.value = '';
+
+  /* Drag & drop */
+  var zone = document.getElementById('import-drop-zone');
+  if (zone && !zone._dndWired) {
+    zone._dndWired = true;
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault(); zone.classList.remove('dragover');
+      var f = e.dataTransfer.files[0];
+      if (f) { var fi = document.getElementById('import-file-input'); fi.files = e.dataTransfer.files; onImportFileSelected(fi); }
+    });
+  }
+}
+
+function closeImportModal() {
+  var modal = document.getElementById('import-modal');
+  if (modal) modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function onImportOverlayClick(e) {
+  if (e.target === document.getElementById('import-modal')) closeImportModal();
+}
+
+function onImportFileSelected(input) {
+  var file   = input.files[0];
+  var selEl  = document.getElementById('import-file-selected');
+  var nameEl = document.getElementById('import-file-name-text');
+  var uploadBtn = document.getElementById('btn-import-upload');
+  if (file) {
+    selEl.classList.add('show');
+    nameEl.textContent = file.name;
+    uploadBtn.disabled = false;
+  } else {
+    selEl.classList.remove('show');
+    uploadBtn.disabled = true;
+  }
+}
+
+async function doImportUpload() {
+  var input = document.getElementById('import-file-input');
+  var file  = input && input.files[0];
+  if (!file) { showToast('No file selected.', 'error'); return; }
+
+  var btn     = document.getElementById('btn-import-upload');
+  var btnHtml = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:inline;vertical-align:middle;margin-right:5px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload';
+  if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
+
+  var res = await importShiftSchedules(file);
+
+  if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
+
+  if (res.success) {
+    var d   = res.data || {};
+    var msg = 'Imported ' + (d.imported || 0) + ' record(s)';
+    if (d.skipped) msg += ', ' + d.skipped + ' skipped';
+    showToast(msg, 'success');
+    closeImportModal();
+    loadShiftList();
+  } else {
+    showToast(res.error || 'Import failed.', 'error');
+  }
+}
+
+/* ════════════════════════════════
+   SHIFT LIST — BOTTOM CARD
+════════════════════════════════ */
+async function loadShiftList() {
+  showListMsg('Loading...');
+  var res = await fetchShiftScheduleList({
+    page:       listPage,
+    limit:      LIST_LIMIT,
+    start_date: listFilters.start_date,
+    end_date:   listFilters.end_date,
+    team:       listFilters.team
+  });
+
+  if (!res.success) {
+    showListMsg('Failed to load shift schedule.', true);
+    return;
+  }
+
+  shiftListData = buildShiftTableRows(res.data);
+  listLastPage  = res.meta.last_page || 1;
+  listTotal     = res.meta.total_records || res.meta.total || res.data.length;
+
+  renderShiftList();
+  renderListPag();
+}
+
+function renderShiftList() {
+  var tbody = document.getElementById('shift-list-tbody');
+  if (!tbody) return;
+
+  if (shiftListData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="shift-empty-state">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:36px;height:36px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+      + 'No shift schedule found</div></td></tr>';
+    updateSelectAllCb();
+    return;
+  }
+
+  tbody.innerHTML = shiftListData.map(function(r, idx) {
+    var isSel   = selectedRowIdxSet.has(idx);
+    var badge   = r.badge || { label: r.shiftType || '—', cls: 'dayoff' };
+    var canEdit = !r.isPast;
+    var badgeHtml = '<span class="shift-badge ' + badge.cls + '"><span class="dot"></span>' + escHtml(badge.label) + '</span>';
+
+    return '<tr class="' + (isSel ? 'row-selected' : '') + '" data-idx="' + idx + '">'
+      + '<td class="shift-check-col">'
+        + (canEdit ? '<input type="checkbox" ' + (isSel ? 'checked' : '') + ' data-idx="' + idx + '">' : '')
+      + '</td>'
+      + '<td style="font-weight:500;">' + escHtml(r.name) + '</td>'
+      + '<td style="white-space:nowrap;color:#5a6a7a;">' + escHtml(r.dateDisplay) + '</td>'
+      + '<td>' + badgeHtml + '</td>'
+      + '<td style="color:#6b7c8d;">' + escHtml(r.teamName) + '</td>'
+      + '<td class="shift-actions-col">'
+        + (canEdit
+          ? '<button class="btn-shift-del" data-idx="' + idx + '">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> Delete'
+            + '</button>'
+          : '<span style="color:#b0bec5;font-size:11px;">Past</span>')
+      + '</td>'
+      + '</tr>';
+  }).join('');
+
+  updateSelectAllCb();
+}
+
+function showListMsg(msg, isErr) {
+  var tbody = document.getElementById('shift-list-tbody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:'
+    + (isErr ? '#e57373' : '#9aabb7') + ';font-size:13px;">' + escHtml(msg) + '</td></tr>';
+}
+
+function renderListPag() {
+  var start  = listTotal === 0 ? 0 : (listPage - 1) * LIST_LIMIT + 1;
+  var end    = Math.min(listPage * LIST_LIMIT, listTotal);
+  var infoEl = document.getElementById('shift-pag-info');
+  var prevEl = document.getElementById('shift-pag-prev');
+  var nextEl = document.getElementById('shift-pag-next');
+  if (infoEl) infoEl.textContent = listTotal > 0 ? 'Showing ' + start + '–' + end + ' of ' + listTotal : 'No data';
+  if (prevEl) prevEl.disabled = listPage <= 1;
+  if (nextEl) nextEl.disabled = listPage >= listLastPage;
+}
+
+function changeListPage(dir) {
+  var newPage = listPage + dir;
+  if (newPage < 1 || newPage > listLastPage) return;
+  listPage = newPage;
+  clearRowSelection();
+  loadShiftList();
+}
+
+/* ── List event delegation ── */
+document.addEventListener('DOMContentLoaded', function() {
+  var tbody = document.getElementById('shift-list-tbody');
+  if (!tbody) return;
+
+  tbody.addEventListener('click', function(e) {
+    var tr = e.target.closest('tr[data-idx]');
+    if (!tr) return;
+    var idx = parseInt(tr.dataset.idx);
+    var row = shiftListData[idx];
+    if (!row) return;
+
+    /* Delete button */
+    if (e.target.closest('.btn-shift-del')) {
+      e.stopPropagation();
+      openDeleteModal(idx, row.name, row.dateDisplay);
+      return;
+    }
+
+    /* Checkbox */
+    if (e.target.matches('input[type=checkbox]')) {
+      if (e.target.checked) selectedRowIdxSet.add(idx);
+      else                  selectedRowIdxSet.delete(idx);
+      tr.classList.toggle('row-selected', e.target.checked);
+      updateSelRowsBar();
+      updateSelectAllCb();
+      return;
+    }
+
+    /* Row click → single edit */
+    if (row.isPast) return;
+    loadSingleRowForEdit(row, idx);
+  });
+});
+
+/* ── Row selection ── */
+function toggleSelectAll(checked) {
+  selectedRowIdxSet.clear();
+  if (checked) {
+    shiftListData.forEach(function(r, idx) { if (!r.isPast) selectedRowIdxSet.add(idx); });
+  }
+  renderShiftList();
+  updateSelRowsBar();
+}
+
+function updateSelectAllCb() {
+  var cb = document.getElementById('select-all-cb');
+  if (!cb) return;
+  var editableCount = shiftListData.filter(function(r) { return !r.isPast; }).length;
+  cb.checked       = editableCount > 0 && selectedRowIdxSet.size === editableCount;
+  cb.indeterminate = selectedRowIdxSet.size > 0 && selectedRowIdxSet.size < editableCount;
+}
+
+function updateSelRowsBar() {
+  var bar  = document.getElementById('sel-rows-bar');
+  var text = document.getElementById('sel-rows-text');
+  var n    = selectedRowIdxSet.size;
+  if (!bar) return;
+  if (n > 0) {
+    bar.classList.add('show');
+    if (text) text.textContent = n + ' shift' + (n > 1 ? 's' : '') + ' selected';
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+function clearRowSelection() {
+  selectedRowIdxSet.clear();
+  renderShiftList();
+  updateSelRowsBar();
+  var cb = document.getElementById('select-all-cb');
+  if (cb) { cb.checked = false; cb.indeterminate = false; }
+}
+
+/* ── Edit: single row click ── */
+function loadSingleRowForEdit(row, idx) {
+  editingRows    = [row];
+  selectedDates  = {};
+  selectedDates[row.date] = row.shiftId;
+
+  var existing = selectedEmployees.find(function(e) { return e.id === row.userId; });
+  if (!existing) {
+    var emp = allStaff.find(function(s) { return s.id === row.userId; });
+    selectedEmployees = [{ id: row.userId, name: row.name, role: emp ? emp.role : 'staff' }];
+  }
+
+  var parts  = row.date.split('-');
+  calYear    = parseInt(parts[0]);
+  calMonth   = parseInt(parts[1]) - 1;
+
+  /* highlight row */
+  selectedRowIdxSet.clear();
+  selectedRowIdxSet.add(idx);
+  renderShiftList();
+  updateSelRowsBar();
+
+  renderEmpTags();
+  renderEmpList();
+  renderShiftCal();
+  updateEditBanner();
+  updateSaveBtn();
+  document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Edit: batch (selected rows) ── */
+function loadSelectedForEdit() {
+  if (selectedRowIdxSet.size === 0) return;
+
+  editingRows   = [];
+  selectedDates = {};
+  var empMap    = {};
+
+  selectedRowIdxSet.forEach(function(idx) {
+    var r = shiftListData[idx];
+    if (r && !r.isPast) {
+      editingRows.push(r);
+      selectedDates[r.date] = r.shiftId;
+      if (!empMap[r.userId]) {
+        var emp = allStaff.find(function(s) { return s.id === r.userId; });
+        empMap[r.userId] = { id: r.userId, name: r.name, role: emp ? emp.role : 'staff' };
+      }
+    }
+  });
+
+  selectedEmployees = Object.values(empMap);
+
+  if (editingRows.length === 0) { showToast('No editable shifts selected.', 'error'); return; }
+
+  var firstDate = editingRows[0].date.split('-');
+  calYear  = parseInt(firstDate[0]);
+  calMonth = parseInt(firstDate[1]) - 1;
+
+  renderEmpTags();
+  renderEmpList();
+  renderShiftCal();
+  updateEditBanner();
+  updateSaveBtn();
+  document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ════════════════════════════════
+   DELETE MODAL
+════════════════════════════════ */
+function openDeleteModal(idx, name, dateDisplay) {
+  _deleteTargetIdx = idx;
+  var msgEl = document.getElementById('delete-confirm-msg');
+  if (msgEl) msgEl.innerHTML = 'Delete shift for <strong>' + escHtml(name) + '</strong> on <strong>' + escHtml(dateDisplay) + '</strong>?';
+  document.getElementById('delete-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  _deleteTargetIdx = null;
+}
+
+async function confirmDelete() {
+  if (_deleteTargetIdx === null) return;
+  var row = shiftListData[_deleteTargetIdx];
+  if (!row || !row.id) { showToast('Invalid record.', 'error'); closeDeleteModal(); return; }
+
+  var btn     = document.getElementById('btn-confirm-del');
+  var btnHtml = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> Delete';
+  if (btn) { btn.disabled = true; btn.textContent = 'Deleting...'; }
+
+  var res = await deleteShiftSchedule(row.id);
+
+  if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
+
+  if (res.success) {
+    showToast('Shift deleted successfully.', 'success');
+    closeDeleteModal();
+    loadShiftList();
+  } else {
+    showToast(res.error || 'Delete failed.', 'error');
+  }
+}
+
+/* ════════════════════════════════
+   FILTERS
+════════════════════════════════ */
+function applyListFilters() {
+  listFilters.start_date = document.getElementById('filter-date-from').value;
+  listFilters.end_date   = document.getElementById('filter-date-to').value;
+  listFilters.team       = document.getElementById('filter-team').value;
+  listPage = 1;
+  clearRowSelection();
+  loadShiftList();
+}
+
+function resetListFilters() {
+  document.getElementById('filter-date-from').value = '';
+  document.getElementById('filter-date-to').value   = '';
+  document.getElementById('filter-team').value       = '';
+  listFilters = { start_date: '', end_date: '', team: '' };
+  listPage = 1;
+  clearRowSelection();
+  loadShiftList();
+}
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+function showToast(message, type) {
+  var toast  = document.getElementById('app-toast');
+  var iconEl = document.getElementById('toast-icon');
+  var textEl = document.getElementById('toast-text');
+  if (!toast) return;
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+  toast.className = 'toast ' + (type || 'success');
+  textEl.textContent = message;
+  iconEl.innerHTML = type === 'error'
+    ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { toast.classList.add('show'); }); });
+  _toastTimer = setTimeout(function() { toast.classList.remove('show'); _toastTimer = null; }, 3500);
+}
+
+/* ════════════════════════════════
+   KEYBOARD
+════════════════════════════════ */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeDeleteModal();
+    closeImportModal();
+    closeEmpDropdown();
+  }
+});
+
+/* Click outside employee dropdown closes it */
+document.addEventListener('click', function(e) {
+  if (empDropdownOpen && !document.getElementById('emp-ms-wrap').contains(e.target)) {
+    closeEmpDropdown();
+  }
+});
+
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+window.addEventListener('load', async function() {
+  TODAY_STR = getTodayStr();
+  var d     = new Date();
+  calYear   = d.getFullYear();
+  calMonth  = d.getMonth();
+
+  renderShiftCal();
+
+  /* Fetch master shifts → build SHIFT_OPTS for cell dropdowns */
+  var shiftRes = await fetchMasterShifts();
+  if (shiftRes.success && shiftRes.data.length > 0) {
+    masterShifts = shiftRes.data;
+    SHIFT_OPTS = masterShifts.map(function(s) {
+      var timeLabel = '';
+      if (s.start_time && s.end_time) {
+        timeLabel = ' (' + s.start_time.substring(0, 5) + '–' + s.end_time.substring(0, 5) + ')';
+      }
+      return { value: s.id, label: s.name + timeLabel };
+    });
+  }
+
+  /* Load staff + team leaders for employee picker */
+  var empRes = await fetchShiftableEmployees();
+  if (empRes.success) {
+    allStaff      = empRes.data;
+    filteredStaff = allStaff.slice();
+    renderEmpList();
+  }
+
+  /* Load shift list */
+  await loadShiftList();
+
+  window.loadComponents();
+});
+</script>
+</body>
+</html>

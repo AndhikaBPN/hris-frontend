@@ -40,6 +40,7 @@ window.loadComponents = function() {
     const dashboardLink = navItems[0];
     const attendanceLink = navItems[1];
     const teamLink = navItems[2];
+    const employeeLink = navItems[4]
 
     if (dashboardLink) {
       if (userRole === 'c_level') dashboardLink.href = '../dashboard/dashboard-clevel.html';
@@ -58,19 +59,26 @@ window.loadComponents = function() {
       if (userRole === 'team_leader' || userRole === 'hrd_manager' || userRole === 'technical_manager' || userRole === 'c_level' || userRole === 'staff') teamLink.href = '../team/team-hub.html';
     }
 
+    if (employeeLink) {
+      if (userRole === 'c_level' || userRole === 'hrd_manager' || userRole === 'technical_manager') employeeLink.href = '../employee/employee-management.html';
+    }
+
     const faceSampleLink = document.querySelector('.nav-face-sample');
     if (faceSampleLink) faceSampleLink.href = '../face-sample/face-sample.html';
 
     const empLink = document.querySelector('.nav-employee');
     if (empLink) empLink.href = '../employee/employee-management.html';
 
+    const shiftLink = document.querySelector('.nav-shift');
+    if (shiftLink) shiftLink.href = '../shift-schedule/shift-schedule.html';
+
     // Hide unauthorized menus
     if (userRole === 'staff') {
-      document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
     } else if (userRole === 'team_leader') {
-      document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
     } else if (userRole === 'technical_manager') {
-      document.querySelectorAll('.nav-admin, .nav-employee').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-admin').forEach(e => e.style.display = 'none');
     } else if (userRole === 'hrd_manager') {
       document.querySelectorAll('.nav-admin').forEach(e => e.style.display = 'none');
     }
