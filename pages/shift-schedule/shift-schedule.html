@@ -154,12 +154,22 @@
     <!-- Pagination -->
     <div class="shift-pag">
       <span class="shift-pag-info" id="shift-pag-info"></span>
-      <button class="shift-pag-btn" id="shift-pag-prev" disabled onclick="changeListPage(-1)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button class="shift-pag-btn" id="shift-pag-next" disabled onclick="changeListPage(1)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+        <span style="font-size:12px;color:#7a8a99;">Rows</span>
+        <select id="limit-select" class="shift-filter-select" onchange="changeLimitPerPage(this.value)" style="padding:4px 8px;font-size:12px;min-width:64px;">
+          <option value="10">10</option>
+          <option value="15" selected>15</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+        <button class="shift-pag-btn" id="shift-pag-prev" disabled onclick="changeListPage(-1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span id="shift-pag-pages" style="font-size:12px;color:#5a6a7a;white-space:nowrap;"></span>
+        <button class="shift-pag-btn" id="shift-pag-next" disabled onclick="changeListPage(1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -744,20 +754,29 @@ function showListMsg(msg, isErr) {
 }
 
 function renderListPag() {
-  var start  = listTotal === 0 ? 0 : (listPage - 1) * LIST_LIMIT + 1;
-  var end    = Math.min(listPage * LIST_LIMIT, listTotal);
-  var infoEl = document.getElementById('shift-pag-info');
-  var prevEl = document.getElementById('shift-pag-prev');
-  var nextEl = document.getElementById('shift-pag-next');
-  if (infoEl) infoEl.textContent = listTotal > 0 ? 'Showing ' + start + '–' + end + ' of ' + listTotal : 'No data';
-  if (prevEl) prevEl.disabled = listPage <= 1;
-  if (nextEl) nextEl.disabled = listPage >= listLastPage;
+  var start    = listTotal === 0 ? 0 : (listPage - 1) * LIST_LIMIT + 1;
+  var end      = Math.min(listPage * LIST_LIMIT, listTotal);
+  var infoEl   = document.getElementById('shift-pag-info');
+  var pagesEl  = document.getElementById('shift-pag-pages');
+  var prevEl   = document.getElementById('shift-pag-prev');
+  var nextEl   = document.getElementById('shift-pag-next');
+  if (infoEl)  infoEl.textContent  = listTotal > 0 ? 'Showing ' + start + '–' + end + ' of ' + listTotal : 'No data';
+  if (pagesEl) pagesEl.textContent = listLastPage > 1 ? listPage + ' / ' + listLastPage : '';
+  if (prevEl)  prevEl.disabled = listPage <= 1;
+  if (nextEl)  nextEl.disabled = listPage >= listLastPage;
 }
 
 function changeListPage(dir) {
   var newPage = listPage + dir;
   if (newPage < 1 || newPage > listLastPage) return;
   listPage = newPage;
+  clearRowSelection();
+  loadShiftList();
+}
+
+function changeLimitPerPage(val) {
+  LIST_LIMIT = parseInt(val, 10) || 15;
+  listPage   = 1;
   clearRowSelection();
   loadShiftList();
 }
