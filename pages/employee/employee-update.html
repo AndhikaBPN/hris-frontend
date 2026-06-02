@@ -424,7 +424,8 @@ async function submitUpdate() {
   if (res.success) {
     sessionStorage.setItem('emp_toast_msg',  res.message || 'Employee updated successfully');
     sessionStorage.setItem('emp_toast_type', 'success');
-    window.location.href = 'employee-management.html';
+    sessionStorage.setItem('selectedEmployeeId', _employeeId);
+    window.location.href = 'employee-detail.html';
   } else {
     showError(res.message || res.error || 'An error occurred');
   }

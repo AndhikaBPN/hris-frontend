@@ -154,6 +154,12 @@
   </main>
 </div>
 
+<!-- TOAST -->
+<div class="toast" id="app-toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span class="toast-text" id="toast-text"></span>
+</div>
+
 <script src="../../assets/js/env.js"></script>
 <script src="../../assets/js/config.js"></script>
 <script src="../../assets/js/api.js"></script>
@@ -255,6 +261,24 @@ function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+var _toastTimer = null;
+function showToast(message, type) {
+  var toast  = document.getElementById('app-toast');
+  var iconEl = document.getElementById('toast-icon');
+  var textEl = document.getElementById('toast-text');
+  if (!toast) return;
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+  toast.className = 'toast ' + (type || 'success');
+  textEl.textContent = message;
+  iconEl.innerHTML = type === 'error'
+    ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+  });
+  _toastTimer = setTimeout(function() { toast.classList.remove('show'); _toastTimer = null; }, 3500);
+}
+
 window.addEventListener('load', function() {
   currentEmployeeId = sessionStorage.getItem('selectedEmployeeId') || sessionStorage.getItem('currentEmployeeId');
   sessionStorage.removeItem('selectedEmployeeId');
@@ -267,6 +291,14 @@ window.addEventListener('load', function() {
 
   loadDetail();
   window.loadComponents();
+
+  var msg  = sessionStorage.getItem('emp_toast_msg');
+  var type = sessionStorage.getItem('emp_toast_type');
+  if (msg) {
+    sessionStorage.removeItem('emp_toast_msg');
+    sessionStorage.removeItem('emp_toast_type');
+    setTimeout(function() { showToast(msg, type || 'success'); }, 400);
+  }
 });
 </script>
 </body>

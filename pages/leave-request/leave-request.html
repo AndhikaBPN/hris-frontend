@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Leave Request</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+  <link rel="stylesheet" href="../../assets/css/leave.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+  <main class="content">
+
+    <div class="page-header-row" style="margin-bottom:1.4rem;">
+      <div>
+        <h1 class="hub-title">Leave Request</h1>
+        <div class="hub-sub">LEAVE & ABSENCE MANAGEMENT</div>
+      </div>
+    </div>
+
+    <!-- ── 4 Summary Cards ── -->
+    <div class="leave-summary-grid" id="leave-summary-grid">
+      <div class="leave-summary-card">
+        <div class="leave-summary-icon prev">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+        <div class="leave-summary-info">
+          <div class="leave-summary-val" id="sum-prev-year">—</div>
+          <div class="leave-summary-lbl">Remaining (Last Year)</div>
+        </div>
+      </div>
+      <div class="leave-summary-card">
+        <div class="leave-summary-icon curr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </div>
+        <div class="leave-summary-info">
+          <div class="leave-summary-val" id="sum-curr-year">—</div>
+          <div class="leave-summary-lbl">Remaining (This Year)</div>
+        </div>
+      </div>
+      <div class="leave-summary-card">
+        <div class="leave-summary-icon used">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M12 2v20M2 12h20"/></svg>
+        </div>
+        <div class="leave-summary-info">
+          <div class="leave-summary-val" id="sum-used">—</div>
+          <div class="leave-summary-lbl">Days Used</div>
+        </div>
+      </div>
+      <div class="leave-summary-card">
+        <div class="leave-summary-icon total">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="leave-summary-info">
+          <div class="leave-summary-val" id="sum-total">—</div>
+          <div class="leave-summary-lbl">Total Quota (This Year)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Main List Card ── -->
+    <div class="card" style="padding:1.4rem;">
+
+      <div class="leave-list-header">
+        <span class="leave-list-title">Leave Requests</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <!-- Manager: pending approvals button (shown for hrd_manager / technical_manager / c_level) -->
+          <button class="leave-approval-toggle" id="btn-pending-approvals" style="display:none;" onclick="openApprovalsModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Pending Approvals
+            <span class="leave-approval-badge" id="pending-count">0</span>
+          </button>
+          <button class="leave-btn-add" onclick="goToAddLeave()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Leave Request
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="leave-filters">
+        <input class="leave-filter-input" type="text" id="filter-name" placeholder="Search name..." oninput="applyFilters()">
+        <input class="leave-filter-input" type="text" id="filter-team" placeholder="Search team..." oninput="applyFilters()" style="min-width:130px;">
+        <select class="leave-filter-select" id="filter-type" onchange="applyFilters()">
+          <option value="">All Types</option>
+          <option value="annual">Annual Leave</option>
+          <option value="sick">Sick</option>
+          <option value="permit">Permit</option>
+          <option value="leave_of_absence">Leave of Absence</option>
+        </select>
+        <select class="leave-filter-select" id="filter-status" onchange="applyFilters()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <div class="leave-filter-date-wrap">
+          <input class="leave-filter-input" type="text" id="filter-date-from" placeholder="Date from..." readonly style="cursor:pointer;">
+          <span style="color:#9aabb7;font-size:12px;">–</span>
+          <input class="leave-filter-input" type="text" id="filter-date-to" placeholder="Date to..." readonly style="cursor:pointer;">
+        </div>
+        <button class="leave-btn-clear" onclick="clearFilters()">Clear</button>
+      </div>
+
+      <!-- Table -->
+      <div class="leave-table-wrap">
+        <table class="leave-table">
+          <thead>
+            <tr>
+              <th class="col-name">Name</th>
+              <th class="col-team">Team</th>
+              <th class="col-date">Date</th>
+              <th class="col-type">Type</th>
+              <th class="col-stat">Status</th>
+              <th class="col-act">Action</th>
+            </tr>
+          </thead>
+          <tbody id="leave-tbody">
+            <tr><td colspan="6" class="leave-empty">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="leave-pag">
+        <span class="leave-pag-info" id="leave-pag-info"></span>
+        <div class="leave-pag-btns">
+          <button class="leave-pag-btn" id="pag-prev" disabled onclick="changePage(-1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span class="leave-pag-pages" id="leave-pag-pages"></span>
+          <button class="leave-pag-btn" id="pag-next" disabled onclick="changePage(1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ Detail Popup ══ -->
+<div class="leave-modal-overlay" id="detail-modal">
+  <div class="leave-modal">
+    <div class="leave-modal-head">
+      <span class="leave-modal-title">Leave Request Detail</span>
+      <button class="leave-modal-close" onclick="closeDetailModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="leave-modal-body" id="detail-modal-body">
+      <div class="leave-empty">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Pending Approvals Modal ══ -->
+<div class="leave-modal-overlay" id="approvals-modal">
+  <div class="leave-modal" style="max-width:560px;">
+    <div class="leave-modal-head">
+      <span class="leave-modal-title">Pending Approvals</span>
+      <button class="leave-modal-close" onclick="closeApprovalsModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="approvals-list" style="display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;">
+      <div class="leave-empty">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Approve/Reject Detail Popup ══ -->
+<div class="leave-modal-overlay" id="approval-detail-modal">
+  <div class="leave-modal">
+    <div class="leave-modal-head">
+      <span class="leave-modal-title">Leave Request Detail</span>
+      <button class="leave-modal-close" onclick="closeApprovalDetailModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="leave-modal-body" id="approval-detail-body">
+      <div class="leave-empty">Loading...</div>
+    </div>
+    <div class="leave-modal-actions" id="approval-detail-actions" style="display:none;">
+      <button class="leave-btn-reject"  id="btn-reject-action"  onclick="doRejectAction()">Reject</button>
+      <button class="leave-btn-approve" id="btn-approve-action" onclick="doApproveAction()">Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="app-toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span class="toast-text" id="toast-text"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/leave.js"></script>
+<script src="../../assets/js/render/leave.js"></script>
+<script>
+guardRoute(['staff', 'team_leader', 'hrd_manager', 'technical_manager', 'c_level']);
+
+var _user     = JSON.parse(localStorage.getItem('hris_user') || '{}');
+var _role     = _user.role     || '';
+var _teamId   = _user.team_id  || '';
+var _userId   = _user.id       || '';
+
+var LIST_LIMIT    = 15;
+var listPage      = 1;
+var listLastPage  = 1;
+var listTotal     = 0;
+var _activeDetail = null;
+var _activeApprovalId = null;
+
+var filters = { name: '', team: '', type: '', status: '', date_from: '', date_to: '' };
+
+/* ── Init flatpickr ── */
+flatpickr('#filter-date-from', {
+  dateFormat: 'Y-m-d',
+  onChange: function(sel, str) { filters.date_from = str; applyFilters(); }
+});
+flatpickr('#filter-date-to', {
+  dateFormat: 'Y-m-d',
+  onChange: function(sel, str) { filters.date_to = str; applyFilters(); }
+});
+
+/* ── Role-based setup ── */
+function setupRoleAccess() {
+  var isManager = _role === 'hrd_manager' || _role === 'technical_manager' || _role === 'c_level';
+  if (isManager) {
+    document.getElementById('btn-pending-approvals').style.display = '';
+    loadPendingCount();
+  }
+  /* c_level hides add button — no leave needed */
+  if (_role === 'c_level') {
+    document.querySelector('.leave-btn-add').style.display = 'none';
+    document.getElementById('leave-summary-grid').style.display = 'none';
+  }
+  /* staff: hide name & team filters (own data only) */
+  if (_role === 'staff') {
+    document.getElementById('filter-name').style.display = 'none';
+    document.getElementById('filter-team').style.display = 'none';
+  }
+}
+
+/* ── Summary ── */
+async function loadSummary() {
+  if (_role === 'c_level') return;
+  var res = await fetchLeaveSummary();
+  if (!res.success) return;
+  var s = mapLeaveSummary(res.data);
+  document.getElementById('sum-prev-year').textContent = s.prevYearRemaining;
+  document.getElementById('sum-curr-year').textContent = s.currYearRemaining;
+  document.getElementById('sum-used').textContent      = s.used;
+  document.getElementById('sum-total').textContent     = s.totalThisYear;
+}
+
+/* ── List ── */
+async function loadLeaveList() {
+  document.getElementById('leave-tbody').innerHTML = '<tr><td colspan="6" class="leave-empty">Loading...</td></tr>';
+
+  var opts = {
+    page:      listPage,
+    limit:     LIST_LIMIT,
+    name:      filters.name,
+    team:      filters.team,
+    type:      filters.type,
+    status:    filters.status,
+    date_from: filters.date_from,
+    date_to:   filters.date_to
+  };
+
+  /* team_leader sends own team_id for scoped list */
+  if (_role === 'team_leader' && _teamId) opts.team_id = _teamId;
+
+  var res = await fetchLeaveList(opts);
+  if (!res.success) {
+    document.getElementById('leave-tbody').innerHTML = '<tr><td colspan="6" class="leave-empty">Failed to load data.</td></tr>';
+    return;
+  }
+
+  var rows = mapLeaveList(res.data);
+  renderLeaveTable(rows);
+
+  listTotal    = res.meta.total_records || res.meta.total || rows.length;
+  listLastPage = res.meta.total_pages   || res.meta.last_page || 1;
+  renderPagination();
+}
+
+function renderLeaveTable(rows) {
+  var tbody = document.getElementById('leave-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="leave-empty">No leave requests found.</td></tr>';
+    return;
+  }
+
+  var canSeeAll = (_role === 'hrd_manager' || _role === 'technical_manager' || _role === 'c_level' || _role === 'team_leader');
+
+  tbody.innerHTML = rows.map(function(r) {
+    var nameCell = canSeeAll
+      ? '<div class="leave-name-cell">' + escHtml(r.name) + '</div>'
+      : '<div class="leave-name-cell">My Request</div>';
+
+    var teamCell = canSeeAll
+      ? escHtml(r.team)
+      : '—';
+
+    var actHtml = '<div class="leave-act-wrap">';
+    actHtml += '<button class="leave-btn-view" onclick="openDetailModal(' + r.id + ')">View</button>';
+    if (r.canCancel) {
+      actHtml += '<button class="leave-btn-cancel" onclick="doCancelRequest(' + r.id + ', this)">Cancel</button>';
+    }
+    actHtml += '</div>';
+
+    return '<tr>'
+      + '<td>' + nameCell + '</td>'
+      + '<td>' + escHtml(teamCell) + '</td>'
+      + '<td><div>' + escHtml(r.dateDisplay) + '</div><div class="leave-days-cell">' + r.days + ' day' + (r.days !== 1 ? 's' : '') + '</div></td>'
+      + '<td><span class="leave-type-badge ' + r.typeBadge.cls + '">' + escHtml(r.typeBadge.label) + '</span></td>'
+      + '<td><span class="leave-status-badge ' + r.statusBadge.cls + '">' + escHtml(r.statusBadge.label) + '</span></td>'
+      + '<td>' + actHtml + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+/* ── Pagination ── */
+function renderPagination() {
+  var start   = listTotal === 0 ? 0 : (listPage - 1) * LIST_LIMIT + 1;
+  var end     = Math.min(listPage * LIST_LIMIT, listTotal);
+  var infoEl  = document.getElementById('leave-pag-info');
+  var pagesEl = document.getElementById('leave-pag-pages');
+  var prevEl  = document.getElementById('pag-prev');
+  var nextEl  = document.getElementById('pag-next');
+  if (infoEl)  infoEl.textContent  = listTotal > 0 ? 'Showing ' + start + '–' + end + ' of ' + listTotal : 'No data';
+  if (pagesEl) pagesEl.textContent = listLastPage > 1 ? listPage + ' / ' + listLastPage : '';
+  if (prevEl)  prevEl.disabled = listPage <= 1;
+  if (nextEl)  nextEl.disabled = listPage >= listLastPage;
+}
+
+function changePage(dir) {
+  var next = listPage + dir;
+  if (next < 1 || next > listLastPage) return;
+  listPage = next;
+  loadLeaveList();
+}
+
+/* ── Filters ── */
+function applyFilters() {
+  filters.name   = document.getElementById('filter-name').value.trim();
+  filters.team   = document.getElementById('filter-team').value.trim();
+  filters.type   = document.getElementById('filter-type').value;
+  filters.status = document.getElementById('filter-status').value;
+  listPage = 1;
+  loadLeaveList();
+}
+
+function clearFilters() {
+  document.getElementById('filter-name').value   = '';
+  document.getElementById('filter-team').value   = '';
+  document.getElementById('filter-type').value   = '';
+  document.getElementById('filter-status').value = '';
+  document.getElementById('filter-date-from')._flatpickr && document.getElementById('filter-date-from')._flatpickr.clear();
+  document.getElementById('filter-date-to')._flatpickr  && document.getElementById('filter-date-to')._flatpickr.clear();
+  filters = { name: '', team: '', type: '', status: '', date_from: '', date_to: '' };
+  listPage = 1;
+  loadLeaveList();
+}
+
+/* ── Detail Modal ── */
+async function openDetailModal(id) {
+  document.getElementById('detail-modal-body').innerHTML = '<div class="leave-empty">Loading...</div>';
+  document.getElementById('detail-modal').classList.add('open');
+
+  var res = await fetchLeaveDetail(id);
+  if (!res.success) {
+    document.getElementById('detail-modal-body').innerHTML = '<div class="leave-empty">Failed to load detail.</div>';
+    return;
+  }
+  var d = mapLeaveDetail(res.data);
+  renderDetailModalBody(document.getElementById('detail-modal-body'), d);
+}
+
+function closeDetailModal() {
+  document.getElementById('detail-modal').classList.remove('open');
+}
+
+function renderDetailModalBody(container, d) {
+  if (!d) { container.innerHTML = '<div class="leave-empty">No data.</div>'; return; }
+  var attachHtml = '';
+  if (d.type === 'sick' && d.doctorLetter) {
+    attachHtml = '<div class="leave-modal-row"><span class="leave-modal-lbl">Doctor Letter</span>'
+      + '<span class="leave-modal-val"><a class="leave-modal-attachment" href="' + escHtml(d.doctorLetter) + '" target="_blank">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+      + 'View File</a></span></div>';
+  }
+  var rejectHtml = '';
+  if (d.status === 'rejected' && d.rejectReason) {
+    rejectHtml = '<div class="leave-modal-row"><span class="leave-modal-lbl">Reject Reason</span><span class="leave-modal-val" style="color:#dc2626;">' + escHtml(d.rejectReason) + '</span></div>';
+  }
+  container.innerHTML =
+    '<div class="leave-modal-row"><span class="leave-modal-lbl">Employee</span><span class="leave-modal-val">' + escHtml(d.name) + '</span></div>'
+    + '<div class="leave-modal-row"><span class="leave-modal-lbl">Team</span><span class="leave-modal-val">' + escHtml(d.team) + '</span></div>'
+    + '<div class="leave-modal-sep"></div>'
+    + '<div class="leave-modal-row"><span class="leave-modal-lbl">Leave Type</span><span class="leave-modal-val"><span class="leave-type-badge ' + d.typeBadge.cls + '">' + escHtml(d.typeBadge.label) + '</span></span></div>'
+    + '<div class="leave-modal-row"><span class="leave-modal-lbl">Date</span><span class="leave-modal-val">' + escHtml(d.dateDisplay) + ' (' + d.days + ' day' + (d.days !== 1 ? 's' : '') + ')</span></div>'
+    + '<div class="leave-modal-row"><span class="leave-modal-lbl">Status</span><span class="leave-modal-val"><span class="leave-status-badge ' + d.statusBadge.cls + '">' + escHtml(d.statusBadge.label) + '</span></span></div>'
+    + '<div class="leave-modal-sep"></div>'
+    + '<div class="leave-modal-row"><span class="leave-modal-lbl">Reason</span><span class="leave-modal-val">' + escHtml(d.reason || '—') + '</span></div>'
+    + attachHtml
+    + rejectHtml;
+}
+
+/* ── Cancel ── */
+async function doCancelRequest(id, btn) {
+  if (!confirm('Cancel this leave request?')) return;
+  btn.disabled = true;
+  var res = await cancelLeaveRequest(id);
+  if (res.success) {
+    showToast('Leave request cancelled.', 'success');
+    loadLeaveList();
+  } else {
+    showToast(res.error || 'Failed to cancel.', 'error');
+    btn.disabled = false;
+  }
+}
+
+/* ── Pending Approvals (manager) ── */
+async function loadPendingCount() {
+  var res = await fetchPendingApprovals({ page: 1, limit: 1 });
+  if (res.success) {
+    var count = res.meta.total_records || res.meta.total || res.data.length;
+    document.getElementById('pending-count').textContent = count;
+  }
+}
+
+async function openApprovalsModal() {
+  document.getElementById('approvals-list').innerHTML = '<div class="leave-empty">Loading...</div>';
+  document.getElementById('approvals-modal').classList.add('open');
+
+  var res = await fetchPendingApprovals({ page: 1, limit: 50 });
+  var listEl = document.getElementById('approvals-list');
+  if (!res.success || !res.data.length) {
+    listEl.innerHTML = '<div class="leave-empty">No pending approvals.</div>';
+    return;
+  }
+  var rows = mapLeaveList(res.data);
+  listEl.innerHTML = rows.map(function(r) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #f0f3f6;border-radius:8px;">'
+      + '<div>'
+      + '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(r.name) + '</div>'
+      + '<div style="font-size:11px;color:#7a8a99;margin-top:2px;">'
+      + '<span class="leave-type-badge ' + r.typeBadge.cls + '" style="margin-right:6px;">' + escHtml(r.typeBadge.label) + '</span>'
+      + escHtml(r.dateDisplay) + ' (' + r.days + 'd)'
+      + '</div>'
+      + '</div>'
+      + '<button class="leave-btn-view" onclick="openApprovalDetail(' + r.id + ')">View</button>'
+      + '</div>';
+  }).join('');
+}
+
+function closeApprovalsModal() {
+  document.getElementById('approvals-modal').classList.remove('open');
+}
+
+/* ── Approval Detail ── */
+async function openApprovalDetail(id) {
+  _activeApprovalId = id;
+  document.getElementById('approval-detail-body').innerHTML = '<div class="leave-empty">Loading...</div>';
+  document.getElementById('approval-detail-actions').style.display = 'none';
+  document.getElementById('approval-detail-modal').classList.add('open');
+
+  var res = await fetchLeaveDetail(id);
+  if (!res.success) {
+    document.getElementById('approval-detail-body').innerHTML = '<div class="leave-empty">Failed to load.</div>';
+    return;
+  }
+  var d = mapLeaveDetail(res.data);
+  renderDetailModalBody(document.getElementById('approval-detail-body'), d);
+  document.getElementById('approval-detail-actions').style.display = 'flex';
+}
+
+function closeApprovalDetailModal() {
+  document.getElementById('approval-detail-modal').classList.remove('open');
+  _activeApprovalId = null;
+}
+
+async function doApproveAction() {
+  if (!_activeApprovalId) return;
+  var btn = document.getElementById('btn-approve-action');
+  btn.disabled = true;
+  var res = await approveLeaveRequest(_activeApprovalId);
+  btn.disabled = false;
+  if (res.success) {
+    showToast('Leave request approved.', 'success');
+    closeApprovalDetailModal();
+    closeApprovalsModal();
+    loadPendingCount();
+    loadLeaveList();
+  } else {
+    showToast(res.error || 'Failed to approve.', 'error');
+  }
+}
+
+async function doRejectAction() {
+  if (!_activeApprovalId) return;
+  var reason = prompt('Reject reason (optional):') || '';
+  var btn = document.getElementById('btn-reject-action');
+  btn.disabled = true;
+  var res = await rejectLeaveRequest(_activeApprovalId, reason);
+  btn.disabled = false;
+  if (res.success) {
+    showToast('Leave request rejected.', 'success');
+    closeApprovalDetailModal();
+    closeApprovalsModal();
+    loadPendingCount();
+    loadLeaveList();
+  } else {
+    showToast(res.error || 'Failed to reject.', 'error');
+  }
+}
+
+/* ── Navigate ── */
+function goToAddLeave() {
+  window.location.href = 'leave-request-add.html';
+}
+
+/* ── Close modals on overlay click ── */
+document.getElementById('detail-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDetailModal();
+});
+document.getElementById('approvals-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeApprovalsModal();
+});
+document.getElementById('approval-detail-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeApprovalDetailModal();
+});
+
+/* ── Toast ── */
+var _toastTimer = null;
+function showToast(message, type) {
+  var toast  = document.getElementById('app-toast');
+  var iconEl = document.getElementById('toast-icon');
+  var textEl = document.getElementById('toast-text');
+  if (!toast) return;
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+  toast.className = 'toast ' + (type || 'success');
+  textEl.textContent = message;
+  iconEl.innerHTML = type === 'error'
+    ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+  });
+  _toastTimer = setTimeout(function() { toast.classList.remove('show'); _toastTimer = null; }, 3500);
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Init ── */
+window.addEventListener('load', function() {
+  window.loadComponents();
+  setupRoleAccess();
+  loadSummary();
+  loadLeaveList();
+
+  var msg  = sessionStorage.getItem('leave_toast_msg');
+  var type = sessionStorage.getItem('leave_toast_type');
+  if (msg) {
+    sessionStorage.removeItem('leave_toast_msg');
+    sessionStorage.removeItem('leave_toast_type');
+    setTimeout(function() { showToast(msg, type || 'success'); }, 400);
+  }
+});
+</script>
+</body>
+</html>

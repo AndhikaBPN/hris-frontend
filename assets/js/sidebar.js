@@ -72,11 +72,16 @@ window.loadComponents = function() {
     const shiftLink = document.querySelector('.nav-shift');
     if (shiftLink) shiftLink.href = '../shift-schedule/shift-schedule.html';
 
+    const leaveLink = document.querySelector('.nav-leave');
+    if (leaveLink) leaveLink.href = '../leave-request/leave-request.html';
+
     // Hide unauthorized menus
     if (userRole === 'staff') {
       document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
     } else if (userRole === 'team_leader') {
       document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
+    } else if (userRole === 'c_level') {
+      document.querySelectorAll('.nav-leave').forEach(e => e.style.display = 'none');
     } else if (userRole === 'technical_manager') {
       document.querySelectorAll('.nav-admin').forEach(e => e.style.display = 'none');
     } else if (userRole === 'hrd_manager') {
