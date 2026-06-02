@@ -16,11 +16,12 @@
 <div id="navbar-placeholder"></div>
   <main class="content">
 
-    <!-- BACK BUTTON -->
-    <button class="back-btn" onclick="window.location.href='employee-management.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
-      Back
-    </button>
+    <div class="page-header-row" style="margin-bottom:1.4rem;">
+      <div>
+        <h1 class="hub-title">Detail Employee</h1>
+        <div class="hub-sub">DETAIL EMPLOYEE INFORMATION</div>
+      </div>
+    </div>
 
     <div class="detail-layout">
 
@@ -114,9 +115,7 @@
           </div>
           <div class="detail-field">
             <span class="detail-label">Account Status</span>
-            <div class="detail-badge-field">
-              <span id="d-status">—</span>
-            </div>
+            <span id="d-status">—</span>
           </div>
         </div>
 
@@ -138,13 +137,18 @@
           </div>
           <div class="detail-field">
             <span class="detail-label">Role</span>
-            <div class="detail-badge-field">
-              <span id="d-role">—</span>
-            </div>
+            <span id="d-role">—</span>
           </div>
         </div>
 
       </div>
+    </div>
+
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+      <button class="back-btn" onclick="window.location.href='employee-management.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
     </div>
 
   </main>
