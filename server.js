@@ -33,6 +33,11 @@ var env = parseEnv();
 generateEnvJs(env);
 
 const PORT = parseInt(env.PORT || '3000', 10);
+const ALLOWED_ORIGINS = (env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(function(o) { return o.trim(); })
+  .filter(Boolean)
+  .concat(['http://localhost:' + parseInt(env.PORT || '3000', 10)]);
 
 const MIME = {
   '.html': 'text/html',
@@ -46,7 +51,12 @@ const MIME = {
 };
 
 http.createServer(function(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  var origin = req.headers['origin'];
+  if (origin && ALLOWED_ORIGINS.indexOf(origin) !== -1) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:' + PORT);
+  }
 
   var pathname = url.parse(req.url).pathname;
   var filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
