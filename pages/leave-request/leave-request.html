@@ -311,6 +311,7 @@ var _activeDetail = null;
 var _activeApprovalId = null;
 var _activeTab    = 'all'; /* 'mine' | 'all' */
 var _rawCache     = {};   /* id → raw API item, for detail view without extra API call */
+var _pendingCache = {};   /* id → raw pending item, for approval detail without extra API call */
 
 var filters = { name: '', team: '', type: '', status: '', date_from: '', date_to: '' };
 
@@ -570,6 +571,9 @@ async function openApprovalsModal() {
     listEl.innerHTML = '<div class="leave-empty">No pending approvals.</div>';
     return;
   }
+  /* cache raw items for approval detail view */
+  _pendingCache = {};
+  (res.data || []).forEach(function(item) { if (item && item.id) _pendingCache[item.id] = item; });
   var rows = mapLeaveList(res.data);
   listEl.innerHTML = rows.map(function(r) {
     return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #f0f3f6;border-radius:8px;">'
@@ -590,18 +594,17 @@ function closeApprovalsModal() {
 }
 
 /* ── Approval Detail ── */
-async function openApprovalDetail(id) {
+function openApprovalDetail(id) {
   _activeApprovalId = id;
-  document.getElementById('approval-detail-body').innerHTML = '<div class="leave-empty">Loading...</div>';
   document.getElementById('approval-detail-actions').style.display = 'none';
   document.getElementById('approval-detail-modal').classList.add('open');
 
-  var res = await fetchLeaveDetail(id);
-  if (!res.success) {
-    document.getElementById('approval-detail-body').innerHTML = '<div class="leave-empty">Failed to load.</div>';
+  var raw = _pendingCache[id];
+  if (!raw) {
+    document.getElementById('approval-detail-body').innerHTML = '<div class="leave-empty">Data not found.</div>';
     return;
   }
-  var d = mapLeaveDetail(res.data);
+  var d = mapLeaveDetail(raw);
   renderDetailModalBody(document.getElementById('approval-detail-body'), d);
   document.getElementById('approval-detail-actions').style.display = 'flex';
 }
