@@ -62,6 +62,30 @@ body {
 }
 .nav-item.active svg { stroke: #3d5c45; }
 
+/* ── Collapsible Nav Group ── */
+.nav-group-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13.5px; color: #6b7c8d;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-weight: 400;
+  user-select: none;
+}
+.nav-group-header:hover { background: #f4f6f8; color: #2c3e50; }
+.nav-group-header.open  { background: #f0f5f2; color: #3d5c45; font-weight: 500; }
+.nav-group-arrow {
+  margin-left: auto;
+  width: 14px !important; height: 14px !important;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.nav-group-header.open .nav-group-arrow { transform: rotate(90deg); }
+.nav-group-children { display: none; padding: 2px 0 2px 4px; }
+.nav-group-children.open { display: flex; flex-direction: column; gap: 2px; }
+.nav-child { padding-left: 36px !important; font-size: 13px !important; }
+
 .logout-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; padding: 12px;

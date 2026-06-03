@@ -1,0 +1,129 @@
+/* ══════════════════════════════════════════════
+   REPORT MODULE STYLES
+══════════════════════════════════════════════ */
+
+/* ── Filters ── */
+.rpt-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.rpt-filter-input,
+.rpt-filter-select {
+  height: 34px;
+  border: 1.5px solid #dde3ea;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #3a4a5a;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.rpt-filter-input:focus,
+.rpt-filter-select:focus  { border-color: #2e7d4f; }
+.rpt-filter-input         { min-width: 180px; }
+.rpt-filter-select        { min-width: 120px; }
+
+/* ── Export Buttons ── */
+.rpt-export-row { display: flex; gap: 8px; }
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid #3d5c45;
+  color: #3d5c45;
+  background: #fff;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-export:hover:not(:disabled) { background: #3d5c45; color: #fff; }
+.btn-export:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Completion Badges ── */
+.rpt-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.rpt-badge-green  { background: #e8f5ec; color: #2e7d4f; }
+.rpt-badge-yellow { background: #fff8e1; color: #b06000; }
+.rpt-badge-red    { background: #fdecea; color: #c0392b; }
+
+/* ── Row Variants (shift report) ── */
+.row-dayoff   { background: #f4f5f6; }
+.row-override { background: #fffbe6; }
+
+/* ── Footer Summary Row ── */
+.rpt-footer-row { background: #f8faf9; font-weight: 600; font-size: 12.5px; }
+.rpt-footer-row td { border-top: 2px solid #dde8e2 !important; color: #3d5c45; }
+
+/* ── Remaining Color (leave report) ── */
+.rem-red    { color: #c0392b; font-weight: 600; }
+.rem-yellow { color: #b06000; font-weight: 600; }
+.rem-green  { color: #2e7d4f; font-weight: 600; }
+
+/* ── Status Badge ── */
+.rpt-active   { background: #e8f5ec; color: #2e7d4f; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 600; }
+.rpt-inactive { background: #fdecea; color: #c0392b; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 600; }
+
+/* ── Role Badge (reuse emp-role-badge style) ── */
+.rpt-role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #eef2f5;
+  color: #5a6a7a;
+}
+
+/* ── Override Badge ── */
+.rpt-badge-orange { background: #fff3e0; color: #b06000; }
+
+/* ── Notes Tooltip ── */
+.rpt-notes {
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+}
+
+/* ── Loading Spinner (inline) ── */
+.rpt-spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid #e8eeeb;
+  border-top-color: #3d5c45;
+  border-radius: 50%;
+  animation: rpt-spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes rpt-spin { to { transform: rotate(360deg); } }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px; border-radius: 10px; min-width: 260px; max-width: 380px;
+  font-size: 13.5px; font-weight: 500;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.14);
+  transform: translateY(20px); opacity: 0;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+.toast.show    { transform: translateY(0); opacity: 1; pointer-events: all; }
+.toast.success { background: #2e7d4f; color: #fff; }
+.toast.error   { background: #c0392b; color: #fff; }
+.toast-icon    { flex-shrink: 0; width: 18px; height: 18px; }
+.toast-text    { flex: 1; line-height: 1.4; }

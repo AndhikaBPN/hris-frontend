@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Leave Report</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+  <link rel="stylesheet" href="../../assets/css/report.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+  <main class="content">
+
+    <div class="page-header-row" style="margin-bottom:1.4rem;">
+      <div>
+        <h1 class="hub-title">Leave Report</h1>
+        <div class="hub-sub">ANNUAL LEAVE USAGE OVERVIEW</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:1.4rem 1.6rem;">
+
+      <div class="emp-card-header">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#2c3e50;">Leave Report</div>
+          <div class="emp-card-sub" id="rpt-sub">Select a year to load data</div>
+        </div>
+        <div class="rpt-export-row">
+          <button class="btn-export" id="btn-xlsx" onclick="doExport('xlsx')" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="2" y1="9" x2="8" y2="9"/><path d="M12 9l8 6M20 9l-8 6"/></svg>
+            Export XLSX
+          </button>
+          <button class="btn-export" id="btn-pdf" onclick="doExport('pdf')" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Export PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="rpt-filters">
+        <select class="rpt-filter-select" id="filter-year" onchange="loadReport()"></select>
+        <input class="rpt-filter-input" id="filter-name" placeholder="Search by name..." oninput="renderFiltered()">
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="att-table emp-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th style="width:44px;text-align:center;">#</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th style="text-align:center;">Total Quota</th>
+              <th style="text-align:center;">Annual Used</th>
+              <th style="text-align:center;">Sick Used</th>
+              <th style="text-align:center;">Remaining</th>
+              <th style="text-align:center;">Pending</th>
+              <th style="text-align:center;">Rejected</th>
+            </tr>
+          </thead>
+          <tbody id="rpt-tbody">
+            <tr><td colspan="9" class="emp-empty">Select a year to load data.</td></tr>
+          </tbody>
+          <tfoot id="rpt-tfoot"></tfoot>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="app-toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span class="toast-text" id="toast-text"></span>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/report.js"></script>
+<script>
+guardRoute(['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']);
+
+var _role = (JSON.parse(localStorage.getItem('hris_user') || '{}').role) || '';
+var _data = [];
+
+var ROLE_LABELS = { c_level:'C-Level', hrd_manager:'HRD Manager', technical_manager:'Tech Manager', team_leader:'Team Leader', staff:'Staff' };
+
+function buildYearOptions() {
+  var now = new Date().getFullYear();
+  var sel = document.getElementById('filter-year');
+  for (var y = now + 1; y >= 2023; y--) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    if (y === now) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function remainingClass(val) {
+  var v = parseInt(val) || 0;
+  if (v <= 3) return 'rem-red';
+  if (v <= 6) return 'rem-yellow';
+  return 'rem-green';
+}
+
+function renderFiltered() {
+  var q = (document.getElementById('filter-name').value || '').toLowerCase().trim();
+  var rows = q ? _data.filter(function(r) { return (r.name || '').toLowerCase().includes(q); }) : _data;
+  renderTable(rows);
+}
+
+function renderTable(rows) {
+  var tbody = document.getElementById('rpt-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="emp-empty">No data found for selected filters.</td></tr>';
+    renderFooter([]);
+    return;
+  }
+  tbody.innerHTML = rows.map(function(r, i) {
+    var rem = r.remaining != null ? r.remaining : '—';
+    var remCls = r.remaining != null ? remainingClass(r.remaining) : '';
+    return '<tr>' +
+      '<td style="text-align:center;color:#9aabb7;font-size:12px;">' + (i + 1) + '</td>' +
+      '<td style="font-weight:500;">' + escHtml(r.name || '—') + '</td>' +
+      '<td><span class="rpt-role-badge">' + escHtml(ROLE_LABELS[r.role] || r.role || '—') + '</span></td>' +
+      '<td style="text-align:center;">' + (r.total_quota != null ? r.total_quota : '—') + '</td>' +
+      '<td style="text-align:center;">' + (r.annual_used || 0) + '</td>' +
+      '<td style="text-align:center;">' + (r.sick_used || 0) + '</td>' +
+      '<td style="text-align:center;"><span class="' + remCls + '">' + rem + '</span></td>' +
+      '<td style="text-align:center;">' + (r.pending_requests || 0) + '</td>' +
+      '<td style="text-align:center;">' + (r.rejected_requests || 0) + '</td>' +
+    '</tr>';
+  }).join('');
+  renderFooter(rows);
+}
+
+function renderFooter(rows) {
+  var tfoot = document.getElementById('rpt-tfoot');
+  if (!rows.length) { tfoot.innerHTML = ''; return; }
+  var totalUsed   = rows.reduce(function(s, r) { return s + (parseInt(r.annual_used) || 0) + (parseInt(r.sick_used) || 0); }, 0);
+  var totalRemain = rows.reduce(function(s, r) { return s + (parseInt(r.remaining) || 0); }, 0);
+  var totalPending = rows.reduce(function(s, r) { return s + (parseInt(r.pending_requests) || 0); }, 0);
+  tfoot.innerHTML = '<tr class="rpt-footer-row">' +
+    '<td colspan="3" style="padding-left:12px;">Summary · ' + rows.length + ' employee(s)</td>' +
+    '<td style="text-align:center;">—</td>' +
+    '<td colspan="2" style="text-align:center;">Total used: ' + totalUsed + '</td>' +
+    '<td style="text-align:center;">' + totalRemain + '</td>' +
+    '<td style="text-align:center;">' + totalPending + '</td>' +
+    '<td style="text-align:center;">—</td>' +
+  '</tr>';
+}
+
+async function loadReport() {
+  var year = document.getElementById('filter-year').value;
+  setLoading(true);
+  var res = await fetchLeaveReport(year);
+  setLoading(false);
+  if (!res.success) { showError(res.error || 'Failed to load data'); return; }
+  _data = res.data;
+  document.getElementById('rpt-sub').textContent = _data.length + ' employee(s) · Year ' + year;
+  document.getElementById('btn-xlsx').disabled = false;
+  document.getElementById('btn-pdf').disabled  = false;
+  renderFiltered();
+}
+
+function setLoading(on) {
+  if (on) {
+    document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="9" class="emp-empty"><span class="rpt-spinner"></span>Loading...</td></tr>';
+    document.getElementById('btn-xlsx').disabled = true;
+    document.getElementById('btn-pdf').disabled  = true;
+  }
+}
+
+function showError(msg) {
+  document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="9" class="emp-empty" style="color:#c0392b;">' +
+    escHtml(msg) + ' <button onclick="loadReport()" style="margin-left:8px;padding:4px 10px;border:1px solid #c0392b;border-radius:6px;color:#c0392b;background:none;cursor:pointer;font-size:12px;">Retry</button></td></tr>';
+}
+
+async function doExport(format) {
+  var year = document.getElementById('filter-year').value;
+  var btn  = document.getElementById('btn-' + format);
+  if (btn) btn.disabled = true;
+  var res = await exportReportFile('leave', { format: format, year: year });
+  if (!res.success) showToast('Export failed: ' + (res.error || ''), 'error');
+  if (btn) btn.disabled = false;
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+var _toastTimer = null;
+function showToast(message, type) {
+  var toast = document.getElementById('app-toast');
+  var iconEl = document.getElementById('toast-icon');
+  var textEl = document.getElementById('toast-text');
+  if (!toast) return;
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+  toast.className = 'toast ' + (type || 'success');
+  textEl.textContent = message;
+  iconEl.innerHTML = type === 'error'
+    ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { toast.classList.add('show'); }); });
+  _toastTimer = setTimeout(function() { toast.classList.remove('show'); _toastTimer = null; }, 3500);
+}
+
+window.addEventListener('load', function() {
+  buildYearOptions();
+  if (_role === 'staff') document.getElementById('filter-name').style.display = 'none';
+  window.loadComponents();
+  loadReport();
+});
+</script>
+</body>
+</html>

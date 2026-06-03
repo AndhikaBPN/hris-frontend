@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Employees Report</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+  <link rel="stylesheet" href="../../assets/css/employee.css">
+  <link rel="stylesheet" href="../../assets/css/report.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+  <main class="content">
+
+    <div class="page-header-row" style="margin-bottom:1.4rem;">
+      <div>
+        <h1 class="hub-title">Employees Report</h1>
+        <div class="hub-sub">EMPLOYEE DIRECTORY OVERVIEW</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:1.4rem 1.6rem;">
+
+      <div class="emp-card-header">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#2c3e50;">Employees Report</div>
+          <div class="emp-card-sub" id="rpt-sub">Loading...</div>
+        </div>
+        <div class="rpt-export-row">
+          <button class="btn-export" id="btn-xlsx" onclick="doExport('xlsx')" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="2" y1="9" x2="8" y2="9"/><path d="M12 9l8 6M20 9l-8 6"/></svg>
+            Export XLSX
+          </button>
+          <button class="btn-export" id="btn-pdf" onclick="doExport('pdf')" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Export PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="rpt-filters">
+        <select class="rpt-filter-select" id="filter-role" onchange="loadReport()">
+          <option value="">All Roles</option>
+          <option value="c_level">C-Level</option>
+          <option value="hrd_manager">HRD Manager</option>
+          <option value="technical_manager">Technical Manager</option>
+          <option value="team_leader">Team Leader</option>
+          <option value="staff">Staff</option>
+        </select>
+        <select class="rpt-filter-select" id="filter-status" onchange="loadReport()">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <select class="rpt-filter-select" id="filter-manager" onchange="loadReport()">
+          <option value="">All Managers</option>
+        </select>
+        <input class="rpt-filter-input" id="filter-search" placeholder="Search name or email..." oninput="renderFiltered()">
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="att-table emp-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th style="width:44px;text-align:center;">#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+              <th>Manager</th>
+              <th>Join Date</th>
+              <th style="text-align:center;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="rpt-tbody">
+            <tr><td colspan="8" class="emp-empty"><span class="rpt-spinner"></span>Loading...</td></tr>
+          </tbody>
+          <tfoot id="rpt-tfoot"></tfoot>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="app-toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span class="toast-text" id="toast-text"></span>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/report.js"></script>
+<script>
+guardRoute(['c_level', 'hrd_manager', 'technical_manager', 'team_leader']);
+
+var _user = JSON.parse(localStorage.getItem('hris_user') || '{}');
+var _role = _user.role || '';
+var _data = [];
+
+var ROLE_LABELS = { c_level:'C-Level', hrd_manager:'HRD Manager', technical_manager:'Tech Manager', team_leader:'Team Leader', staff:'Staff' };
+var ROLE_COLORS = { c_level:'#8b4513', hrd_manager:'#2980b9', technical_manager:'#8e44ad', team_leader:'#27ae60', staff:'#3d5c45' };
+
+function formatDate(str) {
+  if (!str) return '—';
+  var d = new Date(str.replace(' ', 'T'));
+  if (isNaN(d)) return str;
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+async function loadManagers() {
+  var sel = document.getElementById('filter-manager');
+  var result = await apiRequest('/employees?page=1&limit=100');
+  if (!result.success) return;
+  var list = extractListData(result);
+  var managers = list.filter(function(u) {
+    return u.role === 'hrd_manager' || u.role === 'technical_manager' || u.role === 'c_level';
+  });
+  managers.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.name + ' (' + (ROLE_LABELS[m.role] || m.role) + ')';
+    sel.appendChild(opt);
+  });
+
+  // Team leader: lock manager filter to self
+  if (_role === 'team_leader') {
+    sel.value = _user.id || '';
+    sel.disabled = true;
+  }
+}
+
+function renderFiltered() {
+  var q = (document.getElementById('filter-search').value || '').toLowerCase().trim();
+  var rows = q ? _data.filter(function(r) {
+    return (r.name || '').toLowerCase().includes(q) || (r.email || '').toLowerCase().includes(q);
+  }) : _data;
+  renderTable(rows);
+}
+
+function renderTable(rows) {
+  var tbody = document.getElementById('rpt-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="emp-empty">No employees found for selected filters.</td></tr>';
+    renderFooter([]);
+    return;
+  }
+  tbody.innerHTML = rows.map(function(r, i) {
+    var roleBg = ROLE_COLORS[r.role] ? ROLE_COLORS[r.role] + '22' : '#eef2f5';
+    var roleColor = ROLE_COLORS[r.role] || '#5a6a7a';
+    var statusHtml = r.is_active
+      ? '<span class="rpt-active">Active</span>'
+      : '<span class="rpt-inactive">Inactive</span>';
+    return '<tr>' +
+      '<td style="text-align:center;color:#9aabb7;font-size:12px;">' + (i + 1) + '</td>' +
+      '<td style="font-weight:500;">' + escHtml(r.name || '—') + '</td>' +
+      '<td style="font-size:12.5px;color:#5a6a7a;">' + escHtml(r.email || '—') + '</td>' +
+      '<td style="font-size:12.5px;color:#5a6a7a;">' + escHtml(r.phone || '—') + '</td>' +
+      '<td><span class="emp-role-badge" style="background:' + roleBg + ';color:' + roleColor + ';">' + escHtml(ROLE_LABELS[r.role] || r.role || '—') + '</span></td>' +
+      '<td style="font-size:12.5px;">' + escHtml(r.manager_name || '—') + '</td>' +
+      '<td style="font-size:12.5px;">' + formatDate(r.join_date) + '</td>' +
+      '<td style="text-align:center;">' + statusHtml + '</td>' +
+    '</tr>';
+  }).join('');
+  renderFooter(rows);
+}
+
+function renderFooter(rows) {
+  var tfoot = document.getElementById('rpt-tfoot');
+  if (!rows.length) { tfoot.innerHTML = ''; return; }
+  var active   = rows.filter(function(r) { return r.is_active; }).length;
+  var inactive = rows.length - active;
+  tfoot.innerHTML = '<tr class="rpt-footer-row">' +
+    '<td colspan="6" style="padding-left:12px;">Summary · ' + rows.length + ' employee(s)</td>' +
+    '<td colspan="2" style="text-align:center;">Active: ' + active + ' · Inactive: ' + inactive + '</td>' +
+  '</tr>';
+}
+
+async function loadReport() {
+  var role      = document.getElementById('filter-role').value;
+  var status    = document.getElementById('filter-status').value;
+  var managerId = document.getElementById('filter-manager').value;
+  setLoading(true);
+  var res = await fetchEmployeesReport({ role: role, status: status, manager_id: managerId });
+  setLoading(false);
+  if (!res.success) { showError(res.error || 'Failed to load data'); return; }
+  _data = res.data;
+  document.getElementById('rpt-sub').textContent = _data.length + ' employee(s)';
+  document.getElementById('btn-xlsx').disabled = false;
+  document.getElementById('btn-pdf').disabled  = false;
+  renderFiltered();
+}
+
+function setLoading(on) {
+  if (on) {
+    document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="8" class="emp-empty"><span class="rpt-spinner"></span>Loading...</td></tr>';
+    document.getElementById('btn-xlsx').disabled = true;
+    document.getElementById('btn-pdf').disabled  = true;
+  }
+}
+
+function showError(msg) {
+  document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="8" class="emp-empty" style="color:#c0392b;">' +
+    escHtml(msg) + ' <button onclick="loadReport()" style="margin-left:8px;padding:4px 10px;border:1px solid #c0392b;border-radius:6px;color:#c0392b;background:none;cursor:pointer;font-size:12px;">Retry</button></td></tr>';
+}
+
+async function doExport(format) {
+  var role      = document.getElementById('filter-role').value;
+  var status    = document.getElementById('filter-status').value;
+  var managerId = document.getElementById('filter-manager').value;
+  var btn = document.getElementById('btn-' + format);
+  if (btn) btn.disabled = true;
+  var res = await exportReportFile('employees', { format: format, role: role, status: status, manager_id: managerId });
+  if (!res.success) showToast('Export failed: ' + (res.error || ''), 'error');
+  if (btn) btn.disabled = false;
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+var _toastTimer = null;
+function showToast(message, type) {
+  var toast = document.getElementById('app-toast');
+  var iconEl = document.getElementById('toast-icon');
+  var textEl = document.getElementById('toast-text');
+  if (!toast) return;
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+  toast.className = 'toast ' + (type || 'success');
+  textEl.textContent = message;
+  iconEl.innerHTML = type === 'error'
+    ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  requestAnimationFrame(function() { requestAnimationFrame(function() { toast.classList.add('show'); }); });
+  _toastTimer = setTimeout(function() { toast.classList.remove('show'); _toastTimer = null; }, 3500);
+}
+
+window.addEventListener('load', function() {
+  window.loadComponents();
+  loadManagers();
+  loadReport();
+});
+</script>
+</body>
+</html>

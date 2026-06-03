@@ -62,7 +62,11 @@ http.createServer(function(req, res) {
   var pathname = url.parse(req.url).pathname;
 
   var ROUTES = {
-    '/set-password': 'pages/set-password.html'
+    '/set-password':      'pages/set-password.html',
+    '/report/attendance': 'pages/report/attendance.html',
+    '/report/leave':      'pages/report/leave.html',
+    '/report/employees':  'pages/report/employees.html',
+    '/report/shifts':     'pages/report/shifts.html'
   };
   var routedPath = ROUTES[pathname];
   var filePath = path.join(__dirname, routedPath || (pathname === '/' ? 'index.html' : pathname));

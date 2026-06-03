@@ -1,6 +1,14 @@
 /* ══════════════════════════════════════════════
     LOAD COMPONENTS — sidebar & navbar injection
     ══════════════════════════════════════════════ */
+
+window.toggleNavGroup = function() {
+  var header   = document.getElementById('nav-reports-header');
+  var children = document.getElementById('nav-reports-children');
+  if (header)   header.classList.toggle('open');
+  if (children) children.classList.toggle('open');
+};
+
 window.loadComponents = function() {
   const userStr = localStorage.getItem('hris_user');
   let userRole = '';
@@ -75,11 +83,22 @@ window.loadComponents = function() {
     const leaveLink = document.querySelector('.nav-leave');
     if (leaveLink) leaveLink.href = '../leave-request/leave-request.html';
 
+    // Report child links
+    const rptAtt = document.querySelector('.nav-report-attendance');
+    const rptLeave = document.querySelector('.nav-report-leave');
+    const rptEmp = document.querySelector('.nav-report-employees');
+    const rptShift = document.querySelector('.nav-report-shifts');
+    if (rptAtt)   rptAtt.href   = '../report/attendance.html';
+    if (rptLeave) rptLeave.href = '../report/leave.html';
+    if (rptEmp)   rptEmp.href   = '../report/employees.html';
+    if (rptShift) rptShift.href = '../report/shifts.html';
+
     // Hide unauthorized menus
     if (userRole === 'staff') {
-      document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
+      if (rptEmp) rptEmp.style.display = 'none';
     } else if (userRole === 'team_leader') {
-      document.querySelectorAll('.nav-reports, .nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
     } else if (userRole === 'c_level') {
       document.querySelectorAll('.nav-leave').forEach(e => e.style.display = 'none');
     } else if (userRole === 'technical_manager') {
@@ -88,8 +107,17 @@ window.loadComponents = function() {
       document.querySelectorAll('.nav-admin').forEach(e => e.style.display = 'none');
     }
 
-    // Set Active State based on current URL
+    // Auto-expand report group if on a report page
     const currentPath = window.location.pathname;
+    const isReportPage = currentPath.includes('/report/');
+    if (isReportPage) {
+      const rHeader = document.getElementById('nav-reports-header');
+      const rChildren = document.getElementById('nav-reports-children');
+      if (rHeader) rHeader.classList.add('open');
+      if (rChildren) rChildren.classList.add('open');
+    }
+
+    // Set Active State based on current URL
     document.querySelectorAll('.nav-item').forEach(link => {
       link.classList.remove('active');
       if (link.getAttribute('href') && currentPath.includes(link.getAttribute('href').replace('../', ''))) {
