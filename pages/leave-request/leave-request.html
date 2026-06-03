@@ -73,6 +73,12 @@
         </div>
       </div>
 
+      <!-- Tab Bar (manager roles only) -->
+      <div class="leave-tab-bar" id="leave-tab-bar" style="display:none;">
+        <button class="leave-tab-btn" id="tab-btn-mine" onclick="switchTab('mine')">My Requests</button>
+        <button class="leave-tab-btn active" id="tab-btn-all" onclick="switchTab('all')">All Employees</button>
+      </div>
+
       <!-- Filters -->
       <div class="leave-filters">
         <input class="leave-filter-input" type="text" id="filter-name" placeholder="Search by name or team..." oninput="applyFilters()">
@@ -303,6 +309,7 @@ var listLastPage  = 1;
 var listTotal     = 0;
 var _activeDetail = null;
 var _activeApprovalId = null;
+var _activeTab    = 'all'; /* 'mine' | 'all' */
 
 var filters = { name: '', team: '', type: '', status: '', date_from: '', date_to: '' };
 
@@ -321,17 +328,30 @@ function setupRoleAccess() {
   var isManager = _role === 'hrd_manager' || _role === 'technical_manager' || _role === 'c_level';
   if (isManager) {
     document.getElementById('btn-pending-approvals').style.display = '';
+    document.getElementById('leave-tab-bar').style.display = 'flex';
+    _activeTab = 'all';
     loadPendingCount();
   }
-  /* c_level hides add button — no leave needed */
+  /* c_level: no add button, no summary, no "My Requests" tab */
   if (_role === 'c_level') {
     document.querySelector('.leave-btn-add').style.display = 'none';
     document.getElementById('leave-summary-grid').style.display = 'none';
+    document.getElementById('tab-btn-mine').style.display = 'none';
   }
-  /* staff: hide name & team filters (own data only) */
-  if (_role === 'staff') {
+  /* staff/team_leader: hide name filter (own data only) */
+  if (_role === 'staff' || _role === 'team_leader') {
     document.getElementById('filter-name').style.display = 'none';
   }
+}
+
+/* ── Tab switcher ── */
+function switchTab(tab) {
+  _activeTab = tab;
+  listPage = 1;
+  document.getElementById('tab-btn-mine').classList.toggle('active', tab === 'mine');
+  document.getElementById('tab-btn-all').classList.toggle('active', tab === 'all');
+  document.getElementById('filter-name').style.display = tab === 'mine' ? 'none' : '';
+  loadLeaveList();
 }
 
 /* ── Summary ── */
@@ -360,6 +380,10 @@ async function loadLeaveList() {
     date_to:   filters.date_to
   };
 
+  /* view param: 'own' for personal view, 'all' for full list */
+  var isMineView = (_activeTab === 'mine') || (_role === 'staff' || _role === 'team_leader');
+  opts.view = isMineView ? 'own' : 'all';
+
   /* team_leader sends own team_id for scoped list */
   if (_role === 'team_leader' && _teamId) opts.team_id = _teamId;
 
@@ -384,7 +408,7 @@ function renderLeaveTable(rows) {
     return;
   }
 
-  var canSeeAll = (_role === 'hrd_manager' || _role === 'technical_manager' || _role === 'c_level' || _role === 'team_leader');
+  var canSeeAll = (_role === 'hrd_manager' || _role === 'technical_manager' || _role === 'c_level' || _role === 'team_leader') && _activeTab === 'all';
 
   tbody.innerHTML = rows.map(function(r) {
     var nameCell = canSeeAll

@@ -13,12 +13,15 @@ async function fetchLeaveList(options) {
   var date_from = options.date_from || '';
   var date_to   = options.date_to   || '';
 
+  var view      = options.view      || '';
+
   var params = '?page=' + page + '&limit=' + limit;
-  if (search)    params += '&search='     + encodeURIComponent(search);
-  if (type)      params += '&leave_type=' + encodeURIComponent(type);
-  if (status)    params += '&status='     + encodeURIComponent(status);
-  if (date_from) params += '&date_from='  + encodeURIComponent(date_from);
-  if (date_to)   params += '&date_to='    + encodeURIComponent(date_to);
+  if (view)      params += '&view='        + encodeURIComponent(view);
+  if (search)    params += '&search='      + encodeURIComponent(search);
+  if (type)      params += '&leave_type='  + encodeURIComponent(type);
+  if (status)    params += '&status='      + encodeURIComponent(status);
+  if (date_from) params += '&date_from='   + encodeURIComponent(date_from);
+  if (date_to)   params += '&date_to='     + encodeURIComponent(date_to);
 
   var result = await apiRequest('/leave' + params);
   if (!result.success) {

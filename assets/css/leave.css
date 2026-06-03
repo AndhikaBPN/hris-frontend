@@ -454,6 +454,32 @@
 }
 .leave-btn-back-form:hover { border-color: #9aabb7; color: #2c3e50; }
 
+/* ── Leave Tab Bar ── */
+.leave-tab-bar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #f0f3f6;
+  margin-bottom: 14px;
+}
+.leave-tab-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #7a8a99;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.leave-tab-btn.active {
+  color: #2e7d4f;
+  border-bottom-color: #2e7d4f;
+  font-weight: 600;
+}
+.leave-tab-btn:hover:not(.active) { color: #2c3e50; }
+
 /* ── Toast (reuse from style.css pattern) ── */
 .toast {
   position: fixed; bottom: 24px; right: 24px; z-index: 9999;
