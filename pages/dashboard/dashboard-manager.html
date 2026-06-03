@@ -160,7 +160,7 @@
               UPCOMING SHIFT
             </div>
             <div class="shift-time">09:00 – 17:00</div>
-            <div class="shift-loc">Main HQ · Floor 3</div>
+            <div class="shift-loc" id="shift-loc">Main Office</div>
             <div class="progress-row">
               <div class="progress-bar">
                 <div class="progress-fill" style="width:0%"></div>
@@ -182,7 +182,7 @@
             </div>
             <div class="leave-title">Annual Leave Days</div>
             <div class="leave-sub">Remaining for 2025</div>
-            <a class="leave-link" href="#">Request Leave →</a>
+            <a class="leave-link" href="../leave-request/leave-request.html">Request Leave →</a>
           </div>
         </div>
       </div>
@@ -192,7 +192,7 @@
         <div class="card">
           <div class="attendance-header">
             <h2 class="section-title">Employee Attendance — Today</h2>
-            <a class="view-all" href="#">View All</a>
+            <a class="view-all" href="#"></a>
           </div>
           <table class="att-table">
             <thead>
@@ -209,7 +209,7 @@
         <div class="card">
           <div class="attendance-header">
             <h2 class="section-title">Manager Attendance — Today</h2>
-            <a class="view-all" href="#">View All</a>
+            <a class="view-all" href="#"></a>
           </div>
           <table class="att-table">
             <thead>
@@ -230,7 +230,7 @@
         <div class="card">
           <div class="attendance-header">
             <h2 class="section-title">Employee Leave Data</h2>
-            <a class="view-all" href="#">View All</a>
+            <a class="view-all" href="#"></a>
           </div>
           <table class="att-table">
             <thead>
@@ -301,6 +301,7 @@
         loadLeaveData();
         loadBirthdayData();
         loadLeaveQuota();
+        loadOfficeName();
 
         if (av) av.textContent = 'D';
         animateProgress(8);
@@ -326,6 +327,14 @@
       if (res.success) {
         var rows = buildAttendanceRows(res.data, 'manager');
         renderAttendanceTable(rows, 'tbody-mgr-m');
+      }
+    }
+
+    async function loadOfficeName() {
+      var res = await fetchOfficeLocation(1);
+      if (res.success && res.data) {
+        var el = document.getElementById('shift-loc');
+        if (el) el.textContent = res.data.name;
       }
     }
 
