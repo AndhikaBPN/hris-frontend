@@ -159,13 +159,13 @@
               </svg>
               UPCOMING SHIFT
             </div>
-            <div class="shift-time">09:00 – 17:00</div>
-            <div class="shift-loc" id="shift-loc">Main Office</div>
+            <div class="shift-time" id="shift-time">--:-- – --:--</div>
+            <div class="shift-loc" id="shift-loc">—</div>
             <div class="progress-row">
               <div class="progress-bar">
-                <div class="progress-fill" style="width:0%"></div>
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
               </div>
-              <span class="progress-label">45m</span>
+              <span class="progress-label" id="progress-label">—</span>
             </div>
           </div>
           <div class="card leave-card">
@@ -272,8 +272,6 @@
   <script src="../../assets/js/render/dashboard.js"></script>
   <script src="../../assets/js/fetch/face-api.js"></script>
   <script src="../../assets/js/render/face-api.js"></script>
-  <script src="../../assets/js/fetch/office.js"></script>
-  <script src="../../assets/js/render/office.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.14/dist/face-api.js" integrity="sha384-1hSisOX+umG254ClWaLauH3hLxdwhs8oUHLoKR5xELvquQSDfvu/wLAencDLUqFm" crossorigin="anonymous"></script>
   <script>
     var ROLE_LABEL = 'MANAGER';
@@ -301,7 +299,7 @@
         loadLeaveData();
         loadBirthdayData();
         loadLeaveQuota();
-        loadOfficeName();
+        loadUpcomingShift();
 
         if (av) av.textContent = 'D';
         animateProgress(8);
@@ -330,12 +328,29 @@
       }
     }
 
-    async function loadOfficeName() {
-      var res = await fetchOfficeLocation(1);
+    async function loadUpcomingShift() {
+      var res = await fetchUpcomingShift();
       if (res.success && res.data) {
-        var el = document.getElementById('shift-loc');
-        if (el) el.textContent = res.data.name;
+        var d = res.data;
+        var timeEl = document.getElementById('shift-time');
+        var locEl = document.getElementById('shift-loc');
+        var labelEl = document.getElementById('progress-label');
+        var fillEl = document.getElementById('progress-fill');
+        if (timeEl) timeEl.textContent = d.start_time + ' – ' + d.end_time;
+        if (locEl) locEl.textContent = d.location || '—';
+        if (labelEl) labelEl.textContent = d.minutes_until !== null && d.minutes_until !== undefined ? d.minutes_until + 'm' : '—';
+        if (fillEl && d.minutes_until !== null && d.minutes_until !== undefined) {
+          var shiftMins = calcShiftMinutes(d.start_time, d.end_time);
+          var elapsed = shiftMins > 0 ? Math.max(0, Math.min(100, Math.round((1 - d.minutes_until / shiftMins) * 100))) : 0;
+          fillEl.style.width = elapsed + '%';
+        }
       }
+    }
+
+    function calcShiftMinutes(start, end) {
+      var s = start.split(':').map(Number), e = end.split(':').map(Number);
+      var mins = (e[0] * 60 + e[1]) - (s[0] * 60 + s[1]);
+      return mins <= 0 ? mins + 1440 : mins;
     }
 
     async function loadLeaveData() {

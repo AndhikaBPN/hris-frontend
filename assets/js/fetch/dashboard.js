@@ -54,6 +54,15 @@ async function fetchLeaveRequests() {
   };
 }
 
+async function fetchUpcomingShift() {
+  var result = await apiRequest('/shift-schedules/upcoming');
+  if (!result.success) {
+    console.error('Error fetching upcoming shift:', result.error);
+    return { success: false, data: null };
+  }
+  return { success: true, data: result.data && result.data.data ? result.data.data : null };
+}
+
 async function fetchLeaveQuota() {
   var year = new Date().getFullYear();
   var result = await apiRequest('/leave/quota?year=' + year);
