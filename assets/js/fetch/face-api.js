@@ -12,6 +12,24 @@ async function fetchFaceEmbeddings() {
   return { success: true, data: extractListData(result) };
 }
 
+async function fetchFaceEmbeddingsByUser(userId) {
+  var path = '/face-embeddings' + (userId ? '?user_id=' + userId : '');
+  var result = await apiRequest(path);
+  if (!result.success) {
+    console.error('Error fetching face embeddings for user:', result.error);
+    return { success: false, data: [] };
+  }
+  return { success: true, data: extractListData(result) };
+}
+
+async function updateFaceEmbedding(id, embedding) {
+  var result = await apiRequest('/face-embeddings/' + id, {
+    method: 'PUT',
+    body: JSON.stringify({ embeddings: embedding })
+  });
+  return { success: result.success, error: result.error };
+}
+
 async function saveFaceEmbedding(embedding) {
   var result = await apiRequest('/face-embeddings', {
     method: 'POST',

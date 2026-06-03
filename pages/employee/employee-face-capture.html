@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanctuary – Capture Face Sample</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/biometric.css">
+  <link rel="stylesheet" href="../../assets/css/team-hub.css">
+</head>
+<body>
+<div id="sidebar-placeholder"></div>
+
+<div class="main-wrap">
+<div id="navbar-placeholder"></div>
+  <main class="content">
+
+    <div class="page-header-row" style="margin-bottom:1.6rem;">
+      <div>
+        <h1 class="hub-title" id="page-title">Capture Face Sample</h1>
+        <div class="hub-sub" id="page-sub">BIOMETRIC SAMPLE ENROLLMENT</div>
+      </div>
+    </div>
+
+    <div class="face-sample-wrap">
+      <div class="card" style="padding:1.6rem;">
+        <h2 style="font-size:14px;font-weight:600;color:#2c3e50;margin:0 0 1.2rem;" id="card-title">Capture Sample</h2>
+
+        <!-- Pose instruction -->
+        <div class="pose-card">
+          <div class="pose-icon" id="pose-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg>
+          </div>
+          <div>
+            <div class="pose-label" id="pose-label">Sample 1</div>
+            <div class="pose-instruction" id="pose-instruction">Look straight at the camera</div>
+          </div>
+        </div>
+
+        <!-- Camera -->
+        <div class="face-sample-camera-wrap">
+          <div class="face-sample-loading-overlay" id="fs-loading-overlay">
+            <div class="bio-spinner"></div>
+            <span>Loading AI models...</span>
+          </div>
+          <video id="fs-video" class="face-sample-video" autoplay muted playsinline></video>
+          <canvas id="fs-canvas" class="face-sample-canvas"></canvas>
+          <div class="face-sample-overlay-text" id="fs-overlay-text">Initializing camera...</div>
+        </div>
+
+        <!-- Status bar -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
+          <div class="bio-status-dot scanning" id="fs-status-dot"></div>
+          <span id="fs-status-text" style="font-size:12px;color:#6b7c8a;">Loading face recognition models...</span>
+        </div>
+
+        <!-- Capture button -->
+        <button class="btn-capture" id="btn-capture" onclick="captureSample()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M3 9a2 2 0 0 1 2-2h.93a2 2 0 0 0 1.664-.89l.812-1.22A2 2 0 0 1 10.07 4h3.86a2 2 0 0 1 1.664.89l.812 1.22A2 2 0 0 0 18.07 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span id="btn-capture-text">Capture Sample</span>
+        </button>
+
+        <p class="face-sample-hint" id="fs-hint">
+          Follow the pose guide. Position your face clearly within the frame.
+        </p>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+      <button class="back-btn" id="btn-cancel" onclick="cancelCapture()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+        Cancel
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="app-toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+  <span class="toast-text" id="toast-text"></span>
+</div>
+
+<script src="../../assets/js/env.js"></script>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/dashboard-shared.js"></script>
+<script src="../../assets/js/sidebar.js"></script>
+<script src="../../assets/js/fetch/face-api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.14/dist/face-api.js" integrity="sha384-1hSisOX+umG254ClWaLauH3hLxdwhs8oUHLoKR5xELvquQSDfvu/wLAencDLUqFm" crossorigin="anonymous"></script>
+<script>
+guardRoute(['hrd_manager', 'technical_manager']);
+
+var POSES = [
+  { label: 'Sample 1 — Front',     instruction: 'Look straight at the camera',      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg>' },
+  { label: 'Sample 2 — Left',      instruction: 'Turn your head slightly to the LEFT',  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M15 18l-6-6 6-6"/></svg>' },
+  { label: 'Sample 3 — Right',     instruction: 'Turn your head slightly to the RIGHT', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M9 18l6-6-6-6"/></svg>' },
+  { label: 'Sample 4 — Up',        instruction: 'Tilt your chin slightly UPWARD',       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M18 15l-6-6-6 6"/></svg>' },
+  { label: 'Sample 5 — Front (2nd)', instruction: 'Look straight at the camera again', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg>' }
+];
+
+var FS_MODEL_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+var fsVideo        = null;
+var fsCanvas       = null;
+var fsDetectLoop   = null;
+var fsFaceDetected = false;
+var fsModelsLoaded = false;
+var captured       = false;
+
+var _userId    = null;
+var _mode      = 'add';
+var _embId     = null;
+var _poseIndex = 0;
+
+function cancelCapture() {
+  stopCamera();
+  window.location.href = 'employee-face-sample.html';
+}
+
+function stopCamera() {
+  if (fsDetectLoop) { clearInterval(fsDetectLoop); fsDetectLoop = null; }
+  if (fsVideo && fsVideo.srcObject) {
+    fsVideo.srcObject.getTracks().forEach(function(t) { t.stop(); });
+  }
+}
+
+async function initCapture() {
+  try {
+    await fsLoadModels();
+    await fsStartCamera();
+    fsStartDetection();
+  } catch (err) {
+    fsSetStatus('error', 'Initialization failed: ' + err.message);
+    document.getElementById('fs-overlay-text').textContent = 'Camera error';
+    console.error('[FaceCapture] init error:', err);
+  }
+}
+
+async function fsLoadModels() {
+  fsSetStatus('scanning', 'Loading AI models...');
+  await Promise.all([
+    faceapi.nets.ssdMobilenetv1.loadFromUri(FS_MODEL_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(FS_MODEL_URL),
+    faceapi.nets.faceRecognitionNet.loadFromUri(FS_MODEL_URL)
+  ]);
+  fsModelsLoaded = true;
+  document.getElementById('fs-loading-overlay').style.display = 'none';
+}
+
+async function fsStartCamera() {
+  var stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+  });
+  fsVideo.srcObject = stream;
+  await new Promise(function(resolve) { fsVideo.onloadedmetadata = resolve; });
+  fsSetStatus('scanning', 'Camera ready — searching for face...');
+  document.getElementById('fs-overlay-text').textContent = 'Align face within frame';
+}
+
+function fsStartDetection() {
+  var opts = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+
+  fsDetectLoop = setInterval(async function() {
+    if (!fsModelsLoaded || !fsVideo || fsVideo.paused || fsVideo.ended || !fsVideo.videoWidth) return;
+
+    var detection = await faceapi
+      .detectSingleFace(fsVideo, opts)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    var displaySize = { width: fsVideo.videoWidth, height: fsVideo.videoHeight };
+    faceapi.matchDimensions(fsCanvas, displaySize);
+    var ctx = fsCanvas.getContext('2d');
+    ctx.clearRect(0, 0, fsCanvas.width, fsCanvas.height);
+
+    if (detection) {
+      var resized = faceapi.resizeResults(detection, displaySize);
+      var box = resized.detection.box;
+      ctx.strokeStyle = '#2e7d4f';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+      var bLen = 14;
+      [[box.x, box.y, bLen, 0, 0, bLen],[box.x + box.width, box.y, -bLen, 0, 0, bLen],
+       [box.x, box.y + box.height, bLen, 0, 0, -bLen],[box.x + box.width, box.y + box.height, -bLen, 0, 0, -bLen]
+      ].forEach(function(c) {
+        ctx.lineWidth = 3; ctx.beginPath();
+        ctx.moveTo(c[0], c[1]); ctx.lineTo(c[0] + c[2], c[1] + c[3]);
+        ctx.moveTo(c[0], c[1]); ctx.lineTo(c[0] + c[4], c[1] + c[5]);
+        ctx.stroke();
+      });
+      fsFaceDetected = true;
+      if (!captured) {
+        fsSetStatus('detected', 'Face detected — ready to capture');
+        document.getElementById('btn-capture').disabled = false;
+      }
+      document.getElementById('fs-overlay-text').textContent = 'Face detected ✓';
+    } else {
+      fsFaceDetected = false;
+      if (!captured) {
+        fsSetStatus('scanning', 'Searching for face...');
+        document.getElementById('btn-capture').disabled = true;
+      }
+      document.getElementById('fs-overlay-text').textContent = POSES[_poseIndex].instruction;
+    }
+  }, 300);
+}
+
+async function captureSample() {
+  if (!fsFaceDetected || captured) return;
+
+  var btn = document.getElementById('btn-capture');
+  btn.disabled = true;
+  document.getElementById('btn-capture-text').textContent = 'Processing...';
+
+  try {
+    var detection = await faceapi
+      .detectSingleFace(fsVideo, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!detection || !detection.descriptor) {
+      showToast('Face not captured clearly. Please try again.', 'error');
+      btn.disabled = false;
+      document.getElementById('btn-capture-text').textContent = 'Capture Sample';
+      return;
+    }
+
+    var embedding = Array.from(detection.descriptor);
+    var res;
+
+    if (_mode === 'edit' && _embId) {
+      res = await updateFaceEmbedding(_embId, embedding);
+    } else {
+      res = await saveFaceEmbedding(embedding);
+    }
+
+    if (!res.success) {
+      showToast('Failed to save sample: ' + (res.error || 'Unknown error'), 'error');
+      btn.disabled = false;
+      document.getElementById('btn-capture-text').textContent = 'Capture Sample';
+      return;
+    }
+
+    captured = true;
+    stopCamera();
+    fsSetStatus('detected', 'Sample captured successfully!');
+    document.getElementById('fs-overlay-text').textContent = 'Captured ✓';
+    document.getElementById('fs-hint').textContent = 'Sample saved. Returning to face sample list...';
+    showToast(_mode === 'edit' ? 'Face sample updated!' : 'Face sample added!', 'success');
+
+    var toastMsg  = _mode === 'edit' ? 'Face sample updated successfully.' : 'Face sample added successfully.';
+    sessionStorage.setItem('emp_toast_msg',  toastMsg);
+    sessionStorage.setItem('emp_toast_type', 'success');
+
+    setTimeout(function() {
+      window.location.href = 'employee-face-sample.html';
+    }, 2000);
+
+  } catch (err) {
+    showToast('Error during capture: ' + err.message, 'error');
+    console.error('[FaceCapture] error:', err);
+    btn.disabled = false;
+    document.getElementById('btn-capture-text').textContent = 'Capture Sample';
+  }
+}
+
+function fsSetStatus(type, text) {
+  var dot    = document.getElementById('fs-status-dot');
+  var textEl = document.getElementById('fs-status-text');
+  if (dot)    dot.className = 'bio-status-dot ' + type;
+  if (textEl) textEl.textContent = text;
+}
+
+var _toastTimer = null;
+function showToast(message, type) {
+  var toast  = document.getElementById('app-toast');
+  var iconEl = document.getElementById('toast-icon');
+  var textEl = document.getElementById('toast-text');
+  if (!toast) return;
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+  toast.className = 'toast ' + (type || 'success');
+  textEl.textContent = message;
+  iconEl.innerHTML = type === 'error'
+    ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+  });
+  _toastTimer = setTimeout(function() { toast.classList.remove('show'); _toastTimer = null; }, 3500);
+}
+
+window.addEventListener('beforeunload', function() { stopCamera(); });
+
+window.addEventListener('load', function() {
+  _userId    = sessionStorage.getItem('manageFaceSampleUserId');
+  _mode      = sessionStorage.getItem('manageFaceSampleMode') || 'add';
+  _embId     = sessionStorage.getItem('manageFaceSampleId');
+  _poseIndex = parseInt(sessionStorage.getItem('manageFaceSamplePoseIndex') || '0', 10);
+
+  if (!_userId) {
+    window.location.replace('employee-management.html');
+    return;
+  }
+
+  var pose = POSES[Math.min(_poseIndex, POSES.length - 1)];
+  document.getElementById('pose-label').textContent      = pose.label;
+  document.getElementById('pose-instruction').textContent = pose.instruction;
+  document.getElementById('pose-icon').innerHTML         = pose.icon;
+
+  var modeLabel = _mode === 'edit' ? 'Retake' : 'Add';
+  document.getElementById('page-title').textContent  = modeLabel + ' Face Sample';
+  document.getElementById('card-title').textContent  = modeLabel + ' — ' + pose.label;
+
+  var empName = sessionStorage.getItem('manageFaceSampleEmployeeName') || '';
+  if (empName) document.getElementById('page-sub').textContent = 'FACE SAMPLE · ' + empName.toUpperCase();
+
+  fsVideo  = document.getElementById('fs-video');
+  fsCanvas = document.getElementById('fs-canvas');
+
+  window.loadComponents();
+  initCapture();
+});
+</script>
+</body>
+</html>
