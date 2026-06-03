@@ -30,7 +30,7 @@
         <div class="sample-progress-row">
           <div class="sample-dots" id="sample-dots"></div>
           <span class="sample-count-label" id="sample-count-label">
-            <span id="count-num">0</span> / min 3 samples
+            <span id="count-num">0</span> / min 5 samples
           </span>
         </div>
 
@@ -131,7 +131,8 @@ var POSES = [
     }
 ];
 
-var MIN_SAMPLES = 3;
+var IS_ONBOARDING = new URLSearchParams(window.location.search).get('onboarding') === 'true';
+var MIN_SAMPLES = 5;
 var MAX_SAMPLES = 5;
 
 var FS_MODEL_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
@@ -144,7 +145,16 @@ var sampleCount    = 0;
 var registered     = false;
 
 window.addEventListener('load', function() {
-    window.loadComponents();
+    if (IS_ONBOARDING) {
+        var sidebarEl = document.getElementById('sidebar-placeholder');
+        var navbarEl  = document.getElementById('navbar-placeholder');
+        var wrapEl    = document.querySelector('.main-wrap');
+        if (sidebarEl) sidebarEl.style.display = 'none';
+        if (navbarEl)  navbarEl.style.display  = 'none';
+        if (wrapEl)    { wrapEl.style.marginLeft = '0'; wrapEl.style.paddingTop = '2rem'; }
+    } else {
+        window.loadComponents();
+    }
     fsVideo  = document.getElementById('fs-video');
     fsCanvas = document.getElementById('fs-canvas');
     renderDots();
@@ -372,8 +382,16 @@ function finishRegistration() {
     document.getElementById('btn-finish').style.display = 'none';
     fsSetStatus('detected', 'Registration complete — ' + sampleCount + ' samples saved.');
     document.getElementById('fs-overlay-text').textContent = 'Registration complete ✓';
-    document.getElementById('fs-hint').textContent = sampleCount + ' face samples registered. You can now use biometric clock-in.';
     showToast('Face registration complete! ' + sampleCount + ' samples saved.', 'success');
+
+    if (IS_ONBOARDING) {
+        document.getElementById('fs-hint').textContent = 'Face registration complete. Redirecting to login...';
+        setTimeout(function() {
+            window.location.href = '../login.html';
+        }, 2500);
+    } else {
+        document.getElementById('fs-hint').textContent = sampleCount + ' face samples registered. You can now use biometric clock-in.';
+    }
 }
 
 /* ── Helpers ── */

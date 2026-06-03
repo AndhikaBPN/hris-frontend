@@ -253,6 +253,29 @@ async function handleReset() {
   });
 
   if (result.success) {
+    var payload = result.data && result.data.data ? result.data.data : (result.data || {});
+    var token = payload.token;
+    var user  = payload.user;
+
+    if (token && user) {
+      localStorage.setItem('hris_token', token);
+      localStorage.setItem('hris_user', JSON.stringify(user));
+
+      var profileResult = await apiRequest('/profile');
+      var profileData = profileResult.success && profileResult.data && profileResult.data.data
+        ? profileResult.data.data
+        : null;
+      var hasFace = profileData && profileData.has_face_registered === true;
+
+      if (!hasFace) {
+        showMsg('password-msg', 'Password reset! Redirecting to face registration...', 'success');
+        setTimeout(function() {
+          window.location.href = 'face-sample/face-sample.html?onboarding=true';
+        }, 1500);
+        return;
+      }
+    }
+
     showMsg('password-msg', 'Password successfully reset! Redirecting to login...', 'success');
     setTimeout(function() {
       showLogin();
