@@ -623,9 +623,9 @@ async function doApproveAction() {
   if (res.success) {
     showToast('Leave request approved.', 'success');
     closeApprovalDetailModal();
-    closeApprovalsModal();
     loadPendingCount();
     loadLeaveList();
+    openApprovalsModal();
   } else {
     showToast(res.error || 'Failed to approve.', 'error');
   }
@@ -633,17 +633,16 @@ async function doApproveAction() {
 
 async function doRejectAction() {
   if (!_activeApprovalId) return;
-  var reason = prompt('Reject reason (optional):') || '';
   var btn = document.getElementById('btn-reject-action');
   btn.disabled = true;
-  var res = await rejectLeaveRequest(_activeApprovalId, reason);
+  var res = await rejectLeaveRequest(_activeApprovalId, '');
   btn.disabled = false;
   if (res.success) {
     showToast('Leave request rejected.', 'success');
     closeApprovalDetailModal();
-    closeApprovalsModal();
     loadPendingCount();
     loadLeaveList();
+    openApprovalsModal();
   } else {
     showToast(res.error || 'Failed to reject.', 'error');
   }
