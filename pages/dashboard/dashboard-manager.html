@@ -357,7 +357,7 @@
     async function loadLeaveQuota() {
       var res = await fetchLeaveQuota();
       if (res.success) {
-        var quota = res.data.quota || res.data.remaining_days || 0;
+        var quota = res.data.remaining_quota !== undefined ? res.data.remaining_quota : 0;
         document.getElementById('leave-quota').textContent = quota;
       }
     }
