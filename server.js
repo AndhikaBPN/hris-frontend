@@ -60,7 +60,12 @@ http.createServer(function(req, res) {
   }
 
   var pathname = url.parse(req.url).pathname;
-  var filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+
+  var ROUTES = {
+    '/set-password': 'pages/set-password.html'
+  };
+  var routedPath = ROUTES[pathname];
+  var filePath = path.join(__dirname, routedPath || (pathname === '/' ? 'index.html' : pathname));
   var ext = path.extname(filePath);
 
   fs.readFile(filePath, function(err, data) {
