@@ -1,3 +1,3 @@
 var APP_ENV = {
-  URL_LOCAL: ''
+  "URL_LOCAL": ""
 };
