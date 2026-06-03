@@ -13,7 +13,7 @@ async function fetchFaceEmbeddings() {
 }
 
 async function fetchFaceEmbeddingsByUser(userId) {
-  var path = '/face-embeddings' + (userId ? '?user_id=' + userId : '');
+  var path = '/face-embeddings/' + userId;
   var result = await apiRequest(path);
   if (!result.success) {
     console.error('Error fetching face embeddings for user:', result.error);
