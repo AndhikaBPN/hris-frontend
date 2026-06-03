@@ -80,27 +80,25 @@
       </div>
 
       <!-- Filters -->
-      <div class="leave-filters">
-        <input class="leave-filter-input" type="text" id="filter-name" placeholder="Search by name or team..." oninput="applyFilters()">
-        <select class="leave-filter-select" id="filter-type" onchange="applyFilters()">
+      <div class="filter-bar">
+        <input class="att-filter" type="text" id="filter-name" placeholder="Search by name or team..." oninput="applyFilters()" style="min-width:200px;">
+        <select class="att-filter" id="filter-type" onchange="applyFilters()">
           <option value="">All Types</option>
           <option value="annual">Annual Leave</option>
           <option value="sick">Sick</option>
           <option value="permit">Permit</option>
           <option value="leave_of_absence">Leave of Absence</option>
         </select>
-        <select class="leave-filter-select" id="filter-status" onchange="applyFilters()">
+        <select class="att-filter" id="filter-status" onchange="applyFilters()">
           <option value="">All Status</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
-        <div class="leave-filter-date-wrap">
-          <input class="leave-filter-input" type="text" id="filter-date-from" placeholder="Date from..." readonly style="cursor:pointer;">
-          <span style="color:#9aabb7;font-size:12px;">–</span>
-          <input class="leave-filter-input" type="text" id="filter-date-to" placeholder="Date to..." readonly style="cursor:pointer;">
-        </div>
-        <button class="leave-btn-clear" onclick="clearFilters()">Clear</button>
+        <input class="att-filter" type="text" id="filter-date-from" placeholder="Date from..." readonly style="cursor:pointer;">
+        <span class="date-range-sep">–</span>
+        <input class="att-filter" type="text" id="filter-date-to" placeholder="Date to..." readonly style="cursor:pointer;">
+        <button class="btn-reset-filter" onclick="clearFilters()">⟳ Reset</button>
       </div>
 
       <!-- Table -->

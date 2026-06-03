@@ -114,13 +114,12 @@
     <div class="section-title" style="margin-bottom:16px;">Shift Schedule List</div>
 
     <!-- Filters -->
-    <div class="shift-list-filters">
-      <span class="shift-filter-label">Date</span>
-      <input type="text" id="filter-date-from" class="shift-date-input" placeholder="From date..." readonly style="cursor:pointer;">
-      <span class="shift-filter-label">–</span>
-      <input type="text" id="filter-date-to" class="shift-date-input" placeholder="To date..." readonly style="cursor:pointer;">
-      <input type="text" id="filter-team" class="shift-date-input" placeholder="Filter team..." oninput="applyListFilters()" style="min-width:120px;">
-      <button class="btn-filter-reset" onclick="resetListFilters()">⟳ Reset</button>
+    <div class="filter-bar">
+      <input type="text" id="filter-date-from" class="att-filter" placeholder="From date..." readonly style="cursor:pointer;">
+      <span class="date-range-sep">–</span>
+      <input type="text" id="filter-date-to" class="att-filter" placeholder="To date..." readonly style="cursor:pointer;">
+      <input type="text" id="filter-team" class="att-filter" placeholder="Filter team..." oninput="applyListFilters()" style="min-width:120px;">
+      <button class="btn-reset-filter" onclick="resetListFilters()">⟳ Reset</button>
     </div>
 
     <!-- Selected rows bar -->
