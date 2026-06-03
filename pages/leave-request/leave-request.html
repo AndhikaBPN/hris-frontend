@@ -421,7 +421,7 @@ function renderLeaveTable(rows) {
 
     var actHtml = '<div class="leave-act-wrap">';
     actHtml += '<button class="leave-btn-view" onclick="openDetailModal(' + r.id + ')">View</button>';
-    if (r.canCancel) {
+    if (r.canCancel && _activeTab !== 'all') {
       actHtml += '<button class="leave-btn-cancel" onclick="doCancelRequest(' + r.id + ', this)">Cancel</button>';
     }
     actHtml += '</div>';
