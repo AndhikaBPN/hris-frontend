@@ -149,9 +149,13 @@ window.addEventListener('load', function() {
         var sidebarEl = document.getElementById('sidebar-placeholder');
         var navbarEl  = document.getElementById('navbar-placeholder');
         var wrapEl    = document.querySelector('.main-wrap');
+        var contentEl = document.querySelector('.content');
         if (sidebarEl) sidebarEl.style.display = 'none';
         if (navbarEl)  navbarEl.style.display  = 'none';
-        if (wrapEl)    { wrapEl.style.marginLeft = '0'; wrapEl.style.paddingTop = '2rem'; }
+        if (wrapEl)    { wrapEl.style.marginLeft = '0'; wrapEl.style.paddingTop = '0'; }
+        if (contentEl) { contentEl.style.padding = '1.5rem'; contentEl.style.maxWidth = '560px'; contentEl.style.margin = '0 auto'; }
+        var headerRow = document.querySelector('.page-header-row');
+        if (headerRow) headerRow.style.marginBottom = '1rem';
     } else {
         window.loadComponents();
     }
