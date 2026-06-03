@@ -1,446 +1,280 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Panduan untuk Claude Code saat bekerja di repository ini.
+
+> **Dokumen Lengkap:**
+> - **PRD.md** — product requirements, fitur, role, API reference lengkap
+> - **agent.md** — mental model, pattern, CSS class reference, pitfalls
+> - **instruction.md** — step-by-step implementation patterns dengan code examples
+
+---
 
 ## Project Overview
 
-HRIS Frontend is a static HTML/CSS/Vanilla JavaScript web application for Gaming House employee attendance management. It communicates with a REST API backend for authentication, attendance tracking, leave management, and reporting.
+Sanctuary HRIS adalah aplikasi web attendance management untuk **Gaming House** (game streaming). Static HTML/CSS/Vanilla JS yang berkomunikasi dengan PHP REST API.
 
 **Key Characteristics:**
-- No build tools, bundlers, or frameworks (React, Vue, etc.)
-- Plain vanilla JavaScript with fetch API
-- Served by a simple Node.js HTTP server
-- Role-based access control (5 roles: c_level, hrd_manager, technical_manager, team_leader, staff)
-- Client-side state managed via localStorage (tokens, user data)
+
+- No build tools, bundlers, atau frameworks
+- Vanilla JavaScript + fetch API
+- Node.js static server (port 3000)
+- Backend API: PHP Native di port 8000
+- 5 roles: `c_level`, `hrd_manager`, `technical_manager`, `team_leader`, `staff`
+- JWT di `localStorage.hris_token`, user data di `localStorage.hris_user`
 
 ## Running the Application
 
 ```bash
-# Start the development server on localhost:3000
-npm start
-# OR
-node server.js
+node server.js   # atau: npm start
+# Buka http://localhost:3000
 ```
 
-Then open `http://localhost:3000/` in a browser. You will be redirected to the login page.
+---
 
-**No dependency installation needed** — the application uses CDN-based external libraries (Lucide icons, face-api.js).
+## Project Structure (Current)
 
-## Project Structure
-
-```
+```text
 .
-├── index.html                    # Entry point (redirects to login)
-├── server.js                     # Node.js static server
-├── .env                          # Configuration (API URL)
-├── package.json                  # Minimal (only server.js)
+├── index.html
+├── server.js                        # Static server + ROUTES map untuk clean URLs
+├── .env                             # URL_LOCAL=http://localhost:8000
+├── PRD.md                           # Product requirements document
+├── agent.md                         # AI agent guide
+├── instruction.md                   # Implementation patterns
 ├── assets/
 │   ├── css/
-│   │   ├── style.css            # Global & shared styles
-│   │   ├── dashboard.css        # Dashboard pages
-│   │   └── attendance.css       # Attendance pages
+│   │   ├── dashboard.css            # Base: layout, sidebar, nav, att-table
+│   │   ├── team-hub.css             # Buttons, cards, toast, modal, emp-table styles
+│   │   ├── employee.css             # emp-table reset, role/status badges
+│   │   ├── employee-detail.css      # Profile sidebar layout
+│   │   ├── employee-create.css      # Create/update form
+│   │   ├── leave.css                # Leave request styles, tab bar
+│   │   ├── shift.css                # Shift schedule page
+│   │   ├── attendance.css           # Attendance pages
+│   │   ├── attendance-manager.css   # Manager attendance view
+│   │   ├── biometric.css            # Camera/face recognition UI
+│   │   └── report.css               # Report filters, export buttons, badges
 │   └── js/
-│       ├── config.js            # Loads .env, provides getApiUrl()
-│       ├── api.js               # Fetch wrapper with auth & error handling
-│       ├── auth.js              # Login/logout logic
-│       ├── dashboard-shared.js  # Shared dashboard utilities
-│       ├── sidebar.js           # Navigation sidebar
-│       ├── fetch/               # API fetch functions (return data only)
-│       │   ├── team.js          # Team API calls
-│       │   ├── attendance.js    # Attendance API calls
-│       │   └── [feature].js     # Feature-specific API calls
-│       └── render/              # Data mapping & rendering (return objects, not HTML)
-│           ├── team.js          # Team data mapping functions
-│           ├── attendance.js    # Attendance data mapping functions
-│           └── [feature].js     # Feature-specific mapping functions
-├── pages/
-│   ├── login.html               # Public login page
-│   ├── reset-access.html        # Password reset stub
-│   ├── dashboard.html           # Dashboard router (redirects by role)
-│   ├── components/
-│   │   ├── navbar.html          # Header component
-│   │   └── sidebar.html         # Navigation component
-│   ├── dashboard/               # Role-specific dashboards
-│   │   ├── dashboard-staff.html
-│   │   ├── dashboard-teamlead.html
-│   │   ├── dashboard-manager.html
-│   │   └── dashboard-clevel.html
-│   └── attendance/              # Attendance flow pages
-│       ├── attendance-staff.html
-│       ├── attendance-teamlead.html
-│       └── attendance-manager.html
-└── docs/
-    ├── flow.md                  # Business rules & meeting notes
-    ├── hris.md                  # Initial technical spec
-    └── hris_architecture_v2.md  # Backend architecture (reference)
+│       ├── env.js                   # Load window.APP_ENV dari .env
+│       ├── config.js                # getApiUrl(), getBaseUrl()
+│       ├── api.js                   # apiRequest(), extractListData(), guardRoute()
+│       ├── auth.js                  # handleLogin(), handleReset(), handleLogout()
+│       ├── dashboard-shared.js      # Shared utilities
+│       ├── sidebar.js               # loadComponents(), toggleNavGroup()
+│       ├── fetch/
+│       │   ├── team.js
+│       │   ├── team-detail.js
+│       │   ├── attendance.js
+│       │   ├── attendance-manager.js
+│       │   ├── employee.js
+│       │   ├── employee-detail.js
+│       │   ├── leave.js
+│       │   ├── shift.js
+│       │   ├── office.js
+│       │   ├── face-api.js          # Face embeddings + clock-in + export
+│       │   └── report.js            # Report fetch + blob export
+│       └── render/
+│           ├── team.js
+│           ├── attendance.js
+│           ├── employee.js
+│           └── employee-detail.js
+└── pages/
+    ├── login.html
+    ├── set-password.html            # Reset password dari email link
+    ├── dashboard.html               # Router → redirect by role
+    ├── components/
+    │   ├── sidebar.html             # Collapsible Reports group
+    │   └── navbar.html
+    ├── dashboard/
+    │   ├── dashboard-staff.html
+    │   ├── dashboard-teamlead.html
+    │   ├── dashboard-manager.html
+    │   └── dashboard-clevel.html
+    ├── attendance/
+    │   ├── attendance-staff.html
+    │   ├── attendance-teamlead.html
+    │   └── attendance-manager.html
+    ├── team/
+    │   ├── team-hub.html
+    │   └── team-detail.html
+    ├── employee/
+    │   ├── employee-management.html
+    │   ├── employee-detail.html
+    │   ├── employee-create.html
+    │   ├── employee-update.html
+    │   ├── employee-face-sample.html  # List face samples per employee
+    │   └── employee-face-capture.html # Capture single face sample
+    ├── face-sample/
+    │   └── face-sample.html          # Onboarding face registration
+    ├── leave-request/
+    │   └── leave-request.html
+    ├── shift-schedule/
+    │   └── shift-schedule.html
+    └── report/
+        ├── attendance.html
+        ├── leave.html
+        ├── employees.html
+        └── shifts.html
 ```
 
-## Key Architectural Patterns
+---
 
-### Configuration & API Base URL
+## Core Patterns
 
-The `.env` file contains `URL_LOCAL=<backend-api-url>`. This is loaded by `assets/js/config.js`:
-
-```javascript
-// config.js fetches /.env and parses it
-var config = await getConfigAsync();
-```
-
-All API calls use `getApiUrl(path)` to prepend the backend URL:
+### 1. API Call
 
 ```javascript
-// Usage in any page
-var data = await apiRequest('/api/login', {
+var result = await apiRequest('/endpoint', {
   method: 'POST',
-  body: JSON.stringify({ email, password })
+  body: JSON.stringify({ key: value })
+});
+// result = { success: boolean, data: any, error: string }
+
+var list   = extractListData(result);    // → array dari paginated/direct response
+var single = extractSingleData(result);  // → single object
+var meta   = extractMeta(result);        // → { current_page, last_page, per_page, total_records }
+```
+
+### 2. Fetch / Render / Page Layer
+
+- **`fetch/[feature].js`** → API calls only, return `{ success, data, error }`
+- **`render/[feature].js`** → data transform only, return objects (NO HTML, NO DOM)
+- **Page `<script>`** → orchestrate fetch + render, handle DOM + events
+
+### 3. Guard + Init
+
+```javascript
+guardRoute(['c_level', 'hrd_manager']);  // redirect jika role tidak match
+
+window.addEventListener('load', function() {
+  window.loadComponents();  // inject sidebar + navbar
+  loadData();
 });
 ```
 
-**Do not hardcode API URLs** — always use `apiRequest()` and ensure `.env` is configured.
-
-### Authentication & Token Management
-
-- JWT token stored in `localStorage` as `hris_token`
-- User data stored in `localStorage` as `hris_user`
-- `api.js` automatically includes `Authorization: Bearer <token>` header
-- 401 responses trigger logout and redirect to login page
-- Each page should check token existence before rendering (guard pages)
-
-### Separation of Concerns: Fetch & Render Pattern
-
-**Standard Practice:** Separate business logic into three layers:
-
-1. **Fetch Layer** (`assets/js/fetch/[feature].js`)
-   - Contains all API call functions
-   - Returns raw data objects `{ success, data, meta, error }`
-   - No HTML generation or DOM manipulation
-   - Examples: `fetchTeams()`, `fetchTeamLeaders()`, `createTeam()`
-
-2. **Render Layer** (`assets/js/render/[feature].js`)
-   - Contains data mapping & transformation functions
-   - Returns data objects (arrays, objects) for rendering
-   - No HTML generation — only data structures
-   - Examples: `mapTeamData()`, `buildTeamRows()`
-
-3. **Page Layer** (HTML `<script>` tag)
-   - Imports both fetch and render modules
-   - Calls fetch functions to get data
-   - Calls render functions to map data
-   - Handles DOM rendering with mapped data
-   - Manages page state and event handlers
-
-**Benefits:**
-- Debug functions by inspecting data flow, not HTML strings
-- Reuse fetch/render logic across multiple pages
-- Easier to test data transformation separately
-- Cleaner separation of API logic, data mapping, and UI rendering
-
-**Example:**
-
-```javascript
-// fetch/team.js
-async function fetchTeams(options) {
-  var result = await apiRequest('/teams' + params);
-  return { success: true, data: result.data || [] };
-}
-
-// render/team.js
-function mapTeamData(teams) {
-  return teams.map(t => ({ id: t.id, name: t.name, ... }));
-}
-
-function buildTeamRows(teamsData, canManage) {
-  return teamsData.map(t => ({ id, href, name, ... })); // Returns object
-}
-
-// page HTML
-<script src="../../assets/js/fetch/team.js"></script>
-<script src="../../assets/js/render/team.js"></script>
-<script>
-async function loadTeams() {
-  var res = await fetchTeams({ page: 1 });
-  var mapped = mapTeamData(res.data);
-  var rows = buildTeamRows(mapped, CAN_MANAGE);
-  renderList(rows); // renderList loops through rows and generates HTML
-}
-</script>
-```
-
-### Page Structure
-
-Each page follows this pattern:
-
-1. **HTML structure** — navbar, sidebar (if authenticated), main content
-2. **Script imports** — `config.js`, `api.js`, `fetch/[feature].js`, `render/[feature].js`
-3. **Page logic** — initialization, event handlers, data fetching (in HTML `<script>` tag)
-4. **localStorage checks** — verify token/user data exist before loading content
-
-Example guard:
-
-```javascript
-// In page script
-var user = JSON.parse(localStorage.getItem('hris_user'));
-var token = localStorage.getItem('hris_token');
-if (!token || !user) {
-  window.location.replace('login.html');
-}
-```
-
-### Role-Based Routing
-
-The `pages/dashboard.html` router checks user role and redirects:
-
-```javascript
-var user = JSON.parse(localStorage.getItem('hris_user'));
-var role = user?.role;
-// Redirect to role-specific dashboard
-// dashboard-staff.html, dashboard-teamlead.html, etc.
-```
-
-**Do not create generic dashboard pages** — always provide role-specific variants to match the backend RBAC structure.
-
-### Styling Conventions
-
-- Global styles in `assets/css/style.css`
-- Page-specific styles in separate files (e.g., `dashboard.css`, `attendance.css`)
-- No CSS preprocessor (plain CSS)
-- Use standard CSS Grid/Flexbox for layout
-- Lucide icons used via CDN (`<i class="lucide lucide-[icon-name]"></i>`)
-
-## System Roles & Features
-
-Reference `README.md` for complete role definitions. Key roles:
-
-- **c_level** — All reports, user management, leave approval, no attendance requirement
-- **hrd_manager** — Shift management, user management, leave approval for staff/team leaders
-- **technical_manager** — Fixed shift, dashboard access, requires c_level approval for leave
-- **team_leader** — Rotating shift, team attendance monitoring dashboard
-- **staff** — Rotating shift, personal dashboard, attendance submission
-
-## Shift & Attendance System
-
-### Shift Rotation (Staff & Team Leaders)
-
-Pattern: 2 days morning → 2 days afternoon → 2 days night → 2 days off (repeating)
-
-Shift hours:
-- **Morning:** 06:00 - 14:00 (break 09:30 - 10:30)
-- **Afternoon:** 14:00 - 22:00 (break 17:30 - 18:30)
-- **Night:** 22:00 - 06:00 (break 01:30 - 02:30)
-
-Managers have fixed hours (HRD: 10:00 - 18:00, Technical: 13:00 - 21:00, Mon-Fri).
-
-### Attendance Sessions
-
-No clock-out system. Each shift has **two sessions**:
-
-1. **Session 1:** Initial shift clock-in (must be within 15 min of shift start)
-2. **Session 2:** Second work session clock-in (e.g., after break)
-
-Validation:
-- Face recognition using face-api.js (Euclidean distance < 0.5)
-- GPS geolocation (within 50 meters of office)
-- Late threshold: 15 minutes
-
-**Failures do not block submission** — system logs them as `invalid` status in backend for fraud audit.
-
-## Fetch/Render Module Pattern
-
-All feature logic is organized into three layers:
-
-### 1. Fetch Layer (`assets/js/fetch/[feature].js`)
-Returns data objects from API calls.
-
-```javascript
-// fetch/attendance.js
-async function fetchAttendance(filters) {
-  var result = await apiRequest('/attendance?date_from=' + filters.date_from);
-  return {
-    success: result.success,
-    data: extractListData(result),
-    error: result.error
-  };
-}
-```
-
-### 2. Render Layer (`assets/js/render/[feature].js`)
-Transforms raw data into render-ready objects. NO HTML generation.
-
-```javascript
-// render/attendance.js
-function buildCalendarCells(year, month, recordsByDate) {
-  return [...Array(daysInMonth).keys()].map(d => ({
-    day: d + 1,
-    dateStr: formatDate(year, month, d + 1),
-    dotClass: getShiftDotClass(recordsByDate[...])
-  }));
-}
-```
-
-### 3. Page Layer (HTML `<script>` tag)
-Orchestrates fetch + render. Handles DOM updates and user interaction.
+### 4. Table (WAJIB pakai keduanya)
 
 ```html
-<script src="../../assets/js/fetch/attendance.js"></script>
-<script src="../../assets/js/render/attendance.js"></script>
-<script>
-async function loadAttendance() {
-  var res = await fetchAttendance({ date_from: '2026-05-01' });
-  var cells = buildCalendarCells(year, month, res.data);
-  
-  // DOM rendering happens HERE
-  var html = cells.map(cell => 
-    '<div class="cal-cell ' + cell.dotClass + '">' + cell.day + '</div>'
-  ).join('');
-  document.getElementById('cal-body').innerHTML = html;
-}
-</script>
+<table class="att-table emp-table" style="width:100%;min-width:700px;">
 ```
 
-### Key Rules
-1. **Fetch functions:** Return `{ success, data, error }` objects only
-2. **Render functions:** Return data objects/arrays. Never generate HTML
-3. **Page layer:** Imports fetch + render modules. Handles all DOM manipulation
-4. **No HTML strings in JS:** All HTML generation happens in the page layer
+`employee.css` WAJIB di-import agar `emp-table` reset override `att-table` scroll hack.
 
-### Benefits
-- **Debuggable:** Inspect data flow separate from HTML generation
-- **Testable:** Functions operate on data, not DOM
-- **Reusable:** Share fetch/render logic across pages
-- **Maintainable:** Clear separation of concerns
+### 5. Sidebar Navigation
 
-## Common Development Tasks
+Sidebar di-inject via `window.loadComponents()`. Report menu adalah collapsible group — toggle via `window.toggleNavGroup()`.
 
-### Adding a New Page
+Role visibility di-handle di `sidebar.js`:
 
-1. Create HTML in `pages/` or `pages/[feature]/`
-2. Create a corresponding `.js` file in `assets/js/` if complex logic needed
-3. Import config, api, auth helpers at the top
-4. Check authentication & role in JS before showing content
-5. Add link in sidebar/navbar (update `pages/components/sidebar.html`)
+- `staff`: hide employee management, shift schedule, employees report
+- `team_leader`: hide employee management, shift schedule
+- `c_level`: hide leave request menu
 
-### Fetching Data from API
-
-**Standard Pattern:** Use `apiRequest()` with async/await. ALL API calls must follow this pattern.
+### 6. sessionStorage untuk Navigasi
 
 ```javascript
-var result = await apiRequest('/api/dashboard/staff');
-if (result.success) {
-  var data = result.data;
-  console.log('Data:', data);
-} else {
-  console.error('Error:', result.error);
-  // Show user-friendly error message
-}
+// Before redirect
+sessionStorage.setItem('selectedEmployeeId', id);
+window.location.href = 'employee-detail.html';
+
+// On target page load
+var id = sessionStorage.getItem('selectedEmployeeId');
+sessionStorage.removeItem('selectedEmployeeId');
+if (!id) { window.location.replace('employee-management.html'); return; }
 ```
 
-**Return Structure:** `apiRequest()` always returns:
-```javascript
-{
-  success: boolean,
-  data: any,         // Response data from API (null if failed)
-  error: string      // Error message (null if success)
-}
-```
-
-**API call options (all optional):**
-```javascript
-var result = await apiRequest('/path', {
-  method: 'POST',                    // Default: GET
-  body: JSON.stringify({ key: val }), // Stringify before sending
-  headers: { 'X-Custom': 'value' }    // Extra headers (merged with defaults)
-});
-```
-
-**The function automatically handles:**
-- Authorization header with JWT token
-- Content-Type JSON
-- 401 logout redirects
-- Response parsing (JSON)
-- Error extraction from response
-
-**Never use `.then()` or callbacks** — always async/await for consistency.
-
-### Submitting Forms
+### 7. Clean URL Routes (server.js)
 
 ```javascript
-// e.g., Leave request form
-var form = document.querySelector('#leave-form');
-form.addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  var data = {
-    leave_date: document.querySelector('#date').value,
-    type: document.querySelector('#type').value,
-    reason: document.querySelector('#reason').value
-  };
-  
-  try {
-    var result = await apiRequest('/api/leave', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-    alert('Leave request submitted!');
-  } catch (error) {
-    alert('Error: ' + error.message);
-  }
-});
+var ROUTES = {
+  '/set-password':      'pages/set-password.html',
+  '/report/attendance': 'pages/report/attendance.html',
+  '/report/leave':      'pages/report/leave.html',
+  '/report/employees':  'pages/report/employees.html',
+  '/report/shifts':     'pages/report/shifts.html'
+};
 ```
 
-### Styling a New Component
+Tambahkan entry baru untuk halaman yang butuh clean URL.
 
-Create a new `.css` file in `assets/css/` and link it in the HTML:
+---
 
-```html
-<link rel="stylesheet" href="../../assets/css/new-feature.css">
-```
+## Onboarding Flow
 
-Avoid inline styles. Use CSS classes and follow existing naming conventions.
+1. Admin buat user → sistem kirim email dengan link `/set-password?email=...&token=...`
+2. User buka link → `set-password.html` → set password → `POST /password/reset`
+3. Response include JWT → disimpan ke localStorage
+4. Check `GET /profile` → `has_face_registered`
+5. Jika `false` → redirect ke `/pages/face-sample/face-sample.html?onboarding=true` (tanpa sidebar/navbar)
+6. Register 5 face samples (pose sequence: Front, Left, Right, Up, Front 2nd)
+7. Selesai → redirect ke login
 
-## Important Notes
+---
 
-### API Configuration
+## Shift System
 
-- Backend URL is configured in `.env`: `URL_LOCAL=http://localhost:3000`
-- Never hardcode backend URLs in code
-- `config.js` reads `.env` from the server's filesystem; this file **is publicly accessible** at `/.env`
-- **Do not store secrets in `.env`** (API keys, passwords, etc.)
+**Rotasi (staff & team_leader):** 2 Pagi → 2 Siang → 2 Malam → 2 Libur (berulang)
 
-### External Libraries
+| Shift     | Jam Kerja    | Break        |
+| --------- | ------------ | ------------ |
+| Pagi      | 06:00–14:00  | 09:30–10:30  |
+| Siang     | 14:00–22:00  | 17:30–18:30  |
+| Malam     | 22:00–06:00  | 01:30–02:30  |
+| HRD       | 10:00–18:00  | Senin–Jumat  |
+| Technical | 13:00–21:00  | Senin–Jumat  |
 
-- **Lucide Icons:** CDN-based, loaded in HTML via `<i class="lucide lucide-[icon-name]"></i>`
-- **face-api.js:** For face recognition (referenced in attendance flow but implementation delegated to backend in current scope)
-- No npm dependencies for frontend code
+---
 
-### localStorage Usage
+## Attendance System
 
-Pages rely on `hris_token` and `hris_user` (JSON) for session state. If removing items for logout, ensure consistency:
+- **2 sesi per shift**, tidak ada clock-out
+- **Session 1:** clock-in awal shift
+- **Session 2:** clock-in setelah break
+- Validasi: face recognition (Euclidean < 0.5) + GPS (≤ 50m dari kantor)
+- Gagal validasi → tidak diblokir, dicatat sebagai `invalid` untuk audit
+- Manager → clock-in langsung tanpa face/geo
 
-```javascript
-localStorage.removeItem('hris_token');
-localStorage.removeItem('hris_user');
-window.location.replace('login.html');
-```
+---
 
-### Debugging
+## Leave System
 
-- No build step to debug — open browser DevTools directly
-- Network tab shows API requests and responses
-- Console logs are safe and visible immediately
-- Check localStorage values in DevTools > Application > Local Storage
+- Jatah: 1 hari per bulan (annual), sick butuh surat dokter
+- Approval: staff/TL → HRD, HRD/Technical → c_level
+- Tab UI: "My Requests" | "All Employees" (untuk manager roles)
 
-## References
+---
 
-- **Business Rules:** `docs/flow.md`
-- **Initial Spec:** `docs/hris.md`
-- **Backend Architecture:** `docs/hris_architecture_v2.md` (reference for understanding API contract)
-- **API Endpoints:** Listed in backend architecture doc (Section 6)
+## Report Module
+
+4 halaman di `/report/`:
+
+- `attendance.html` — filter year+month, completion badges, summary footer
+- `leave.html` — filter year, remaining color coding
+- `employees.html` — filter role/status/manager
+- `shifts.html` — row styling day off (grey) + override (yellow)
+
+Export: fetch dengan auth header → blob download.
+
+---
 
 ## Common Pitfalls
 
-1. **Forgetting role checks** — Always verify user role before showing role-specific pages or features
-2. **Hardcoding URLs** — Use `getApiUrl()` function from config.js
-3. **Ignoring 401s** — api.js handles this, but page-level guards are still needed at load time
-4. **Mixing async/await** — Ensure promises are awaited in event handlers
-5. **localStorage assumptions** — Always check if token/user exist before using; guard with redirects
+1. **att-table tanpa emp-table + employee.css** → kolom overlap (table-layout:fixed tidak ter-reset)
+2. **Relative path dari halaman di root** → gunakan absolute `/pages/...` bukan `pages/...`
+3. **Export tanpa auth header** → jangan `window.open()`, gunakan `fetch()` + blob
+4. **Tidak hapus sessionStorage setelah baca** → state bocor ke navigasi berikutnya
+5. **Lupa guardRoute** → halaman bisa diakses semua role
+6. **HTML string dari API tanpa escHtml()** → XSS vulnerability
 
+---
+
+## References
+
+- **PRD.md** — feature requirements, role matrix, API endpoint table
+- **agent.md** — CSS classes, button types, pitfalls, cara tambah halaman/sidebar link
+- **instruction.md** — code patterns dengan full examples
+- **docs/hris_architecture_v2.md** — backend architecture reference
+- **docs/list_api_shift_schedule.md** — shift schedule API detail
+- **docs/leave_request_api_docs.md** — leave API dengan request/response examples
+- **docs/face-recognition-flow.md** — face recognition flow detail
+- **docs/geolocation-flow.md** — geolocation flow detail
