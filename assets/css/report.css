@@ -2,15 +2,6 @@
    REPORT MODULE STYLES
 ══════════════════════════════════════════════ */
 
-/* ── Table: reset att-table scroll hack, enable h-scroll ── */
-.emp-table {
-  table-layout: auto !important;
-  min-width: 700px;
-}
-.emp-table thead { display: table-header-group !important; width: auto !important; }
-.emp-table tbody { display: table-row-group !important; max-height: none !important; overflow-y: visible !important; }
-.emp-table tbody tr { display: table-row !important; width: auto !important; }
-
 /* ── Filters ── */
 .rpt-filters {
   display: flex;
