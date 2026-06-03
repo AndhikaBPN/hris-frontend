@@ -42,6 +42,12 @@ async function fetchManagers() {
   return { success: true, data: managers, error: null };
 }
 
+async function fetchCLevelUsers() {
+  var res = await fetchEmployees({ page: 1, limit: 100, role: 'c_level' });
+  if (!res.success) return { success: false, data: [], error: res.error };
+  return { success: true, data: res.data, error: null };
+}
+
 async function createEmployee(payload) {
   if (!payload || !payload.name || !payload.email || !payload.password || !payload.role) {
     return { success: false, data: null, message: 'Name, email, password, and role are required', error: 'Missing required fields' };

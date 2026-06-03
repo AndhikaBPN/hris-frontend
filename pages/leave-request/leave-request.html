@@ -23,17 +23,8 @@
       </div>
     </div>
 
-    <!-- ── 4 Summary Cards ── -->
+    <!-- ── 3 Summary Cards ── -->
     <div class="leave-summary-grid" id="leave-summary-grid">
-      <div class="leave-summary-card">
-        <div class="leave-summary-icon prev">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        </div>
-        <div class="leave-summary-info">
-          <div class="leave-summary-val" id="sum-prev-year">—</div>
-          <div class="leave-summary-lbl">Remaining (Last Year)</div>
-        </div>
-      </div>
       <div class="leave-summary-card">
         <div class="leave-summary-icon curr">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
@@ -84,8 +75,7 @@
 
       <!-- Filters -->
       <div class="leave-filters">
-        <input class="leave-filter-input" type="text" id="filter-name" placeholder="Search name..." oninput="applyFilters()">
-        <input class="leave-filter-input" type="text" id="filter-team" placeholder="Search team..." oninput="applyFilters()" style="min-width:130px;">
+        <input class="leave-filter-input" type="text" id="filter-name" placeholder="Search by name or team..." oninput="applyFilters()">
         <select class="leave-filter-select" id="filter-type" onchange="applyFilters()">
           <option value="">All Types</option>
           <option value="annual">Annual Leave</option>
@@ -127,14 +117,22 @@
       </div>
 
       <!-- Pagination -->
-      <div class="leave-pag">
-        <span class="leave-pag-info" id="leave-pag-info"></span>
-        <div class="leave-pag-btns">
-          <button class="leave-pag-btn" id="pag-prev" disabled onclick="changePage(-1)">
+      <div class="team-pagination">
+        <div class="pagination-left">
+          <span class="pag-label">LIMIT PER PAGE</span>
+          <select class="pag-select" id="limit-select" onchange="onLimitChange()">
+            <option value="10">10</option>
+            <option value="15" selected>15</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="pagination-right">
+          <span class="pag-info" id="leave-pag-info"></span>
+          <button class="pag-btn" id="pag-prev" disabled onclick="changePage(-1)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <span class="leave-pag-pages" id="leave-pag-pages"></span>
-          <button class="leave-pag-btn" id="pag-next" disabled onclick="changePage(1)">
+          <button class="pag-btn" id="pag-next" disabled onclick="changePage(1)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
@@ -249,7 +247,6 @@ function setupRoleAccess() {
   /* staff: hide name & team filters (own data only) */
   if (_role === 'staff') {
     document.getElementById('filter-name').style.display = 'none';
-    document.getElementById('filter-team').style.display = 'none';
   }
 }
 
@@ -259,7 +256,6 @@ async function loadSummary() {
   var res = await fetchLeaveSummary();
   if (!res.success) return;
   var s = mapLeaveSummary(res.data);
-  document.getElementById('sum-prev-year').textContent = s.prevYearRemaining;
   document.getElementById('sum-curr-year').textContent = s.currYearRemaining;
   document.getElementById('sum-used').textContent      = s.used;
   document.getElementById('sum-total').textContent     = s.totalThisYear;
@@ -338,13 +334,17 @@ function renderPagination() {
   var start   = listTotal === 0 ? 0 : (listPage - 1) * LIST_LIMIT + 1;
   var end     = Math.min(listPage * LIST_LIMIT, listTotal);
   var infoEl  = document.getElementById('leave-pag-info');
-  var pagesEl = document.getElementById('leave-pag-pages');
   var prevEl  = document.getElementById('pag-prev');
   var nextEl  = document.getElementById('pag-next');
   if (infoEl)  infoEl.textContent  = listTotal > 0 ? 'Showing ' + start + '–' + end + ' of ' + listTotal : 'No data';
-  if (pagesEl) pagesEl.textContent = listLastPage > 1 ? listPage + ' / ' + listLastPage : '';
   if (prevEl)  prevEl.disabled = listPage <= 1;
   if (nextEl)  nextEl.disabled = listPage >= listLastPage;
+}
+
+function onLimitChange() {
+  LIST_LIMIT = parseInt(document.getElementById('limit-select').value) || 15;
+  listPage = 1;
+  loadLeaveList();
 }
 
 function changePage(dir) {
@@ -356,8 +356,9 @@ function changePage(dir) {
 
 /* ── Filters ── */
 function applyFilters() {
-  filters.name   = document.getElementById('filter-name').value.trim();
-  filters.team   = document.getElementById('filter-team').value.trim();
+  var nameOrTeam = document.getElementById('filter-name').value.trim();
+  filters.name   = nameOrTeam;
+  filters.team   = nameOrTeam;
   filters.type   = document.getElementById('filter-type').value;
   filters.status = document.getElementById('filter-status').value;
   listPage = 1;
@@ -366,7 +367,6 @@ function applyFilters() {
 
 function clearFilters() {
   document.getElementById('filter-name').value   = '';
-  document.getElementById('filter-team').value   = '';
   document.getElementById('filter-type').value   = '';
   document.getElementById('filter-status').value = '';
   document.getElementById('filter-date-from')._flatpickr && document.getElementById('filter-date-from')._flatpickr.clear();

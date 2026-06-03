@@ -1,62 +1,56 @@
 /* ══════════════════════════════════════════════
    LEAVE REQUEST — FETCH LAYER
    All functions return { success, data, meta, error }
-   API endpoints TBD — ready for integration
 ══════════════════════════════════════════════ */
 
 async function fetchLeaveList(options) {
   options = options || {};
-  var page       = options.page       || 1;
-  var limit      = options.limit      || 15;
-  var name       = options.name       || '';
-  var team       = options.team       || '';
-  var type       = options.type       || '';
-  var status     = options.status     || '';
-  var date_from  = options.date_from  || '';
-  var date_to    = options.date_to    || '';
-  var team_id    = options.team_id    || '';
+  var page      = options.page      || 1;
+  var limit     = options.limit     || 15;
+  var search    = options.name      || options.search || '';
+  var type      = options.type      || '';
+  var status    = options.status    || '';
+  var date_from = options.date_from || '';
+  var date_to   = options.date_to   || '';
 
   var params = '?page=' + page + '&limit=' + limit;
-  if (name)      params += '&name='      + encodeURIComponent(name);
-  if (team)      params += '&team='      + encodeURIComponent(team);
-  if (type)      params += '&type='      + encodeURIComponent(type);
-  if (status)    params += '&status='    + encodeURIComponent(status);
-  if (date_from) params += '&date_from=' + encodeURIComponent(date_from);
-  if (date_to)   params += '&date_to='   + encodeURIComponent(date_to);
-  if (team_id)   params += '&team_id='   + encodeURIComponent(team_id);
+  if (search)    params += '&search='     + encodeURIComponent(search);
+  if (type)      params += '&leave_type=' + encodeURIComponent(type);
+  if (status)    params += '&status='     + encodeURIComponent(status);
+  if (date_from) params += '&date_from='  + encodeURIComponent(date_from);
+  if (date_to)   params += '&date_to='    + encodeURIComponent(date_to);
 
-  var result = await apiRequest('/leave-requests' + params);
+  var result = await apiRequest('/leave' + params);
   if (!result.success) {
     return { success: false, data: [], meta: {}, error: result.error };
   }
-  var data = result.data || {};
   return {
     success: true,
-    data: data.data || data || [],
-    meta: data.meta || {}
+    data: extractListData(result),
+    meta: extractMeta(result)
   };
 }
 
 async function fetchLeaveSummary() {
-  var result = await apiRequest('/leave-requests/summary');
+  var result = await apiRequest('/leave/quota');
   if (!result.success) {
     return { success: false, data: null, error: result.error };
   }
-  return { success: true, data: result.data || {} };
+  return { success: true, data: extractSingleData(result) || {} };
 }
 
 async function fetchLeaveDetail(id) {
-  var result = await apiRequest('/leave-requests/' + id);
+  var result = await apiRequest('/leave/' + id);
   if (!result.success) {
     return { success: false, data: null, error: result.error };
   }
-  return { success: true, data: result.data || {} };
+  return { success: true, data: extractSingleData(result) || {} };
 }
 
 async function createLeaveRequest(formData) {
   var token = localStorage.getItem('hris_token');
   try {
-    var response = await fetch(getApiUrl('/leave-requests'), {
+    var response = await fetch(getApiUrl('/leave'), {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token },
       body: formData
@@ -72,7 +66,7 @@ async function createLeaveRequest(formData) {
 }
 
 async function cancelLeaveRequest(id) {
-  var result = await apiRequest('/leave-requests/' + id + '/cancel', { method: 'PUT' });
+  var result = await apiRequest('/leave/' + id + '/cancel', { method: 'PUT' });
   if (!result.success) {
     return { success: false, error: result.error };
   }
@@ -82,23 +76,22 @@ async function cancelLeaveRequest(id) {
 async function fetchPendingApprovals(options) {
   options = options || {};
   var page  = options.page  || 1;
-  var limit = options.limit || 15;
+  var limit = options.limit || 50;
 
   var params = '?page=' + page + '&limit=' + limit + '&status=pending';
-  var result = await apiRequest('/leave-requests/approvals' + params);
+  var result = await apiRequest('/leave' + params);
   if (!result.success) {
     return { success: false, data: [], meta: {}, error: result.error };
   }
-  var data = result.data || {};
   return {
     success: true,
-    data: data.data || data || [],
-    meta: data.meta || {}
+    data: extractListData(result),
+    meta: extractMeta(result)
   };
 }
 
 async function approveLeaveRequest(id) {
-  var result = await apiRequest('/leave-requests/' + id + '/approve', { method: 'PUT' });
+  var result = await apiRequest('/leave/' + id + '/approve', { method: 'PUT' });
   if (!result.success) {
     return { success: false, error: result.error };
   }
@@ -106,7 +99,7 @@ async function approveLeaveRequest(id) {
 }
 
 async function rejectLeaveRequest(id, reason) {
-  var result = await apiRequest('/leave-requests/' + id + '/reject', {
+  var result = await apiRequest('/leave/' + id + '/reject', {
     method: 'PUT',
     body: JSON.stringify({ reason: reason || '' })
   });

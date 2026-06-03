@@ -17,18 +17,13 @@ async function fetchAttendanceSummary(month) {
 
 async function fetchTeamAttendance(filters) {
   filters = filters || {};
-  var params = '';
+  var params = '?role=' + (filters.role || 'staff');
 
-  if (filters.from) params += '&date_from=' + filters.from;
-  if (filters.to) params += '&date_to=' + filters.to;
   if (filters.status) params += '&status=' + filters.status;
-  if (filters.division) params += '&division=' + filters.division;
-  if (filters.page) params += '&page=' + filters.page;
-  if (filters.limit) params += '&limit=' + (filters.limit || 10);
+  if (filters.from)   params += '&date_from=' + filters.from;
+  if (filters.to)     params += '&date_to='   + filters.to;
 
-  if (params) params = '?' + params.substring(1);
-
-  var result = await apiRequest('/attendance/subordinates/today' + params);
+  var result = await apiRequest('/attendance/today' + params);
   if (!result.success) {
     console.error('Error fetching team attendance:', result.error);
     return { success: false, data: [], meta: {} };
@@ -36,7 +31,7 @@ async function fetchTeamAttendance(filters) {
   return {
     success: true,
     data: extractListData(result),
-    meta: extractMeta(result)
+    meta: {}
   };
 }
 

@@ -75,27 +75,34 @@ function buildTeamAttendanceRows(records) {
     var uid = p.user_id;
     if (!grouped[uid]) {
       grouped[uid] = {
-        name: p.user_name || p.name,
-        role: p.user_role || p.role,
-        c1: '--:--',
-        c2: '--:--',
-        status: p.status
+        name:     p.user_name  || p.name  || '—',
+        division: p.team_name  || p.division || p.user_role || '—',
+        c1:       '--:--',
+        c2:       '--:--',
+        status:   p.status     || 'pending',
+        faceImg:  null
       };
     }
-    var time = p.check_in_time || p.clock_in_time;
+    var time = p.check_in_time || p.clock_in_time || '';
     if (time && time.includes(' ')) time = time.split(' ')[1].substring(0, 5);
 
-    if (p.session == 1) grouped[uid].c1 = time;
-    else if (p.session == 2) grouped[uid].c2 = time;
+    if (p.session == 1) {
+      grouped[uid].c1      = time || '--:--';
+      grouped[uid].status  = p.status || grouped[uid].status;
+      grouped[uid].faceImg = p.face_image || null;
+    } else if (p.session == 2) {
+      grouped[uid].c2 = time || '--:--';
+    }
   });
 
   return Object.values(grouped).map(function(u) {
     return {
-      name: u.name,
-      role: u.role,
+      name:           u.name,
+      division:       u.division,
       checkInSession1: u.c1,
       checkInSession2: u.c2,
-      status: u.status
+      status:         u.status,
+      faceImg:        u.faceImg
     };
   });
 }

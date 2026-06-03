@@ -51,8 +51,8 @@ function mapLeaveRow(raw) {
   var status = (raw.status || '').toLowerCase();
   return {
     id:           raw.id,
-    name:         raw.employee_name || raw.name || '—',
-    team:         raw.team_name     || raw.team || '—',
+    name:         raw.user_name || raw.employee_name || raw.name || '—',
+    team:         raw.team_name || raw.team || '—',
     dateFrom:     raw.leave_date_from || raw.date_from || '',
     dateTo:       raw.leave_date_to   || raw.date_to   || '',
     dateDisplay:  formatLeaveDateRange(raw.leave_date_from || raw.date_from, raw.leave_date_to || raw.date_to),
@@ -75,12 +75,11 @@ function mapLeaveList(rawList) {
 }
 
 function mapLeaveSummary(raw) {
-  if (!raw) return { prevYearRemaining: 0, currYearRemaining: 0, used: 0, totalThisYear: 0 };
+  if (!raw) return { currYearRemaining: 0, used: 0, totalThisYear: 0 };
   return {
-    prevYearRemaining: raw.prev_year_remaining  || raw.previous_year_remaining || 0,
-    currYearRemaining: raw.curr_year_remaining  || raw.current_year_remaining  || 0,
-    used:              raw.used_days            || raw.used                    || 0,
-    totalThisYear:     raw.total_days_this_year || raw.total                   || 0
+    currYearRemaining: raw.remaining_quota  || raw.curr_year_remaining || 0,
+    used:              raw.total_used       || raw.used_days           || 0,
+    totalThisYear:     raw.total_quota      || raw.total               || 0
   };
 }
 

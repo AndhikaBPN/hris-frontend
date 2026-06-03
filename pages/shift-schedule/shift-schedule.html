@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../../assets/css/dashboard.css">
   <link rel="stylesheet" href="../../assets/css/team-hub.css">
   <link rel="stylesheet" href="../../assets/css/shift.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
 <div id="sidebar-placeholder"></div>
@@ -115,9 +116,9 @@
     <!-- Filters -->
     <div class="shift-list-filters">
       <span class="shift-filter-label">Date</span>
-      <input type="date" id="filter-date-from" class="shift-date-input" onchange="applyListFilters()">
+      <input type="text" id="filter-date-from" class="shift-date-input" placeholder="From date..." readonly style="cursor:pointer;">
       <span class="shift-filter-label">–</span>
-      <input type="date" id="filter-date-to" class="shift-date-input" onchange="applyListFilters()">
+      <input type="text" id="filter-date-to" class="shift-date-input" placeholder="To date..." readonly style="cursor:pointer;">
       <input type="text" id="filter-team" class="shift-date-input" placeholder="Filter team..." oninput="applyListFilters()" style="min-width:120px;">
       <button class="btn-filter-reset" onclick="resetListFilters()">⟳ Reset</button>
     </div>
@@ -152,21 +153,22 @@
     </div>
 
     <!-- Pagination -->
-    <div class="shift-pag">
-      <span class="shift-pag-info" id="shift-pag-info"></span>
-      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-        <span style="font-size:12px;color:#7a8a99;">Rows</span>
-        <select id="limit-select" class="shift-filter-select" onchange="changeLimitPerPage(this.value)" style="padding:4px 8px;font-size:12px;min-width:64px;">
+    <div class="team-pagination">
+      <div class="pagination-left">
+        <span class="pag-label">LIMIT PER PAGE</span>
+        <select class="pag-select" id="limit-select" onchange="changeLimitPerPage(this.value)">
           <option value="10">10</option>
           <option value="15" selected>15</option>
           <option value="25">25</option>
           <option value="50">50</option>
         </select>
-        <button class="shift-pag-btn" id="shift-pag-prev" disabled onclick="changeListPage(-1)">
+      </div>
+      <div class="pagination-right">
+        <span class="pag-info" id="shift-pag-info"></span>
+        <button class="pag-btn" id="shift-pag-prev" disabled onclick="changeListPage(-1)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span id="shift-pag-pages" style="font-size:12px;color:#5a6a7a;white-space:nowrap;"></span>
-        <button class="shift-pag-btn" id="shift-pag-next" disabled onclick="changeListPage(1)">
+        <button class="pag-btn" id="shift-pag-next" disabled onclick="changeListPage(1)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>
@@ -248,6 +250,7 @@
   <span class="toast-text" id="toast-text"></span>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="../../assets/js/env.js"></script>
 <script src="../../assets/js/config.js"></script>
 <script src="../../assets/js/api.js"></script>
@@ -757,11 +760,9 @@ function renderListPag() {
   var start    = listTotal === 0 ? 0 : (listPage - 1) * LIST_LIMIT + 1;
   var end      = Math.min(listPage * LIST_LIMIT, listTotal);
   var infoEl   = document.getElementById('shift-pag-info');
-  var pagesEl  = document.getElementById('shift-pag-pages');
   var prevEl   = document.getElementById('shift-pag-prev');
   var nextEl   = document.getElementById('shift-pag-next');
   if (infoEl)  infoEl.textContent  = listTotal > 0 ? 'Showing ' + start + '–' + end + ' of ' + listTotal : 'No data';
-  if (pagesEl) pagesEl.textContent = listLastPage > 1 ? listPage + ' / ' + listLastPage : '';
   if (prevEl)  prevEl.disabled = listPage <= 1;
   if (nextEl)  nextEl.disabled = listPage >= listLastPage;
 }
@@ -973,9 +974,9 @@ function applyListFilters() {
 }
 
 function resetListFilters() {
-  document.getElementById('filter-date-from').value = '';
-  document.getElementById('filter-date-to').value   = '';
-  document.getElementById('filter-team').value       = '';
+  document.getElementById('filter-date-from')._flatpickr && document.getElementById('filter-date-from')._flatpickr.clear();
+  document.getElementById('filter-date-to')._flatpickr   && document.getElementById('filter-date-to')._flatpickr.clear();
+  document.getElementById('filter-team').value = '';
   listFilters = { start_date: '', end_date: '', team: '' };
   listPage = 1;
   clearRowSelection();
@@ -1026,6 +1027,15 @@ window.addEventListener('load', async function() {
   var d     = new Date();
   calYear   = d.getFullYear();
   calMonth  = d.getMonth();
+
+  flatpickr('#filter-date-from', {
+    dateFormat: 'Y-m-d',
+    onChange: function(sel, str) { listFilters.start_date = str; listPage = 1; clearRowSelection(); loadShiftList(); }
+  });
+  flatpickr('#filter-date-to', {
+    dateFormat: 'Y-m-d',
+    onChange: function(sel, str) { listFilters.end_date = str; listPage = 1; clearRowSelection(); loadShiftList(); }
+  });
 
   renderShiftCal();
 

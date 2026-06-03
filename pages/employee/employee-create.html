@@ -192,6 +192,7 @@
 guardRoute(['c_level', 'hrd_manager']);
 
 var _managersCache = null;
+var _cLevelCache   = null;
 var _photoFile = null;
 
 /* ── Photo preview ── */
@@ -281,21 +282,29 @@ function updatePreview() {
 
 /* ── Role → show/hide manager + live badge ── */
 document.getElementById('f-role').addEventListener('change', async function() {
-  var show = (this.value === 'team_leader' || this.value === 'staff');
+  var role = this.value;
+  var show = (role === 'team_leader' || role === 'staff' || role === 'hrd_manager' || role === 'technical_manager');
   document.getElementById('manager-group').style.display = show ? '' : 'none';
-  if (show) await ensureManagersLoaded();
+  if (show) await ensureManagersLoaded(role);
 
-  var badge = buildRoleBadgeData(this.value);
+  var badge = buildRoleBadgeData(role);
   var el    = document.getElementById('sidebar-role-badge');
-  if (el) el.innerHTML = this.value
+  if (el) el.innerHTML = role
     ? '<span class="emp-role-badge ' + badge.colorClass + '">' + badge.label + '</span>'
     : '';
 });
 
-async function ensureManagersLoaded() {
-  if (_managersCache) { populateManagers(_managersCache); return; }
-  var res = await fetchManagers();
-  if (res.success) { _managersCache = res.data; populateManagers(res.data); }
+async function ensureManagersLoaded(role) {
+  var isCLevelOnly = (role === 'hrd_manager' || role === 'technical_manager');
+  if (isCLevelOnly) {
+    if (_cLevelCache) { populateManagers(_cLevelCache); return; }
+    var res = await fetchCLevelUsers();
+    if (res.success) { _cLevelCache = res.data; populateManagers(res.data); }
+  } else {
+    if (_managersCache) { populateManagers(_managersCache); return; }
+    var res = await fetchManagers();
+    if (res.success) { _managersCache = res.data; populateManagers(res.data); }
+  }
 }
 
 function populateManagers(managers) {
