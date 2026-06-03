@@ -181,7 +181,7 @@
               <div class="quota-number" id="leave-quota">0</div>
             </div>
             <div class="leave-title">Annual Leave Days</div>
-            <div class="leave-sub">Remaining for 2025</div>
+            <div class="leave-sub" id="leave-sub">Remaining for 2026</div>
             <a class="leave-link" href="../leave-request/leave-request.html">Request Leave →</a>
           </div>
         </div>
@@ -357,8 +357,11 @@
     async function loadLeaveQuota() {
       var res = await fetchLeaveQuota();
       if (res.success) {
+        var year = new Date().getFullYear();
         var quota = res.data.remaining_quota !== undefined ? res.data.remaining_quota : 0;
         document.getElementById('leave-quota').textContent = quota;
+        var sub = document.getElementById('leave-sub');
+        if (sub) sub.textContent = 'Remaining for ' + year;
       }
     }
 

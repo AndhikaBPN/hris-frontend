@@ -55,7 +55,8 @@ async function fetchLeaveRequests() {
 }
 
 async function fetchLeaveQuota() {
-  var result = await apiRequest('/leave/quota');
+  var year = new Date().getFullYear();
+  var result = await apiRequest('/leave/quota?year=' + year);
   if (!result.success) {
     console.error('Error fetching leave quota:', result.error);
     return { success: false, data: {} };
