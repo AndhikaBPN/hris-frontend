@@ -1,107 +1,96 @@
 # HRIS Frontend
 
 Static web frontend for HRIS Attendance System for Gaming House operations.
-This project is built with HTML, CSS, and Vanilla JavaScript, communicating
-with a local REST API backend.
+Built with HTML, CSS, and Vanilla JavaScript, communicating with a REST API backend.
 
 ## Overview
 
-This HRIS system focuses on employee attendance with identity and
-location validation:
-
-- Face recognition for biometric verification.
-- Geo-tagging for attendance location validation.
-- JWT authentication for login sessions.
-- Role-Based Access Control according to the Gaming House structure.
-- Session-based attendance flow, instead of conventional clock-out.
-
-The frontend currently provides a login page, a mock reset access flow, and a
-simple dashboard page after a successful login. The login and reset access pages
-are separated into their respective HTML files.
+- Face recognition for biometric verification
+- Geo-tagging for attendance location validation
+- JWT authentication for login sessions
+- Role-Based Access Control according to Gaming House structure
+- Session-based attendance flow (no clock-out)
 
 ## Tech Stack
 
-- HTML
-- CSS
-- Vanilla JavaScript
-- Desktop browser
-- Lucide icon CDN
-- Target backend: Native PHP REST API + MySQL
+- HTML / CSS / Vanilla JavaScript
+- Node.js (static file server only)
+- Lucide Icons (CDN)
+- Flatpickr (CDN, date pickers)
+- face-api.js (CDN, face recognition)
+- Backend: Native PHP REST API + MySQL
 
 ## File Structure
 
 ```text
 .
 ├── index.html
+├── server.js
+├── .env                          # API URL config (not committed)
 ├── assets/
 │   ├── css/
-│   │   └── style.css
+│   │   ├── style.css
+│   │   ├── dashboard.css
+│   │   ├── attendance.css
+│   │   └── ...
 │   └── js/
 │       ├── config.js
 │       ├── api.js
-│       └── auth.js
+│       ├── auth.js
+│       ├── dashboard-shared.js
+│       ├── sidebar.js
+│       ├── fetch/               # API call functions
+│       └── render/              # Data mapping functions
 ├── pages/
 │   ├── login.html
-│   ├── reset-access.html
-│   └── dashboard.html
-├── docs/
-│   ├── flow.md
-│   ├── hris.md
-│   └── hris_architecture_v2.md
-└── README.md
+│   ├── dashboard.html
+│   ├── components/
+│   ├── dashboard/
+│   ├── attendance/
+│   ├── employee/
+│   ├── leave-request/
+│   └── shift-management/
+└── docs/
 ```
 
-## How to Run Frontend
-
-As this project is a static frontend, no dependency installation is required.
-Run a static server from the project root:
+## How to Run
 
 ```bash
-cd /Users/apple/Documents/kuliah/hris-frontend
-node server.js
+# 1. Clone the project
+git clone https://github.com/AndhikaBPN/hris-frontend.git
+
+# 2. Open the project folder
+cd hris-frontend
+
+# 3. Install dependencies
+npm install
+
+# 4. Start the development server
+npm start
 ```
 
-Open browser:
-
-```text
-http://localhost:5500/index.html
-```
-
-`index.html` will automatically redirect to:
-
-```text
-pages/login.html
-```
+Open browser at `http://localhost:3000`. Redirects automatically to login page.
 
 ## API Configuration
 
-Since this frontend is plain HTML/JS without a bundler, the `.env` is read by
-`assets/js/config.js` through a request to `/.env` when the application runs on a
-static server.
+Create `.env` in the project root (not committed to git):
 
-```js
-var data = await apiRequest('/login', {
-  method: 'POST',
-  body: JSON.stringify({ email: email, password: password })
-});
+```env
+URL_LOCAL=http://localhost:8000
 ```
 
-If the backend port or host changes, simply update the `URL_LOCAL` value in `.env`.
-Do not store secrets in the frontend `.env` because this file is accessible by
-the browser when the static server is running.
+`config.js` reads this file at runtime. Change `URL_LOCAL` if the backend host/port differs.
+Do not store secrets in `.env` — it is accessible by the browser.
 
 ## Login Flow
 
-1. User opens `index.html` or directly `pages/login.html`.
-2. User enters email and password.
-3. Frontend sends a request to `POST /api/login`.
-4. If the response is successful and contains a token:
-   - token is saved to `localStorage` as `hris_token`
-   - user data is saved to `localStorage` as `hris_user`
-   - user is redirected to `pages/dashboard.html`
-5. If failed, an error message is displayed on the login page.
+1. User opens `index.html` or `pages/login.html`
+2. User enters email and password
+3. Frontend sends `POST /api/login`
+4. On success: token saved to `localStorage` as `hris_token`, user data as `hris_user`
+5. Redirected to `pages/dashboard.html` (routes to role-specific dashboard)
 
-Expected response backend:
+Expected response:
 
 ```json
 {
@@ -121,77 +110,60 @@ Expected response backend:
 
 ## System Roles
 
-Business roles used in the Gaming House version:
+| Role | Access |
+| --- | --- |
+| `c_level` | All reports, user management, approves manager leave, attendance not required |
+| `hrd_manager` | Manages users, shifts, reports, approves staff/team leader leave |
+| `technical_manager` | Fixed shift, dashboard access, leave requires c_level approval |
+| `team_leader` | Rotating shift, monitors team attendance |
+| `staff` | Rotating shift, personal dashboard, attendance submission |
 
-- `c_level`: highest access, viewing reports and approving manager leave, attendance not mandatory.
-- `hrd_manager`: managing users, shifts, reports, and approving staff/team leader leave.
-- `technical_manager`: technical manager with fixed working hours and summary dashboard access.
-- `team_leader`: follows shift rotation and monitors the team.
-- `staff`: general role for talents/streamers and operational employees.
+## Shift Schedule
 
-## Shift Flow
+Shift assignments are managed manually by HRD (input or import via shift management page).
 
-Staff and team leaders use automatic rotation:
+Available shift types for staff and team leaders:
 
-```text
-2 days morning shift -> 2 days afternoon shift -> 2 days night shift -> 2 days off
-```
-
-Shift details:
-
-| Shift | Working Hours | Break Time |
+| Shift | Working Hours | Break |
 | --- | --- | --- |
-| Morning | 06:00 - 14:00 | 09:30 - 10:30 |
-| Afternoon | 14:00 - 22:00 | 17:30 - 18:30 |
-| Night | 22:00 - 06:00 | 01:30 - 02:30 |
+| Morning | 06:00 – 14:00 | 09:30 – 10:30 |
+| Afternoon | 14:00 – 22:00 | 17:30 – 18:30 |
+| Night | 22:00 – 06:00 | 01:30 – 02:30 |
 
-Managers use a fixed schedule:
+Managers use fixed schedules:
 
-| Role | Working Hours | Working Days |
+| Role | Working Hours | Days |
 | --- | --- | --- |
-| HRD Manager | 10:00 - 18:00 | Monday - Friday |
-| Technical Manager | 13:00 - 21:00 | Monday - Friday |
+| HRD Manager | 10:00 – 18:00 | Monday – Friday |
+| Technical Manager | 13:00 – 21:00 | Monday – Friday |
 
 ## Attendance Flow
 
-Gaming House attendance does not use clock-out. Each shift uses two sessions:
+No clock-out system. Each shift has two sessions:
 
-1. Session 1: initial shift attendance.
-2. Session 2: attendance at the start of the second work/stream session.
+1. **Session 1** — initial clock-in at shift start
+2. **Session 2** — clock-in at start of second work session (after break)
 
-Attendance validation:
+Validation per session:
 
-- Face recognition using `face-api.js` on the client-side.
-- Face embeddings compared using Euclidean Distance.
-- Match if distance is less than `0.5`.
-- Location validated with `navigator.geolocation`.
-- Distance calculated using the Haversine Formula.
-- Maximum valid radius of `50 meters`.
-- Maximum lateness tolerance of `15 minutes` for each session.
+- Face recognition via `face-api.js` (Euclidean distance < 0.5)
+- GPS geolocation via `navigator.geolocation` (within 50 meters of office)
+- Lateness tolerance: 15 minutes per session
 
-Face or location failures still need to be recorded in the backend as an audit log
-for fraud monitoring purposes.
+Validation failures are still recorded as `invalid` status — used for fraud audit, not submission blocking.
 
 ## Leave Flow
 
-Leave rules:
+- Each employee gets 1 day of leave per month (annual quota)
+- Staff and team leader leave requires HRD Manager approval
+- HRD Manager and Technical Manager leave requires C-Level approval
+- Sick leave must attach a doctor's letter (image or PDF, max 20MB)
 
-- Each employee gets 1 day of leave per month.
-- Staff and team leaders require HRD Manager approval.
-- HRD Manager and Technical Manager require C-Level approval.
-- Sick leave must attach a doctor's note.
+Leave types: `annual`, `sick`, `permit`, `leave_of_absence`
 
 ## Reference Documents
 
-- `docs/flow.md`: meeting notes and Gaming House business rules.
-- `docs/hris.md`: initial technical specification for HRIS attendance.
-- `docs/hris_architecture_v2.md`: latest backend architecture and flow for Gaming House.
-
-## Development Notes
-
-- Do not use Laravel, React, or Python backends for this version scope.
-- Frontend remains lightweight with HTML/CSS/Vanilla JS.
-- Backend uses Native PHP, PDO, MySQL, and JWT.
-- Face recognition uses pretrained models via `face-api.js`.
-- No ML training on the backend.
-- Use prepared statements on the backend for database access.
+- `docs/flow.md` — business rules and meeting notes
+- `docs/hris.md` — initial technical specification
+- `docs/hris_architecture_v2.md` — backend architecture reference
+- `docs/leave_request_api_docs.md` — leave request API endpoints
