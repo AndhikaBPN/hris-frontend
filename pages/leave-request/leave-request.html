@@ -310,6 +310,7 @@ var listTotal     = 0;
 var _activeDetail = null;
 var _activeApprovalId = null;
 var _activeTab    = 'all'; /* 'mine' | 'all' */
+var _rawCache     = {};   /* id → raw API item, for detail view without extra API call */
 
 var filters = { name: '', team: '', type: '', status: '', date_from: '', date_to: '' };
 
@@ -393,7 +394,17 @@ async function loadLeaveList() {
     return;
   }
 
+  /* cache raw items by id for detail view */
+  _rawCache = {};
+  (res.data || []).forEach(function(item) { if (item && item.id) _rawCache[item.id] = item; });
+
   var rows = mapLeaveList(res.data);
+
+  /* All Employees tab: hide pending (handled via Pending Approvals modal) */
+  if (_activeTab === 'all') {
+    rows = rows.filter(function(r) { return r.status !== 'pending'; });
+  }
+
   renderLeaveTable(rows);
 
   listTotal    = res.meta.total_records || res.meta.total || rows.length;
@@ -485,16 +496,14 @@ function clearFilters() {
 }
 
 /* ── Detail Modal ── */
-async function openDetailModal(id) {
-  document.getElementById('detail-modal-body').innerHTML = '<div class="leave-empty">Loading...</div>';
+function openDetailModal(id) {
   document.getElementById('detail-modal').classList.add('open');
-
-  var res = await fetchLeaveDetail(id);
-  if (!res.success) {
-    document.getElementById('detail-modal-body').innerHTML = '<div class="leave-empty">Failed to load detail.</div>';
+  var raw = _rawCache[id];
+  if (!raw) {
+    document.getElementById('detail-modal-body').innerHTML = '<div class="leave-empty">Data not found.</div>';
     return;
   }
-  var d = mapLeaveDetail(res.data);
+  var d = mapLeaveDetail(raw);
   renderDetailModalBody(document.getElementById('detail-modal-body'), d);
 }
 
