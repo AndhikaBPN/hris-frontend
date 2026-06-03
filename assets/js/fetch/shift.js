@@ -3,7 +3,7 @@
 ══════════════════════════════════════════════ */
 
 async function fetchMasterShifts() {
-  var result = await apiRequest('/shifts?page=1&limit=50&order_by=name&sorting=ASC');
+  var result = await apiRequest('/shifts?page=1&limit=50&order_by=id&sorting=ASC');
   if (!result.success) return { success: false, data: [], error: result.error };
   var body = result.data || {};
   var list = Array.isArray(body) ? body : (body.data || []);
