@@ -117,7 +117,7 @@ function formatDate(str) {
 
 async function loadManagers() {
   var sel = document.getElementById('filter-manager');
-  var result = await apiRequest('/employees?page=1&limit=100');
+  var result = await apiRequest('/users?page=1&limit=100');
   if (!result.success) return;
   var list = extractListData(result);
   var managers = list.filter(function(u) {
