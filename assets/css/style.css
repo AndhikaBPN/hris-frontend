@@ -63,9 +63,7 @@ body {
 .brand-logo {
   width: 80px; height: 80px;
   border-radius: 50%; object-fit: cover;
-  border: 3px solid #4a7c59;
   margin: 0 auto 1rem; display: block;
-  box-shadow: 0 4px 12px rgba(74,124,89,0.25);
 }
 .brand h1 { font-size: 2rem; font-weight: 400; color: #3a3a3a; letter-spacing: -0.5px; }
 .brand p  { font-size: 11px; letter-spacing: 2px; color: #8a9ba8; font-weight: 500; margin-top: 4px; }
