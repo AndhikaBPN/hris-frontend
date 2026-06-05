@@ -225,6 +225,217 @@ window.saveProfile = async function() {
   if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
 };
 
+/* ── Notification Logic ── */
+var _notif = { items: [], unreadCount: 0, page: 1, lastPage: 1, loading: false, panelOpen: false };
+var _notifPollingTimer = null;
+
+var _NOTIF_ICONS = {
+  leave_submitted: {
+    cls: 'notif-icon-submitted',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>'
+  },
+  leave_approved: {
+    cls: 'notif-icon-approved',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+  },
+  leave_rejected: {
+    cls: 'notif-icon-rejected',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+  },
+  leave_approved_team: {
+    cls: 'notif-icon-team',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+  }
+};
+
+function _notifRelativeTime(dateStr) {
+  var d = new Date((dateStr || '').replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  var diff = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (diff < 60)     return 'baru saja';
+  if (diff < 3600)   return Math.floor(diff / 60) + ' menit lalu';
+  if (diff < 86400)  return Math.floor(diff / 3600) + ' jam lalu';
+  if (diff < 172800) return 'kemarin';
+  return Math.floor(diff / 86400) + ' hari lalu';
+}
+
+function _notifUpdateBadge() {
+  var badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  if (_notif.unreadCount > 0) {
+    badge.textContent = _notif.unreadCount > 99 ? '99+' : _notif.unreadCount;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function _notifUpdateMarkAllBtn() {
+  var btn = document.getElementById('notif-markall-btn');
+  if (btn) btn.style.display = _notif.unreadCount > 0 ? '' : 'none';
+}
+
+function _notifRenderItems() {
+  var list = document.getElementById('notif-list');
+  if (!list) return;
+  if (!_notif.items.length) {
+    list.innerHTML = '<div class="notif-empty">Tidak ada notifikasi</div>';
+    return;
+  }
+  list.innerHTML = _notif.items.map(function(item) {
+    var icon = _NOTIF_ICONS[item.type] || _NOTIF_ICONS['leave_submitted'];
+    var leaveId = item.data && item.data.leave_id;
+    var detailLink = leaveId
+      ? '<a class="notif-detail-link" href="../leave-request/leave-request.html" onclick="_notifOnDetailClick(event,' + item.id + ')">Lihat Detail →</a>'
+      : '';
+    return '<div class="notif-item' + (item.is_read ? '' : ' unread') + '" id="notif-item-' + item.id + '" onclick="_notifOnItemClick(event,' + item.id + ')">' +
+      '<div class="notif-icon-wrap ' + icon.cls + '">' + icon.svg + '</div>' +
+      '<div class="notif-item-body">' +
+        '<div class="notif-item-title">' + _notifEscHtml(item.title || '') + '</div>' +
+        '<div class="notif-item-body-text">' + _notifEscHtml(item.body || '') + '</div>' +
+        '<div class="notif-item-meta">' +
+          '<span class="notif-item-time">' + _notifRelativeTime(item.created_at) + '</span>' +
+          detailLink +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var footer = document.getElementById('notif-loadmore-wrap');
+  if (footer) footer.style.display = (_notif.page < _notif.lastPage) ? '' : 'none';
+}
+
+function _notifEscHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function _notifFetch(page, append) {
+  if (_notif.loading) return;
+  _notif.loading = true;
+  var list = document.getElementById('notif-list');
+  if (!append && list) list.innerHTML = '<div class="notif-empty">Memuat...</div>';
+  var loadMoreBtn = document.getElementById('notif-loadmore-btn');
+  if (loadMoreBtn) loadMoreBtn.disabled = true;
+  try {
+    var token = localStorage.getItem('hris_token');
+    var res = await fetch(getApiUrl('/notifications?page=' + page + '&limit=20'), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var json = await res.json();
+    if (json.success) {
+      var incoming = (json.data && Array.isArray(json.data)) ? json.data : [];
+      if (append) {
+        _notif.items = _notif.items.concat(incoming);
+      } else {
+        _notif.items = incoming;
+      }
+      var meta = json.meta || {};
+      _notif.unreadCount = meta.unread_count !== undefined ? meta.unread_count : _notif.unreadCount;
+      _notif.lastPage = meta.last_page || 1;
+      _notif.page = page;
+      _notifRenderItems();
+      _notifUpdateBadge();
+      _notifUpdateMarkAllBtn();
+    }
+  } catch(e) {}
+  _notif.loading = false;
+  if (loadMoreBtn) loadMoreBtn.disabled = false;
+}
+
+async function _notifFetchUnreadOnly() {
+  try {
+    var token = localStorage.getItem('hris_token');
+    var res = await fetch(getApiUrl('/notifications?limit=1'), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var json = await res.json();
+    if (json.success && json.meta) {
+      _notif.unreadCount = json.meta.unread_count || 0;
+      _notifUpdateBadge();
+      _notifUpdateMarkAllBtn();
+    }
+  } catch(e) {}
+}
+
+window._notifOnItemClick = async function(e, id) {
+  e.stopPropagation();
+  var item = _notif.items.find(function(n) { return n.id === id; });
+  if (!item || item.is_read) return;
+  var prevRead = item.is_read;
+  item.is_read = true;
+  _notif.unreadCount = Math.max(0, _notif.unreadCount - 1);
+  _notifRenderItems();
+  _notifUpdateBadge();
+  _notifUpdateMarkAllBtn();
+  try {
+    var token = localStorage.getItem('hris_token');
+    var res = await fetch(getApiUrl('/notifications/' + id + '/read'), {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var json = await res.json();
+    if (!json.success) {
+      item.is_read = prevRead;
+      _notif.unreadCount = Math.min(_notif.unreadCount + 1, 99);
+      _notifRenderItems();
+      _notifUpdateBadge();
+      _notifUpdateMarkAllBtn();
+    }
+  } catch(e) {
+    item.is_read = prevRead;
+    _notif.unreadCount = Math.min(_notif.unreadCount + 1, 99);
+    _notifRenderItems();
+    _notifUpdateBadge();
+    _notifUpdateMarkAllBtn();
+  }
+};
+
+window._notifOnDetailClick = function(e, id) {
+  e.stopPropagation();
+  var item = _notif.items.find(function(n) { return n.id === id; });
+  if (item && !item.is_read) {
+    window._notifOnItemClick(e, id);
+  }
+};
+
+window._notifMarkAll = async function() {
+  if (_notif.unreadCount === 0) return;
+  var snapshot = _notif.items.map(function(n) { return { id: n.id, is_read: n.is_read }; });
+  var prevCount = _notif.unreadCount;
+  _notif.items.forEach(function(n) { n.is_read = true; });
+  _notif.unreadCount = 0;
+  _notifRenderItems();
+  _notifUpdateBadge();
+  _notifUpdateMarkAllBtn();
+  try {
+    var token = localStorage.getItem('hris_token');
+    var res = await fetch(getApiUrl('/notifications/read-all'), {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var json = await res.json();
+    if (!json.success) {
+      snapshot.forEach(function(s) {
+        var item = _notif.items.find(function(n) { return n.id === s.id; });
+        if (item) item.is_read = s.is_read;
+      });
+      _notif.unreadCount = prevCount;
+      _notifRenderItems();
+      _notifUpdateBadge();
+      _notifUpdateMarkAllBtn();
+    }
+  } catch(e) {
+    snapshot.forEach(function(s) {
+      var item = _notif.items.find(function(n) { return n.id === s.id; });
+      if (item) item.is_read = s.is_read;
+    });
+    _notif.unreadCount = prevCount;
+    _notifRenderItems();
+    _notifUpdateBadge();
+    _notifUpdateMarkAllBtn();
+  }
+};
+
 window.toggleNavGroup = function() {
   var header   = document.getElementById('nav-reports-header');
   var children = document.getElementById('nav-reports-children');
@@ -403,6 +614,55 @@ window.loadComponents = function() {
         window.openProfileModal();
       });
     }
+
+    // Bell / Notifications
+    var bellBtn = document.getElementById('bell-btn');
+    var notifPanel = document.getElementById('notif-panel');
+    var notifMarkAllBtn = document.getElementById('notif-markall-btn');
+    var notifLoadMoreBtn = document.getElementById('notif-loadmore-btn');
+
+    if (bellBtn && notifPanel) {
+      bellBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = notifPanel.classList.contains('open');
+        // Close profile dropdown if open
+        if (profileDropdown) profileDropdown.classList.remove('open');
+        if (isOpen) {
+          notifPanel.classList.remove('open');
+        } else {
+          notifPanel.classList.add('open');
+          // Fresh load when panel opens
+          _notif.page = 1;
+          _notif.items = [];
+          _notifFetch(1, false);
+        }
+      });
+      document.addEventListener('click', function(e) {
+        var bellWrap = document.getElementById('bell-wrap');
+        if (bellWrap && !bellWrap.contains(e.target)) {
+          notifPanel.classList.remove('open');
+        }
+      });
+    }
+
+    if (notifMarkAllBtn) {
+      notifMarkAllBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        window._notifMarkAll();
+      });
+    }
+
+    if (notifLoadMoreBtn) {
+      notifLoadMoreBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        _notifFetch(_notif.page + 1, true);
+      });
+    }
+
+    // Initial unread count + polling
+    _notifFetchUnreadOnly();
+    if (_notifPollingTimer) clearInterval(_notifPollingTimer);
+    _notifPollingTimer = setInterval(function() { _notifFetchUnreadOnly(); }, 30000);
   });
   return Promise.all([p1, p2]);
 };

@@ -2,10 +2,24 @@
     <span class="portal-label">PORTAL</span>
     <div class="topbar-right">
       <span class="role-badge" id="role-badge">ROLE</span>
-      <button class="icon-btn" title="Notifications">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="badge">3</span>
-      </button>
+      <div class="bell-wrap" id="bell-wrap">
+        <button class="icon-btn" id="bell-btn" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="badge" id="notif-badge" style="display:none;">0</span>
+        </button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-panel-header">
+            <span class="notif-panel-title">Notifikasi</span>
+            <button class="notif-markall-btn" id="notif-markall-btn" style="display:none;">Tandai Semua Dibaca</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">Memuat notifikasi...</div>
+          </div>
+          <div class="notif-loadmore-wrap" id="notif-loadmore-wrap" style="display:none;">
+            <button class="notif-loadmore-btn" id="notif-loadmore-btn">Muat Lebih Banyak</button>
+          </div>
+        </div>
+      </div>
       <div class="profile-wrap" id="profile-wrap">
         <div class="avatar" id="avatar-init">A</div>
         <div class="profile-dropdown" id="profile-dropdown">
