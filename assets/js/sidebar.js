@@ -529,10 +529,10 @@ window.loadComponents = function() {
 
     // Hide unauthorized menus
     if (userRole === 'staff') {
-      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift, .nav-reports').forEach(e => e.style.display = 'none');
       if (rptEmp) rptEmp.style.display = 'none';
     } else if (userRole === 'team_leader') {
-      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift, nav-reports').forEach(e => e.style.display = 'none');
     } else if (userRole === 'c_level') {
       document.querySelectorAll('.nav-leave').forEach(e => e.style.display = 'none');
     } else if (userRole === 'technical_manager') {
