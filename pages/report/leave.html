@@ -124,21 +124,30 @@ function renderFiltered() {
 function renderPagination() {
   var el = document.getElementById('rpt-pagination');
   if (!el) return;
-  if (_totalPages <= 1) { el.innerHTML = ''; return; }
-  var html = '<span class="rpt-pagination-info">' + _totalRecords + ' total</span>';
-  html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page - 1) + ')"' + (_page <= 1 ? ' disabled' : '') + '>&#8249;</button>';
-  var last;
-  var delta = 2;
-  for (var i = 1; i <= _totalPages; i++) {
-    if (i === 1 || i === _totalPages || (i >= _page - delta && i <= _page + delta)) {
-      if (last && i - last > 1) html += '<span class="rpt-page-ellipsis">…</span>';
-      html += '<button class="rpt-page-btn' + (i === _page ? ' active' : '') + '"' +
-        (i === _page ? '' : ' onclick="goToPage(' + i + ')"') + '>' + i + '</button>';
-      last = i;
+  var limitOpts = [10, 25, 50, 100].map(function(v) {
+    return '<option value="' + v + '"' + (v === _limit ? ' selected' : '') + '>' + v + ' / page</option>';
+  }).join('');
+  var html = '<span class="rpt-pagination-info">' + _totalRecords + ' record(s)</span>';
+  html += '<select class="rpt-limit-select" onchange="onLimitChange(this.value)">' + limitOpts + '</select>';
+  if (_totalPages > 1) {
+    html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page - 1) + ')"' + (_page <= 1 ? ' disabled' : '') + '>&#8249;</button>';
+    var last; var delta = 2;
+    for (var i = 1; i <= _totalPages; i++) {
+      if (i === 1 || i === _totalPages || (i >= _page - delta && i <= _page + delta)) {
+        if (last && i - last > 1) html += '<span class="rpt-page-ellipsis">…</span>';
+        html += '<button class="rpt-page-btn' + (i === _page ? ' active' : '') + '"' +
+          (i === _page ? '' : ' onclick="goToPage(' + i + ')"') + '>' + i + '</button>';
+        last = i;
+      }
     }
+    html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page + 1) + ')"' + (_page >= _totalPages ? ' disabled' : '') + '>&#8250;</button>';
   }
-  html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page + 1) + ')"' + (_page >= _totalPages ? ' disabled' : '') + '>&#8250;</button>';
   el.innerHTML = html;
+}
+
+function onLimitChange(val) {
+  _limit = parseInt(val) || 25;
+  loadReport();
 }
 
 function goToPage(n) {

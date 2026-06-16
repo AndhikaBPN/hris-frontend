@@ -52,11 +52,6 @@
           <option value="11">November</option><option value="12">December</option>
         </select>
         <input class="rpt-filter-input" id="filter-name" placeholder="Search by name..." oninput="renderFiltered()">
-        <select class="rpt-limit-select" id="filter-limit" onchange="onLimitChange()">
-          <option value="25">25 / page</option>
-          <option value="50" selected>50 / page</option>
-          <option value="100">100 / page</option>
-        </select>
       </div>
 
       <!-- Legend -->
@@ -142,8 +137,8 @@ function formatDate(str) {
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function onLimitChange() {
-  _limit = parseInt(document.getElementById('filter-limit').value) || 50;
+function onLimitChange(val) {
+  _limit = parseInt(val) || 50;
   loadReport();
 }
 
@@ -156,20 +151,24 @@ function renderFiltered() {
 function renderPagination() {
   var el = document.getElementById('rpt-pagination');
   if (!el) return;
-  if (_totalPages <= 1) { el.innerHTML = ''; return; }
-  var html = '<span class="rpt-pagination-info">' + _totalRecords + ' total</span>';
-  html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page - 1) + ')"' + (_page <= 1 ? ' disabled' : '') + '>&#8249;</button>';
-  var last;
-  var delta = 2;
-  for (var i = 1; i <= _totalPages; i++) {
-    if (i === 1 || i === _totalPages || (i >= _page - delta && i <= _page + delta)) {
-      if (last && i - last > 1) html += '<span class="rpt-page-ellipsis">…</span>';
-      html += '<button class="rpt-page-btn' + (i === _page ? ' active' : '') + '"' +
-        (i === _page ? '' : ' onclick="goToPage(' + i + ')"') + '>' + i + '</button>';
-      last = i;
+  var limitOpts = [25, 50, 100, 200].map(function(v) {
+    return '<option value="' + v + '"' + (v === _limit ? ' selected' : '') + '>' + v + ' / page</option>';
+  }).join('');
+  var html = '<span class="rpt-pagination-info">' + _totalRecords + ' record(s)</span>';
+  html += '<select class="rpt-limit-select" onchange="onLimitChange(this.value)">' + limitOpts + '</select>';
+  if (_totalPages > 1) {
+    html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page - 1) + ')"' + (_page <= 1 ? ' disabled' : '') + '>&#8249;</button>';
+    var last; var delta = 2;
+    for (var i = 1; i <= _totalPages; i++) {
+      if (i === 1 || i === _totalPages || (i >= _page - delta && i <= _page + delta)) {
+        if (last && i - last > 1) html += '<span class="rpt-page-ellipsis">…</span>';
+        html += '<button class="rpt-page-btn' + (i === _page ? ' active' : '') + '"' +
+          (i === _page ? '' : ' onclick="goToPage(' + i + ')"') + '>' + i + '</button>';
+        last = i;
+      }
     }
+    html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page + 1) + ')"' + (_page >= _totalPages ? ' disabled' : '') + '>&#8250;</button>';
   }
-  html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page + 1) + ')"' + (_page >= _totalPages ? ' disabled' : '') + '>&#8250;</button>';
   el.innerHTML = html;
 }
 
@@ -293,7 +292,6 @@ window.addEventListener('load', function() {
   buildYearOptions();
   buildMonthOptions();
   if (_role === 'staff') document.getElementById('filter-name').style.display = 'none';
-  _limit = parseInt(document.getElementById('filter-limit').value) || 50;
   window.loadComponents();
   loadReport();
 });
