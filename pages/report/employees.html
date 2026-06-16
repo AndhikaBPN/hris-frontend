@@ -81,6 +81,7 @@
           <tfoot id="rpt-tfoot"></tfoot>
         </table>
       </div>
+      <div class="rpt-pagination" id="rpt-pagination"></div>
 
     </div>
 
@@ -104,6 +105,10 @@ guardRoute(['c_level', 'hrd_manager', 'technical_manager', 'team_leader']);
 var _user = JSON.parse(localStorage.getItem('hris_user') || '{}');
 var _role = _user.role || '';
 var _data = [];
+var _page = 1;
+var _totalPages   = 1;
+var _totalRecords = 0;
+var _limit = 25;
 
 var ROLE_LABELS = { c_level:'C-Level', hrd_manager:'HRD Manager', technical_manager:'Tech Manager', team_leader:'Team Leader', staff:'Staff' };
 var ROLE_COLORS = { c_level:'#8b4513', hrd_manager:'#2980b9', technical_manager:'#8e44ad', team_leader:'#27ae60', staff:'#3d5c45' };
@@ -145,8 +150,35 @@ function renderFiltered() {
   renderTable(rows);
 }
 
+function renderPagination() {
+  var el = document.getElementById('rpt-pagination');
+  if (!el) return;
+  if (_totalPages <= 1) { el.innerHTML = ''; return; }
+  var html = '<span class="rpt-pagination-info">' + _totalRecords + ' total</span>';
+  html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page - 1) + ')"' + (_page <= 1 ? ' disabled' : '') + '>&#8249;</button>';
+  var last;
+  var delta = 2;
+  for (var i = 1; i <= _totalPages; i++) {
+    if (i === 1 || i === _totalPages || (i >= _page - delta && i <= _page + delta)) {
+      if (last && i - last > 1) html += '<span class="rpt-page-ellipsis">…</span>';
+      html += '<button class="rpt-page-btn' + (i === _page ? ' active' : '') + '"' +
+        (i === _page ? '' : ' onclick="goToPage(' + i + ')"') + '>' + i + '</button>';
+      last = i;
+    }
+  }
+  html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page + 1) + ')"' + (_page >= _totalPages ? ' disabled' : '') + '>&#8250;</button>';
+  el.innerHTML = html;
+}
+
+function goToPage(n) {
+  if (n < 1 || n > _totalPages || n === _page) return;
+  _page = n;
+  loadReport(false);
+}
+
 function renderTable(rows) {
-  var tbody = document.getElementById('rpt-tbody');
+  var tbody  = document.getElementById('rpt-tbody');
+  var offset = (_page - 1) * _limit;
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="8" class="emp-empty">No employees found for selected filters.</td></tr>';
     renderFooter([]);
@@ -159,7 +191,7 @@ function renderTable(rows) {
       ? '<span class="rpt-active">Active</span>'
       : '<span class="rpt-inactive">Inactive</span>';
     return '<tr>' +
-      '<td style="text-align:center;color:#9aabb7;font-size:12px;">' + (i + 1) + '</td>' +
+      '<td style="text-align:center;color:#9aabb7;font-size:12px;">' + (offset + i + 1) + '</td>' +
       '<td style="font-weight:500;">' + escHtml(r.name || '—') + '</td>' +
       '<td style="font-size:12.5px;color:#5a6a7a;">' + escHtml(r.email || '—') + '</td>' +
       '<td style="font-size:12.5px;color:#5a6a7a;">' + escHtml(r.phone || '—') + '</td>' +
@@ -178,24 +210,32 @@ function renderFooter(rows) {
   var active   = rows.filter(function(r) { return r.is_active; }).length;
   var inactive = rows.length - active;
   tfoot.innerHTML = '<tr class="rpt-footer-row">' +
-    '<td colspan="6" style="padding-left:12px;">Summary · ' + rows.length + ' employee(s)</td>' +
+    '<td colspan="6" style="padding-left:12px;">Page ' + _page + ' · ' + rows.length + ' of ' + _totalRecords + ' employee(s)</td>' +
     '<td colspan="2" style="text-align:center;">Active: ' + active + ' · Inactive: ' + inactive + '</td>' +
   '</tr>';
 }
 
-async function loadReport() {
+async function loadReport(resetPage) {
+  if (resetPage !== false) _page = 1;
   var role      = document.getElementById('filter-role').value;
   var status    = document.getElementById('filter-status').value;
   var managerId = document.getElementById('filter-manager').value;
   setLoading(true);
-  var res = await fetchEmployeesReport({ role: role, status: status, manager_id: managerId });
+  var res = await fetchEmployeesReport({ role: role, status: status, manager_id: managerId, page: _page, limit: _limit });
   setLoading(false);
   if (!res.success) { showError(res.error || 'Failed to load data'); return; }
   _data = res.data;
-  document.getElementById('rpt-sub').textContent = _data.length + ' employee(s)';
+  var meta = res.meta || {};
+  _totalRecords = meta.total_records || _data.length;
+  _totalPages   = meta.last_page    || 1;
+  _page         = meta.current_page || _page;
+  document.getElementById('rpt-sub').textContent =
+    _totalRecords + ' employee(s)' +
+    (_totalPages > 1 ? ' · Page ' + _page + '/' + _totalPages : '');
   document.getElementById('btn-xlsx').disabled = false;
   document.getElementById('btn-pdf').disabled  = false;
   renderFiltered();
+  renderPagination();
 }
 
 function setLoading(on) {
@@ -203,6 +243,8 @@ function setLoading(on) {
     document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="8" class="emp-empty"><span class="rpt-spinner"></span>Loading...</td></tr>';
     document.getElementById('btn-xlsx').disabled = true;
     document.getElementById('btn-pdf').disabled  = true;
+    var pg = document.getElementById('rpt-pagination');
+    if (pg) pg.innerHTML = '';
   }
 }
 

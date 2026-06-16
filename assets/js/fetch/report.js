@@ -13,40 +13,52 @@ function _extractReportData(result) {
   return [];
 }
 
-async function fetchAttendanceReport(year, month) {
-  var result = await apiRequest('/reports/attendance?year=' + year + '&month=' + month);
-  if (!result.success) return { success: false, data: [], error: result.error };
-  return { success: true, data: _extractReportData(result) };
+function _extractReportMeta(result) {
+  if (!result || !result.data) return null;
+  return result.data.meta || null;
 }
 
-async function fetchLeaveReport(year) {
-  var result = await apiRequest('/reports/leave?year=' + year);
-  if (!result.success) return { success: false, data: [], error: result.error };
-  return { success: true, data: _extractReportData(result) };
+async function fetchAttendanceReport(year, month, page, limit) {
+  var p = page  || 1;
+  var l = limit || 25;
+  var result = await apiRequest('/reports/attendance?year=' + year + '&month=' + month + '&page=' + p + '&limit=' + l);
+  if (!result.success) return { success: false, data: [], meta: null, error: result.error };
+  return { success: true, data: _extractReportData(result), meta: _extractReportMeta(result) };
+}
+
+async function fetchLeaveReport(year, page, limit) {
+  var p = page  || 1;
+  var l = limit || 25;
+  var result = await apiRequest('/reports/leave?year=' + year + '&page=' + p + '&limit=' + l);
+  if (!result.success) return { success: false, data: [], meta: null, error: result.error };
+  return { success: true, data: _extractReportData(result), meta: _extractReportMeta(result) };
 }
 
 async function fetchEmployeesReport(opts) {
-  var params = [];
+  var page  = opts.page  || 1;
+  var limit = opts.limit || 25;
+  var params = ['page=' + page, 'limit=' + limit];
   if (opts.role)       params.push('role='       + encodeURIComponent(opts.role));
   if (opts.status)     params.push('status='     + encodeURIComponent(opts.status));
   if (opts.manager_id) params.push('manager_id=' + encodeURIComponent(opts.manager_id));
-  var qs = params.length ? '?' + params.join('&') : '';
-  var result = await apiRequest('/reports/employees' + qs);
-  if (!result.success) return { success: false, data: [], error: result.error };
-  return { success: true, data: _extractReportData(result) };
+  var result = await apiRequest('/reports/employees?' + params.join('&'));
+  if (!result.success) return { success: false, data: [], meta: null, error: result.error };
+  return { success: true, data: _extractReportData(result), meta: _extractReportMeta(result) };
 }
 
-async function fetchShiftsReport(year, month) {
-  var result = await apiRequest('/reports/shifts?year=' + year + '&month=' + month);
-  if (!result.success) return { success: false, data: [], error: result.error };
-  return { success: true, data: _extractReportData(result) };
+async function fetchShiftsReport(year, month, page, limit) {
+  var p = page  || 1;
+  var l = limit || 50;
+  var result = await apiRequest('/reports/shifts?year=' + year + '&month=' + month + '&page=' + p + '&limit=' + l);
+  if (!result.success) return { success: false, data: [], meta: null, error: result.error };
+  return { success: true, data: _extractReportData(result), meta: _extractReportMeta(result) };
 }
 
 async function fetchManagersForFilter() {
-  var result = await apiRequest('/reports/employees?role=hrd_manager,technical_manager');
+  var result = await apiRequest('/users?page=1&limit=100');
   if (!result.success) return [];
-  var data = _extractReportData(result);
-  return data.filter(function(u) {
+  var list = extractListData(result);
+  return list.filter(function(u) {
     return u.role === 'hrd_manager' || u.role === 'technical_manager' || u.role === 'c_level';
   });
 }

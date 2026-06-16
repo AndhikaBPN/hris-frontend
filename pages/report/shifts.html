@@ -52,6 +52,11 @@
           <option value="11">November</option><option value="12">December</option>
         </select>
         <input class="rpt-filter-input" id="filter-name" placeholder="Search by name..." oninput="renderFiltered()">
+        <select class="rpt-limit-select" id="filter-limit" onchange="onLimitChange()">
+          <option value="25">25 / page</option>
+          <option value="50" selected>50 / page</option>
+          <option value="100">100 / page</option>
+        </select>
       </div>
 
       <!-- Legend -->
@@ -81,6 +86,7 @@
           <tfoot id="rpt-tfoot"></tfoot>
         </table>
       </div>
+      <div class="rpt-pagination" id="rpt-pagination"></div>
 
     </div>
 
@@ -101,8 +107,12 @@
 <script>
 guardRoute(['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']);
 
-var _role = (JSON.parse(localStorage.getItem('hris_user') || '{}').role) || '';
-var _data = [];
+var _role  = (JSON.parse(localStorage.getItem('hris_user') || '{}').role) || '';
+var _data  = [];
+var _page  = 1;
+var _totalPages   = 1;
+var _totalRecords = 0;
+var _limit = 50;
 
 var MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -132,14 +142,46 @@ function formatDate(str) {
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function onLimitChange() {
+  _limit = parseInt(document.getElementById('filter-limit').value) || 50;
+  loadReport();
+}
+
 function renderFiltered() {
   var q = (document.getElementById('filter-name').value || '').toLowerCase().trim();
   var rows = q ? _data.filter(function(r) { return (r.name || '').toLowerCase().includes(q); }) : _data;
   renderTable(rows);
 }
 
+function renderPagination() {
+  var el = document.getElementById('rpt-pagination');
+  if (!el) return;
+  if (_totalPages <= 1) { el.innerHTML = ''; return; }
+  var html = '<span class="rpt-pagination-info">' + _totalRecords + ' total</span>';
+  html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page - 1) + ')"' + (_page <= 1 ? ' disabled' : '') + '>&#8249;</button>';
+  var last;
+  var delta = 2;
+  for (var i = 1; i <= _totalPages; i++) {
+    if (i === 1 || i === _totalPages || (i >= _page - delta && i <= _page + delta)) {
+      if (last && i - last > 1) html += '<span class="rpt-page-ellipsis">…</span>';
+      html += '<button class="rpt-page-btn' + (i === _page ? ' active' : '') + '"' +
+        (i === _page ? '' : ' onclick="goToPage(' + i + ')"') + '>' + i + '</button>';
+      last = i;
+    }
+  }
+  html += '<button class="rpt-page-btn" onclick="goToPage(' + (_page + 1) + ')"' + (_page >= _totalPages ? ' disabled' : '') + '>&#8250;</button>';
+  el.innerHTML = html;
+}
+
+function goToPage(n) {
+  if (n < 1 || n > _totalPages || n === _page) return;
+  _page = n;
+  loadReport(false);
+}
+
 function renderTable(rows) {
-  var tbody = document.getElementById('rpt-tbody');
+  var tbody  = document.getElementById('rpt-tbody');
+  var offset = (_page - 1) * _limit;
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="9" class="emp-empty">No data found for selected filters.</td></tr>';
     renderFooter([]);
@@ -154,7 +196,7 @@ function renderTable(rows) {
     var overrideBadge = isOverride ? '<span class="rpt-badge rpt-badge-orange">Yes</span>' : '—';
     var notes = r.override_reason ? '<span class="rpt-notes" title="' + escHtml(r.override_reason) + '">' + escHtml(r.override_reason) + '</span>' : '—';
     return '<tr' + rowCls + '>' +
-      '<td style="text-align:center;color:#9aabb7;font-size:12px;">' + (i + 1) + '</td>' +
+      '<td style="text-align:center;color:#9aabb7;font-size:12px;">' + (offset + i + 1) + '</td>' +
       '<td style="font-weight:500;">' + escHtml(r.name || '—') + '</td>' +
       '<td style="font-size:12.5px;">' + formatDate(r.date) + '</td>' +
       '<td style="font-size:13px;' + (isDayOff ? 'color:#9aabb7;' : '') + '">' + shiftName + '</td>' +
@@ -174,24 +216,32 @@ function renderFooter(rows) {
   var dayOffCount   = rows.filter(function(r) { return r.is_day_off == 1 || r.is_day_off === true; }).length;
   var overrideCount = rows.filter(function(r) { return r.is_override == 1 || r.is_override === true; }).length;
   tfoot.innerHTML = '<tr class="rpt-footer-row">' +
-    '<td colspan="5" style="padding-left:12px;">Summary · ' + rows.length + ' record(s)</td>' +
+    '<td colspan="5" style="padding-left:12px;">Page ' + _page + ' · ' + rows.length + ' of ' + _totalRecords + ' record(s)</td>' +
     '<td colspan="2" style="text-align:center;">Day Off: ' + dayOffCount + '</td>' +
     '<td colspan="2" style="text-align:center;">Overrides: ' + overrideCount + '</td>' +
   '</tr>';
 }
 
-async function loadReport() {
+async function loadReport(resetPage) {
+  if (resetPage !== false) _page = 1;
   var year  = document.getElementById('filter-year').value;
   var month = document.getElementById('filter-month').value;
   setLoading(true);
-  var res = await fetchShiftsReport(year, month);
+  var res = await fetchShiftsReport(year, month, _page, _limit);
   setLoading(false);
   if (!res.success) { showError(res.error || 'Failed to load data'); return; }
   _data = res.data;
-  document.getElementById('rpt-sub').textContent = _data.length + ' record(s) · ' + MONTH_NAMES[parseInt(month)] + ' ' + year;
+  var meta = res.meta || {};
+  _totalRecords = meta.total_records || _data.length;
+  _totalPages   = meta.last_page    || 1;
+  _page         = meta.current_page || _page;
+  document.getElementById('rpt-sub').textContent =
+    _totalRecords + ' record(s) · ' + MONTH_NAMES[parseInt(month)] + ' ' + year +
+    (_totalPages > 1 ? ' · Page ' + _page + '/' + _totalPages : '');
   document.getElementById('btn-xlsx').disabled = false;
   document.getElementById('btn-pdf').disabled  = false;
   renderFiltered();
+  renderPagination();
 }
 
 function setLoading(on) {
@@ -199,6 +249,8 @@ function setLoading(on) {
     document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="9" class="emp-empty"><span class="rpt-spinner"></span>Loading...</td></tr>';
     document.getElementById('btn-xlsx').disabled = true;
     document.getElementById('btn-pdf').disabled  = true;
+    var pg = document.getElementById('rpt-pagination');
+    if (pg) pg.innerHTML = '';
   }
 }
 
@@ -241,6 +293,7 @@ window.addEventListener('load', function() {
   buildYearOptions();
   buildMonthOptions();
   if (_role === 'staff') document.getElementById('filter-name').style.display = 'none';
+  _limit = parseInt(document.getElementById('filter-limit').value) || 50;
   window.loadComponents();
   loadReport();
 });
