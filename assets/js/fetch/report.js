@@ -15,7 +15,12 @@ function _extractReportData(result) {
 
 function _extractReportMeta(result) {
   if (!result || !result.data) return null;
-  return result.data.meta || null;
+  var d = result.data;
+  // shape: { data: [...], meta: {...} }
+  if (d.meta) return d.meta;
+  // shape: { data: { data: [...], meta: {...} } }
+  if (d.data && d.data.meta) return d.data.meta;
+  return null;
 }
 
 async function fetchAttendanceReport(year, month, page, limit) {

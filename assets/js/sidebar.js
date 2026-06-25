@@ -493,7 +493,7 @@ window.loadComponents = function() {
 
     if (attendanceLink) {
       if (userRole === 'team_leader') attendanceLink.href = '../attendance/attendance-teamlead.html';
-      else if (userRole === 'hrd_manager' || userRole === 'technical_manager') attendanceLink.href = '../attendance/attendance-manager.html';
+      else if (userRole === 'hrd_manager' || userRole === 'technical_manager' || userRole === 'c_level') attendanceLink.href = '../attendance/attendance-manager.html';
       else attendanceLink.href = '../attendance/attendance-staff.html';
     }
 
@@ -502,7 +502,7 @@ window.loadComponents = function() {
     }
 
     if (employeeLink) {
-      if (userRole === 'c_level' || userRole === 'hrd_manager' || userRole === 'technical_manager') employeeLink.href = '../employee/employee-management.html';
+      if (userRole === 'c_level' || userRole === 'hrd_manager') employeeLink.href = '../employee/employee-management.html';
     }
 
     const faceSampleLink = document.querySelector('.nav-face-sample');
@@ -532,11 +532,11 @@ window.loadComponents = function() {
       document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift, .nav-reports').forEach(e => e.style.display = 'none');
       if (rptEmp) rptEmp.style.display = 'none';
     } else if (userRole === 'team_leader') {
-      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift, nav-reports').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift, .nav-reports').forEach(e => e.style.display = 'none');
     } else if (userRole === 'c_level') {
       document.querySelectorAll('.nav-leave').forEach(e => e.style.display = 'none');
     } else if (userRole === 'technical_manager') {
-      document.querySelectorAll('.nav-admin').forEach(e => e.style.display = 'none');
+      document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
     } else if (userRole === 'hrd_manager') {
       document.querySelectorAll('.nav-admin').forEach(e => e.style.display = 'none');
     }
