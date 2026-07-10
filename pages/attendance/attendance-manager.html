@@ -153,8 +153,8 @@
             <tr>
               <th>STAFF MEMBER</th>
               <th>DIVISION</th>
-              <th>CLOCK IN</th>
-              <th>CLOCK OUT</th>
+              <th>CLOCK IN 1</th>
+              <th>CLOCK IN 2</th>
               <th>DURATION</th>
               <th>STATUS</th>
               <th>ATTACHMENT</th>
@@ -417,7 +417,7 @@ function renderTeamTable(rows) {
                    '<td>' + (row.division || '—') + '</td>' +
                    '<td>' + row.checkInSession1 + '</td>' +
                    '<td>' + row.checkInSession2 + '</td>' +
-                   '<td>—</td>' +
+                   '<td>' + (row.duration || '—') + '</td>' +
                    '<td><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></td>' +
                    '<td><button class="btn-view" onclick="openPhotoModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button></td>';
     tbody.appendChild(tr);

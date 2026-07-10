@@ -45,7 +45,7 @@ async function fetchPersonalAttendance(filters) {
 
   if (params) params = '?' + params.substring(1);
 
-  var result = await apiRequest('/attendance/today' + params);
+  var result = await apiRequest('/attendance/my' + params);
   if (!result.success) {
     console.error('Error fetching personal attendance:', result.error);
     return { success: false, data: [] };

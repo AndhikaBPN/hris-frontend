@@ -69,6 +69,17 @@ function buildSummaryRows(summaryData) {
   });
 }
 
+function _calcDuration(rawIn, rawOut) {
+  if (!rawIn || !rawOut) return '—';
+  var tIn  = new Date(rawIn.replace(' ', 'T'));
+  var tOut = new Date(rawOut.replace(' ', 'T'));
+  if (isNaN(tIn) || isNaN(tOut) || tOut <= tIn) return '—';
+  var mins = Math.round((tOut - tIn) / 60000);
+  var h = Math.floor(mins / 60);
+  var m = mins % 60;
+  return h + 'h ' + (m < 10 ? '0' : '') + m + 'm';
+}
+
 function buildTeamAttendanceRows(records) {
   var grouped = {};
   records.forEach(function(p) {
@@ -79,48 +90,83 @@ function buildTeamAttendanceRows(records) {
         division: p.team_name  || p.division || p.user_role || '—',
         c1:       '--:--',
         c2:       '--:--',
+        rawIn1:   null,
+        rawOut:   null,
         status:   p.status     || 'pending',
         faceImg:  null
       };
     }
-    var time = p.check_in_time || p.clock_in_time || '';
-    if (time && time.includes(' ')) time = time.split(' ')[1].substring(0, 5);
+    var rawIn  = p.check_in_time  || p.clock_in_time  || '';
+    var rawOut = p.check_out_time || p.clock_out_time || '';
+    var time = rawIn && rawIn.includes(' ') ? rawIn.split(' ')[1].substring(0, 5) : rawIn;
 
     if (p.session == 1) {
       grouped[uid].c1      = time || '--:--';
+      grouped[uid].rawIn1  = rawIn  || null;
+      grouped[uid].rawOut  = rawOut || null;
       grouped[uid].status  = p.status || grouped[uid].status;
       grouped[uid].faceImg = p.face_image || null;
     } else if (p.session == 2) {
-      grouped[uid].c2 = time || '--:--';
+      grouped[uid].c2     = time || '--:--';
+      if (rawOut) grouped[uid].rawOut = rawOut;
     }
   });
 
   return Object.values(grouped).map(function(u) {
     return {
-      name:           u.name,
-      division:       u.division,
+      name:            u.name,
+      division:        u.division,
       checkInSession1: u.c1,
       checkInSession2: u.c2,
-      status:         u.status,
-      faceImg:        u.faceImg
+      duration:        _calcDuration(u.rawIn1, u.rawOut),
+      status:          u.status,
+      faceImg:         u.faceImg
     };
   });
 }
 
 function buildPersonalAttendanceRows(records) {
+  var _userRole = (JSON.parse(localStorage.getItem('hris_user') || '{}').role) || '';
+  var _roleShift = _userRole === 'hrd_manager' ? 'HRD' : _userRole === 'technical_manager' ? 'Technical' : null;
   return records.map(function(p) {
-    var clockIn = p.clock_in_time || p.check_in_time || p.clockIn || '--:--';
-    var clockOut = p.clock_out_time || p.check_out_time || p.clockOut || '--:--';
+    var rawIn  = p.check_in_time  || p.clock_in_time  || p.clockIn  || '';
+    var rawOut = p.check_out_time || p.clock_out_time || p.clockOut || '';
 
-    if (clockIn.includes(' ')) clockIn = clockIn.split(' ')[1].substring(0, 5);
-    if (clockOut.includes(' ')) clockOut = clockOut.split(' ')[1].substring(0, 5);
+    var clockIn  = rawIn  ? rawIn.includes(' ')  ? rawIn.split(' ')[1].substring(0, 5)  : rawIn  : '--:--';
+    var clockOut = rawOut ? rawOut.includes(' ') ? rawOut.split(' ')[1].substring(0, 5) : rawOut : '--:--';
+
+    // date from shift_date or date portion of check_in_time
+    var dateRaw = p.shift_date || (rawIn ? rawIn.split(' ')[0] : '');
+    var dateLabel = dateRaw ? (function() {
+      var d = new Date(dateRaw + 'T00:00:00');
+      return isNaN(d) ? dateRaw : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    })() : '-';
+
+    // shift: prefer shift_name from API, fallback to role-based name for managers
+    var shiftLabel = p.shift_name || _roleShift || (p.session ? 'Session ' + p.session : '-');
+
+    // duration: calc from check_in to check_out
+    var duration = '-';
+    if (rawIn && rawOut) {
+      var tIn  = new Date(rawIn.replace(' ', 'T'));
+      var tOut = new Date(rawOut.replace(' ', 'T'));
+      if (!isNaN(tIn) && !isNaN(tOut) && tOut > tIn) {
+        var mins = Math.round((tOut - tIn) / 60000);
+        var h = Math.floor(mins / 60);
+        var m = mins % 60;
+        duration = h + 'h ' + (m < 10 ? '0' : '') + m + 'm';
+      }
+    }
 
     return {
-      name: p.user_name || p.name || 'Unknown',
-      role: p.user_role || p.role || '',
+      date:        dateLabel,
+      shift:       shiftLabel,
       checkInTime: clockIn,
       checkOutTime: clockOut,
-      status: p.status || 'pending'
+      duration:    duration,
+      status:      p.status || 'pending',
+      name:        p.user_name || p.name || 'Unknown',
+      role:        p.user_role || p.role || ''
     };
   });
 }
