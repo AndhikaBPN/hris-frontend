@@ -40,3 +40,27 @@ async function fetchShifts(year, month) {
   }
   return { success: false, data: [], error: result.error };
 }
+
+async function fetchAttendanceDetail(shiftScheduleId) {
+  var result = await apiRequest('/attendance/' + shiftScheduleId + '/detail');
+  if (result.success) {
+    var body = result.data || {};
+    var data = body.data || body;
+    return { success: true, data: data };
+  }
+  return { success: false, data: null, error: result.error, status: result.status };
+}
+
+async function fetchMyShiftSchedules(year, month) {
+  var token = localStorage.getItem('hris_token') || '';
+  if (!token) return { success: false, data: [], error: 'Not authenticated' };
+
+  var path = '/shift-schedules/my-schedules?year=' + year + '&month=' + (month + 1);
+  var result = await apiRequest(path);
+  if (result.success) {
+    var body = result.data || {};
+    var list = Array.isArray(body) ? body : (Array.isArray(body.data) ? body.data : []);
+    return { success: true, data: list };
+  }
+  return { success: false, data: [], error: result.error };
+}

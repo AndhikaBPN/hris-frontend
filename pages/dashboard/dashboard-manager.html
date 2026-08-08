@@ -270,6 +270,8 @@
   <script src="../../assets/js/sidebar.js"></script>
   <script src="../../assets/js/fetch/dashboard.js"></script>
   <script src="../../assets/js/render/dashboard.js"></script>
+  <script src="../../assets/js/fetch/office.js"></script>
+  <script src="../../assets/js/render/office.js"></script>
   <script src="../../assets/js/fetch/face-api.js"></script>
   <script src="../../assets/js/render/face-api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.14/dist/face-api.js" integrity="sha384-1hSisOX+umG254ClWaLauH3hLxdwhs8oUHLoKR5xELvquQSDfvu/wLAencDLUqFm" crossorigin="anonymous"></script>
@@ -757,7 +759,7 @@
       var faceImg = captureFaceBase64();
 
       bioSetStatus('scanning', 'Submitting attendance...');
-      var attRes = await clockOutAttendance();
+      var attRes = await clockOutAttendance(faceImg);
 
       if (!attRes.success) {
         var msg = document.getElementById('session-msg');

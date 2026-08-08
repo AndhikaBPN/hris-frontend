@@ -111,7 +111,6 @@
               <th>DATE</th>
               <th>SESSION</th>
               <th>CHECK IN</th>
-              <th>CHECK OUT</th>
               <th>STATUS</th>
               <th>ATTACHMENT</th>
             </tr>
@@ -137,13 +136,12 @@
       </button>
     </div>
     <div class="modal-body">
-      <!-- Dua foto: Clock In 1 & Clock In 2 -->
-      <div class="modal-photos-row">
-        <!-- Foto Clock In 1 -->
-        <div class="modal-photo-col">
-          <div class="modal-photo-label-top">Clock In 1</div>
-          <div class="modal-photo-wrap" id="photo-ci1-wrap">
-            <div class="photo-inner">
+      <!-- Single photo -->
+      <div style="display:flex;justify-content:center;margin-bottom:0;">
+        <div class="modal-photo-col" style="max-width:260px;width:100%;">
+          <div class="modal-photo-label-top" id="m-session-label">Clock In</div>
+          <div class="modal-photo-wrap" id="photo-main-wrap">
+            <div class="photo-inner" id="photo-main-inner">
               <svg viewBox="0 0 80 80" fill="none" width="52" height="52">
                 <circle cx="40" cy="40" r="20" stroke="#4a7c59" stroke-width="2" fill="none"/>
                 <circle cx="32" cy="35" r="3" fill="#4a7c59"/>
@@ -154,32 +152,11 @@
                 <path d="M10 56 L10 70 L24 70" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                 <path d="M70 56 L70 70 L56 70" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </svg>
-              <div class="photo-scan-line" id="scan-ci1"></div>
-              <div class="photo-label" id="photo-ci1-label">Verified Photo</div>
+              <div class="photo-scan-line"></div>
+              <div class="photo-label">Verified Photo</div>
             </div>
           </div>
-          <div class="modal-photo-time" id="photo-ci1-time">--:--</div>
-        </div>
-
-        <!-- Foto Clock In 2 -->
-        <div class="modal-photo-col">
-          <div class="modal-photo-label-top">Clock In 2</div>
-          <div class="modal-photo-wrap modal-photo-wrap--dim" id="photo-ci2-wrap">
-            <div class="photo-inner" id="photo-ci2-inner">
-              <svg viewBox="0 0 80 80" fill="none" width="52" height="52" opacity="0.35">
-                <circle cx="40" cy="40" r="20" stroke="#9aabb7" stroke-width="2" fill="none"/>
-                <circle cx="32" cy="35" r="3" fill="#9aabb7"/>
-                <circle cx="48" cy="35" r="3" fill="#9aabb7"/>
-                <path d="M32 48 Q40 54 48 48" stroke="#9aabb7" stroke-width="2" stroke-linecap="round" fill="none"/>
-                <path d="M10 24 L10 10 L24 10" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <path d="M56 10 L70 10 L70 24" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <path d="M10 56 L10 70 L24 70" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <path d="M70 56 L70 70 L56 70" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              </svg>
-              <div class="photo-label" id="photo-ci2-label" style="color:#b0bec5;">No photo</div>
-            </div>
-          </div>
-          <div class="modal-photo-time" id="photo-ci2-time" style="color:#b0bec5;">--:--</div>
+          <div class="modal-photo-time" id="photo-main-time">--:--</div>
         </div>
       </div>
 
@@ -257,7 +234,7 @@ async function changeMonth(dir) {
 }
 
 async function loadShifts(year, month) {
-  var res = await fetchShifts(year, month);
+  var res = await fetchMyShiftSchedules(year, month);
   shiftsByDate = {};
   if (res.success) {
     res.data.forEach(function(s) { shiftsByDate[s.date] = s; });
@@ -392,7 +369,7 @@ function updateTableTitle() {
 
 function showTableMessage(msg, isError) {
   var tbody = document.getElementById('att-main-tbody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:'
+  if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:'
     + (isError ? '#e57373' : '#9aabb7') + ';font-size:13px;">' + msg + '</td></tr>';
 }
 
@@ -416,12 +393,10 @@ function renderAttTable() {
     var stBadge = '<span class="badge-status ' + cls + '">' + lbl + '</span>';
 
     var ciTime = formatTime(r.check_in_time);
-    var coTime = r.check_out_time ? formatTime(r.check_out_time) : '—';
     var ciCls = ciTime === '—' ? ' pending-time' : '';
-    var coCls = coTime === '—' ? ' pending-time' : '';
 
-    var attachment = r.face_image
-      ? '<button class="btn-view" onclick="openPhotoModal(\'' + r.face_image + '\')">'
+    var attachment = r.shift_schedule_id
+      ? '<button class="btn-view" onclick="openPhotoModal(' + r.shift_schedule_id + ', ' + (r.session || 1) + ')">'
         + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View</button>'
       : '<span class="btn-view-na">None</span>';
 
@@ -429,7 +404,6 @@ function renderAttTable() {
       + '<td class="att-date">' + formatDateDisplay(r.shift_date) + '</td>'
       + '<td><span class="shift-badge morning"><span class="shift-dot morning" style="width:5px;height:5px;border-radius:50%;flex-shrink:0;display:inline-block;margin-right:4px;vertical-align:middle;"></span>' + sessionLabel + '</span></td>'
       + '<td class="checkin-time' + ciCls + '">' + ciTime + '</td>'
-      + '<td class="checkin-time' + coCls + '">' + coTime + '</td>'
       + '<td>' + stBadge + '</td>'
       + '<td>' + attachment + '</td>'
       + '</tr>';
@@ -505,21 +479,75 @@ function updateNextShiftPanel() {
   }
 }
 
-function openPhotoModal(imageUrl) {
+var _PHOTO_PH_GREEN = '<svg viewBox="0 0 80 80" fill="none" width="52" height="52"><circle cx="40" cy="40" r="20" stroke="#4a7c59" stroke-width="2" fill="none"/><circle cx="32" cy="35" r="3" fill="#4a7c59"/><circle cx="48" cy="35" r="3" fill="#4a7c59"/><path d="M32 48 Q40 54 48 48" stroke="#4a7c59" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+var _PHOTO_PH_GREY  = '<svg viewBox="0 0 80 80" fill="none" width="52" height="52" opacity="0.35"><circle cx="40" cy="40" r="20" stroke="#9aabb7" stroke-width="2" fill="none"/><circle cx="32" cy="35" r="3" fill="#9aabb7"/><circle cx="48" cy="35" r="3" fill="#9aabb7"/><path d="M32 48 Q40 54 48 48" stroke="#9aabb7" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+
+var _DETAIL_STATUS_MAP = {
+  valid:       { label: '● Valid',      color: '#2e7d4f' },
+  late:        { label: '● Late',       color: '#b06000' },
+  invalid:     { label: '● Invalid',    color: '#c0392b' },
+  leave:       { label: '● Leave',      color: '#2980b9' },
+  'sick-leave':{ label: '● Sick Leave', color: '#2980b9' },
+  permit:      { label: '● Permit',     color: '#2980b9' }
+};
+
+async function openPhotoModal(shiftScheduleId, sessionNum) {
   var overlay = document.getElementById('modal-overlay');
   if (!overlay) return;
 
-  document.getElementById('modal-title').textContent = 'Attendance Photo';
-  document.getElementById('modal-subtitle').textContent = 'Face Recognition';
-
-  var ci1Wrap = document.getElementById('photo-ci1-wrap');
-  var ci1Inner = ci1Wrap ? ci1Wrap.querySelector('.photo-inner') : null;
-  if (ci1Inner) {
-    ci1Inner.innerHTML = '<img src="' + imageUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="Attendance photo">';
-  }
-
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  /* reset */
+  document.getElementById('modal-title').textContent    = 'Attendance Detail';
+  document.getElementById('modal-subtitle').textContent = 'Loading...';
+  document.getElementById('photo-main-time').textContent = '--:--';
+  document.getElementById('m-session-label').textContent = 'Clock In ' + (sessionNum || 1);
+  document.getElementById('modal-details').innerHTML = '';
+
+  var mainInner = document.getElementById('photo-main-inner');
+  mainInner.innerHTML = _PHOTO_PH_GREEN + '<div class="photo-scan-line"></div><div class="photo-label">Loading...</div>';
+
+  if (!shiftScheduleId) {
+    document.getElementById('modal-subtitle').textContent = 'No data available';
+    return;
+  }
+
+  var res = await fetchAttendanceDetail(shiftScheduleId);
+  if (!res.success) {
+    document.getElementById('modal-subtitle').textContent = res.status === 404 ? 'Data tidak ditemukan' : 'Gagal memuat data';
+    return;
+  }
+
+  var d        = res.data;
+  var sessions = d.sessions || [];
+  var sn = sessions.find(function(s) { return s.session === sessionNum; }) || {};
+
+  /* title + subtitle */
+  var startT = d.start_time ? d.start_time.substring(0, 5) : '--';
+  var endT   = d.end_time   ? d.end_time.substring(0, 5)   : '--';
+  document.getElementById('modal-title').textContent    = formatDateDisplay(d.date);
+  document.getElementById('modal-subtitle').textContent = (d.shift_name || '—') + ' · ' + startT + '–' + endT;
+
+  /* Photo */
+  var ciTime = sn.check_in_time ? sn.check_in_time.split(' ')[1].substring(0, 5) : '--:--';
+  document.getElementById('photo-main-time').textContent = ciTime;
+  if (sn.face_image) {
+    mainInner.innerHTML = '<img src="' + sn.face_image + '" alt="Clock In ' + sessionNum + '">';
+  } else {
+    mainInner.innerHTML = _PHOTO_PH_GREEN + '<div class="photo-scan-line"></div><div class="photo-label">No Photo</div>';
+  }
+
+  /* details grid */
+  var stInfo = sn.status ? (_DETAIL_STATUS_MAP[sn.status] || { label: '● ' + sn.status, color: '#9aabb7' }) : null;
+  var detailsHtml = '';
+  if (stInfo) {
+    detailsHtml += '<div class="modal-detail-item"><span class="detail-label">Status</span><span style="color:' + stInfo.color + '">' + stInfo.label + '</span></div>';
+  }
+  if (sn.distance_to_office !== null && sn.distance_to_office !== undefined) {
+    detailsHtml += '<div class="modal-detail-item"><span class="detail-label">Distance to Office</span><span>' + sn.distance_to_office + ' m</span></div>';
+  }
+  document.getElementById('modal-details').innerHTML = detailsHtml;
 }
 
 function closeModal() {

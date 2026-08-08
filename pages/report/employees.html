@@ -265,9 +265,10 @@ async function doExport(format) {
   var role      = document.getElementById('filter-role').value;
   var status    = document.getElementById('filter-status').value;
   var managerId = document.getElementById('filter-manager').value;
+  var search    = document.getElementById('filter-search').value;
   var btn = document.getElementById('btn-' + format);
   if (btn) btn.disabled = true;
-  var res = await exportReportFile('employees', { format: format, role: role, status: status, manager_id: managerId });
+  var res = await exportReportFile('employees', { format: format, role: role, status: status, manager_id: managerId, search: search });
   if (!res.success) showToast('Export failed: ' + (res.error || ''), 'error');
   if (btn) btn.disabled = false;
 }
@@ -293,6 +294,7 @@ function showToast(message, type) {
 }
 
 window.addEventListener('load', function() {
+  checkTokenName();
   window.loadComponents();
   loadManagers();
   loadReport();

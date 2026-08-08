@@ -84,7 +84,12 @@ async function exportReportFile(type, params) {
     var blobUrl = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = blobUrl;
-    a.download = '';
+    var fmt = params.format || 'pdf';
+    var fname = type;
+    if (params.year)  fname += '_' + params.year;
+    if (params.month) fname += '_' + params.month;
+    fname += '.' + fmt;
+    a.download = fname;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

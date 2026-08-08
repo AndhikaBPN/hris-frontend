@@ -155,7 +155,6 @@
               <th>DIVISION</th>
               <th>CLOCK IN 1</th>
               <th>CLOCK IN 2</th>
-              <th>DURATION</th>
               <th>STATUS</th>
               <th>ATTACHMENT</th>
             </tr>
@@ -233,7 +232,7 @@
     <div class="modal-body">
       <div class="modal-photos-row">
         <div class="modal-photo-col">
-          <div class="modal-photo-label-top">Clock In</div>
+          <div class="modal-photo-label-top" id="m-label-ci">Clock In</div>
           <div class="modal-photo-wrap" id="m-photo-ci">
             <div class="photo-inner">
               <svg viewBox="0 0 80 80" fill="none" width="48" height="48"><circle cx="40" cy="40" r="20" stroke="#4a7c59" stroke-width="2" fill="none"/><circle cx="32" cy="35" r="3" fill="#4a7c59"/><circle cx="48" cy="35" r="3" fill="#4a7c59"/><path d="M32 48 Q40 54 48 48" stroke="#4a7c59" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M10 24 L10 10 L24 10" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M56 10 L70 10 L70 24" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10 56 L10 70 L24 70" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M70 56 L70 70 L56 70" stroke="#4a7c59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
@@ -244,7 +243,7 @@
           <div class="modal-photo-time" id="m-time-ci">--:--</div>
         </div>
         <div class="modal-photo-col">
-          <div class="modal-photo-label-top">Clock Out</div>
+          <div class="modal-photo-label-top" id="m-label-co">Clock Out</div>
           <div class="modal-photo-wrap modal-photo-wrap--dim" id="m-photo-co">
             <div class="photo-inner">
               <svg viewBox="0 0 80 80" fill="none" width="48" height="48" opacity="0.3"><circle cx="40" cy="40" r="20" stroke="#9aabb7" stroke-width="2" fill="none"/><circle cx="32" cy="35" r="3" fill="#9aabb7"/><circle cx="48" cy="35" r="3" fill="#9aabb7"/><path d="M32 48 Q40 54 48 48" stroke="#9aabb7" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M10 24 L10 10 L24 10" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M56 10 L70 10 L70 24" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10 56 L10 70 L24 70" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M70 56 L70 70 L56 70" stroke="#9aabb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
@@ -273,6 +272,7 @@
 <script src="../../assets/js/dashboard-shared.js"></script>
 <script src="../../assets/js/sidebar.js"></script>
 <script src="../../assets/js/fetch/team.js"></script>
+<script src="../../assets/js/fetch/attendance.js"></script>
 <script src="../../assets/js/fetch/attendance-manager.js"></script>
 <script src="../../assets/js/render/attendance-manager.js"></script>
 <script>
@@ -376,7 +376,7 @@ function renderPersonalTable(rows) {
                    '<td>' + row.checkOutTime + '</td>' +
                    '<td>' + (row.duration || '-') + '</td>' +
                    '<td><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></td>' +
-                   '<td><button class="btn-view" onclick="openPhotoModal(\'' + (row.date || '') + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button></td>';
+                   '<td><button class="btn-view" onclick="openPhotoModal(' + (row.shiftScheduleId || 'null') + ',\'personal\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button></td>';
     tbody.appendChild(tr);
   });
 }
@@ -397,7 +397,7 @@ async function loadTeamAttendance() {
     renderTeamTable(rows);
     renderTeamPagination(res.meta);
   } else {
-    document.getElementById('team-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Failed to load data</td></tr>';
+    document.getElementById('team-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Failed to load data</td></tr>';
   }
 }
 
@@ -406,7 +406,7 @@ function renderTeamTable(rows) {
   tbody.innerHTML = '';
 
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">No data found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">No data found</td></tr>';
     return;
   }
 
@@ -417,9 +417,8 @@ function renderTeamTable(rows) {
                    '<td>' + (row.division || '—') + '</td>' +
                    '<td>' + row.checkInSession1 + '</td>' +
                    '<td>' + row.checkInSession2 + '</td>' +
-                   '<td>' + (row.duration || '—') + '</td>' +
                    '<td><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></td>' +
-                   '<td><button class="btn-view" onclick="openPhotoModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button></td>';
+                   '<td><button class="btn-view" onclick="openPhotoModal(' + (row.shiftScheduleId || 'null') + ',\'team\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button></td>';
     tbody.appendChild(tr);
   });
 }
@@ -550,11 +549,99 @@ function resetSummaryFilters() {
   fetchAttendanceSummary(currentMonthStr);
 }
 
-function openPhotoModal(date) {
-  document.getElementById('modal-overlay').style.display = 'flex';
-  if (date) {
-    document.getElementById('modal-subtitle').textContent = date;
+async function openPhotoModal(shiftScheduleId, context) {
+  /* context: 'personal' (manager own) | 'team' (staff/TL attendance) */
+  var isTeam = (context === 'team');
+
+  var overlay = document.getElementById('modal-overlay');
+  overlay.style.display = 'flex';
+
+  /* update panel labels */
+  document.getElementById('m-label-ci').textContent = isTeam ? 'Clock In 1' : 'Clock In';
+  document.getElementById('m-label-co').textContent = isTeam ? 'Clock In 2' : 'Clock Out';
+
+  /* reset to loading state */
+  document.getElementById('modal-title').textContent    = 'Attendance Attachment';
+  document.getElementById('modal-subtitle').textContent = 'Loading...';
+  document.getElementById('m-time-ci').textContent = '--:--';
+  document.getElementById('m-time-co').textContent = '--:--';
+  document.getElementById('modal-details').innerHTML = '';
+
+  var ciWrap  = document.getElementById('m-photo-ci');
+  var coWrap  = document.getElementById('m-photo-co');
+  var PLACEHOLDER_ACTIVE = '<svg viewBox="0 0 80 80" fill="none" width="48" height="48"><circle cx="40" cy="40" r="20" stroke="#4a7c59" stroke-width="2" fill="none"/><circle cx="32" cy="35" r="3" fill="#4a7c59"/><circle cx="48" cy="35" r="3" fill="#4a7c59"/><path d="M32 48 Q40 54 48 48" stroke="#4a7c59" stroke-width="2" stroke-linecap="round" fill="none"/></svg><div class="photo-label">Verified</div>';
+  var PLACEHOLDER_DIM    = '<svg viewBox="0 0 80 80" fill="none" width="48" height="48" opacity="0.3"><circle cx="40" cy="40" r="20" stroke="#9aabb7" stroke-width="2" fill="none"/><circle cx="32" cy="35" r="3" fill="#9aabb7"/><circle cx="48" cy="35" r="3" fill="#9aabb7"/><path d="M32 48 Q40 54 48 48" stroke="#9aabb7" stroke-width="2" stroke-linecap="round" fill="none"/></svg><div class="photo-label" style="color:#b0bec5;">No Data</div>';
+
+  ciWrap.querySelector('.photo-inner').innerHTML = PLACEHOLDER_ACTIVE;
+  coWrap.querySelector('.photo-inner').innerHTML = PLACEHOLDER_DIM;
+
+  if (!shiftScheduleId) {
+    document.getElementById('modal-subtitle').textContent = 'No data available';
+    return;
   }
+
+  var res = await fetchAttendanceDetail(shiftScheduleId);
+  if (!res.success) {
+    document.getElementById('modal-subtitle').textContent = res.status === 404 ? 'Data tidak ditemukan' : 'Gagal memuat data';
+    return;
+  }
+
+  var d  = res.data;
+  var s0 = (d.sessions && d.sessions[0]) ? d.sessions[0] : {};
+  var s1 = (d.sessions && d.sessions[1]) ? d.sessions[1] : null;
+
+  /* subtitle: shift name + date + time range */
+  var startT = d.start_time ? d.start_time.substring(0, 5) : '--';
+  var endT   = d.end_time   ? d.end_time.substring(0, 5)   : '--';
+  document.getElementById('modal-subtitle').textContent =
+    (d.shift_name || '—') + ' · ' + (function(dt) {
+      if (!dt) return '—';
+      var x = new Date(dt + 'T00:00:00');
+      return isNaN(x) ? dt : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    })(d.date) + ' · ' + startT + '–' + endT;
+
+  /* Left panel: Clock In (session 1) */
+  var ciTime = s0.check_in_time ? s0.check_in_time.split(' ')[1].substring(0, 5) : '--:--';
+  document.getElementById('m-time-ci').textContent = ciTime;
+  var ciInner = ciWrap.querySelector('.photo-inner');
+  if (s0.face_image) {
+    ciInner.innerHTML = '<img src="' + s0.face_image + '" alt="Clock In 1">';
+  } else {
+    ciInner.innerHTML = PLACEHOLDER_ACTIVE.replace('Verified', 'No Photo');
+  }
+
+  /* Right panel: Clock In 2 (team) or Clock Out time (personal) */
+  var coInner = coWrap.querySelector('.photo-inner');
+  if (isTeam) {
+    /* session 2 — photo + time */
+    var ci2Time = (s1 && s1.check_in_time) ? s1.check_in_time.split(' ')[1].substring(0, 5) : '--:--';
+    document.getElementById('m-time-co').textContent = ci2Time;
+    if (s1 && s1.face_image) {
+      coInner.innerHTML = '<img src="' + s1.face_image + '" alt="Clock In 2">';
+    } else {
+      coInner.innerHTML = PLACEHOLDER_DIM;
+    }
+  } else {
+    /* personal: check_out time + checkout_face_image */
+    var coTime = s0.check_out_time ? s0.check_out_time.split(' ')[1].substring(0, 5) : '--:--';
+    document.getElementById('m-time-co').textContent = coTime;
+    if (s0.checkout_face_image) {
+      coInner.innerHTML = '<img src="' + s0.checkout_face_image + '" alt="Clock Out">';
+    } else {
+      coInner.innerHTML = PLACEHOLDER_DIM;
+    }
+  }
+
+  /* details grid */
+  var statusInfo = getStatusLabel(s0.status);
+  var detailsHtml = '';
+  if (s0.status) {
+    detailsHtml += '<div class="modal-detail-item"><span class="detail-label">Status</span><span style="color:' + statusInfo.color + '">' + statusInfo.label + '</span></div>';
+  }
+  if (s0.distance_to_office !== null && s0.distance_to_office !== undefined) {
+    detailsHtml += '<div class="modal-detail-item"><span class="detail-label">Distance to Office</span><span>' + s0.distance_to_office + ' m</span></div>';
+  }
+  document.getElementById('modal-details').innerHTML = detailsHtml;
 }
 
 function closeModal() {

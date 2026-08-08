@@ -229,14 +229,17 @@ async function captureSample() {
     var embedding = Array.from(detection.descriptor);
     var res;
 
-    if (_mode === 'edit' && _embId) {
-      res = await updateFaceEmbedding(_embId, embedding);
+    if (_mode === 'edit') {
+      res = await updateFaceEmbeddingForUser(_userId, embedding);
     } else {
-      res = await saveFaceEmbedding(embedding);
+      res = await saveFaceEmbeddingForUser(_userId, embedding);
     }
 
     if (!res.success) {
-      showToast('Failed to save sample: ' + (res.error || 'Unknown error'), 'error');
+      var errMsg = res.status === 404
+        ? (res.error || 'User not found.')
+        : ('Failed to save sample: ' + (res.error || 'Unknown error'));
+      showToast(errMsg, 'error');
       btn.disabled = false;
       document.getElementById('btn-capture-text').textContent = 'Capture Sample';
       return;

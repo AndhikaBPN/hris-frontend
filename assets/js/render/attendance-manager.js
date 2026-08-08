@@ -86,14 +86,15 @@ function buildTeamAttendanceRows(records) {
     var uid = p.user_id;
     if (!grouped[uid]) {
       grouped[uid] = {
-        name:     p.user_name  || p.name  || '—',
-        division: p.team_name  || p.division || p.user_role || '—',
-        c1:       '--:--',
-        c2:       '--:--',
-        rawIn1:   null,
-        rawOut:   null,
-        status:   p.status     || 'pending',
-        faceImg:  null
+        name:            p.user_name  || p.name  || '—',
+        division:        p.team_name  || p.division || p.user_role || '—',
+        c1:              '--:--',
+        c2:              '--:--',
+        rawIn1:          null,
+        rawOut:          null,
+        status:          p.status     || 'pending',
+        faceImg:         null,
+        shiftScheduleId: p.shift_schedule_id || null
       };
     }
     var rawIn  = p.check_in_time  || p.clock_in_time  || '';
@@ -120,7 +121,8 @@ function buildTeamAttendanceRows(records) {
       checkInSession2: u.c2,
       duration:        _calcDuration(u.rawIn1, u.rawOut),
       status:          u.status,
-      faceImg:         u.faceImg
+      faceImg:         u.faceImg,
+      shiftScheduleId: u.shiftScheduleId
     };
   });
 }
@@ -159,14 +161,15 @@ function buildPersonalAttendanceRows(records) {
     }
 
     return {
-      date:        dateLabel,
-      shift:       shiftLabel,
-      checkInTime: clockIn,
-      checkOutTime: clockOut,
-      duration:    duration,
-      status:      p.status || 'pending',
-      name:        p.user_name || p.name || 'Unknown',
-      role:        p.user_role || p.role || ''
+      date:            dateLabel,
+      shift:           shiftLabel,
+      checkInTime:     clockIn,
+      checkOutTime:    clockOut,
+      duration:        duration,
+      status:          p.status || 'pending',
+      name:            p.user_name || p.name || 'Unknown',
+      role:            p.user_role || p.role || '',
+      shiftScheduleId: p.shift_schedule_id || null
     };
   });
 }

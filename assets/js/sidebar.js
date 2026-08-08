@@ -473,7 +473,7 @@ window.loadComponents = function() {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
   }
 
-  const p1 = fetch('../components/sidebar.html').then(r => r.text()).then(html => {
+  const p1 = fetch('/pages/components/sidebar.html').then(r => r.text()).then(html => {
     const el = document.getElementById('sidebar-placeholder');
     if(el) el.outerHTML = html;
 
@@ -534,7 +534,7 @@ window.loadComponents = function() {
     } else if (userRole === 'team_leader') {
       document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift, .nav-reports').forEach(e => e.style.display = 'none');
     } else if (userRole === 'c_level') {
-      document.querySelectorAll('.nav-leave').forEach(e => e.style.display = 'none');
+      // document.querySelectorAll('.nav-leave').forEach(e => e.style.display = 'none');
     } else if (userRole === 'technical_manager') {
       document.querySelectorAll('.nav-admin, .nav-employee, .nav-shift').forEach(e => e.style.display = 'none');
     } else if (userRole === 'hrd_manager') {
@@ -568,7 +568,7 @@ window.loadComponents = function() {
     staff: { label: 'STAFF', color: '#3d5c45' }
   };
 
-  const p2 = fetch('../components/navbar.html').then(r => r.text()).then(html => {
+  const p2 = fetch('/pages/components/navbar.html').then(r => r.text()).then(html => {
     const el = document.getElementById('navbar-placeholder');
     if(el) el.outerHTML = html;
 

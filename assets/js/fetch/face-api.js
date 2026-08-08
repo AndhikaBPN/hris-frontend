@@ -30,8 +30,24 @@ async function updateFaceEmbedding(id, embedding) {
   return { success: result.success, error: result.error };
 }
 
+async function updateFaceEmbeddingForUser(userId, embedding) {
+  var result = await apiRequest('/face-embeddings/' + userId, {
+    method: 'PUT',
+    body: JSON.stringify({ embeddings: embedding })
+  });
+  return { success: result.success, error: result.error, status: result.status };
+}
+
 async function saveFaceEmbedding(embedding) {
   var result = await apiRequest('/face-embeddings', {
+    method: 'POST',
+    body: JSON.stringify({ embeddings: embedding })
+  });
+  return { success: result.success, error: result.error };
+}
+
+async function saveFaceEmbeddingForUser(userId, embedding) {
+  var result = await apiRequest('/face-embeddings/' + userId, {
     method: 'POST',
     body: JSON.stringify({ embeddings: embedding })
   });
@@ -56,8 +72,13 @@ async function clockInAttendance(session, lat, lng, faceImg, distanceToOffice) {
   return { success: true, data: attData };
 }
 
-async function clockOutAttendance() {
-  var result = await apiRequest('/attendance/clock-out', { method: 'POST' });
+async function clockOutAttendance(faceImg) {
+  var body = {};
+  if (faceImg) body.face_image = faceImg;
+  var result = await apiRequest('/attendance/clock-out', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
   if (!result.success) {
     return { success: false, error: result.error };
   }

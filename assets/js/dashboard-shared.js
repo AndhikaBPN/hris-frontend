@@ -338,6 +338,22 @@ async function fetchBirthdays() {
   return { success: true, data: processed };
 }
 
+/* ── Token name check (FE-RPT-04) ── */
+function checkTokenName() {
+  var token = localStorage.getItem('hris_token');
+  if (!token) return;
+  try {
+    var payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.name) return;
+    var banner = document.createElement('div');
+    banner.style.cssText = 'background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:13px;display:flex;align-items:center;gap:8px;';
+    banner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+      'Sesi Anda kedaluwarsa. Silakan <a href="../../index.html" style="color:#856404;font-weight:600;">login ulang</a> agar nama muncul di tanda tangan PDF.';
+    var main = document.querySelector('main.content');
+    if (main) main.insertBefore(banner, main.firstChild);
+  } catch(e) {}
+}
+
 async function fetchLeaveQuota() {
   var result = await apiRequest('/leave/quota');
   if (!result.success) {

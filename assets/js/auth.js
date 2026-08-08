@@ -179,45 +179,30 @@ async function sendOTP() {
     return;
   }
 
-  showMsg('email-msg', 'Sending OTP...', 'success');
-  
-  var result = await apiRequest('/otp/send', {
+  showMsg('email-msg', 'Sending...', 'success');
+
+  await apiRequest('/password/forgot', {
     method: 'POST',
     body: JSON.stringify({ email: email })
   });
 
-  if (result.success) {
-    showMsg('otp-msg', 'OTP sent successfully!', 'success');
-    goToStep('step-otp');
-  } else {
-    showMsg('email-msg', result.error || 'Failed to send OTP.', 'error');
-  }
+  // Endpoint always returns 200 (anti user enumeration — even for unknown emails)
+  showMsg('email-msg', 'Jika email terdaftar, kode OTP telah dikirim.', 'success');
+  goToStep('step-otp');
 }
 
 async function verifyOTP() {
-  var email = document.getElementById('reset-email').value.trim();
   var boxes = document.querySelectorAll('.otp-box');
   var otp   = Array.from(boxes).map(function(b) { return b.value; }).join('');
-  var msg   = document.getElementById('otp-msg');
 
   if (otp.length < 6) {
     showMsg('otp-msg', 'Please enter complete 6-digit OTP.', 'error');
     return;
   }
 
-  showMsg('otp-msg', 'Verifying...', 'success');
-
-  var result = await apiRequest('/otp/verify', {
-    method: 'POST',
-    body: JSON.stringify({ email: email, otp_code: otp })
-  });
-
-  if (result.success) {
-    showMsg('password-msg', 'OTP verified!', 'success');
-    goToStep('step-password');
-  } else {
-    showMsg('otp-msg', result.error || 'Invalid OTP.', 'error');
-  }
+  // OTP is validated server-side during /password/reset — proceed directly to password step
+  showMsg('password-msg', '', 'success');
+  goToStep('step-password');
 }
 
 async function handleReset() {
@@ -281,7 +266,10 @@ async function handleReset() {
       showLogin();
     }, 2000);
   } else {
-    showMsg('password-msg', result.error || 'Reset failed.', 'error');
+    var errMsg = result.status === 400
+      ? 'OTP tidak valid atau sudah kedaluwarsa.'
+      : (result.error || 'Reset failed.');
+    showMsg('password-msg', errMsg, 'error');
   }
 }
 

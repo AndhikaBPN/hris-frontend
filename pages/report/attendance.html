@@ -287,7 +287,12 @@ function showToast(message, type) {
 window.addEventListener('load', function() {
   buildYearOptions();
   buildMonthOptions();
-  if (_role === 'staff') document.getElementById('filter-name').style.display = 'none';
+  if (_role === 'staff') {
+    document.getElementById('filter-name').style.display = 'none';
+    var exportRow = document.querySelector('.rpt-export-row');
+    if (exportRow) exportRow.style.display = 'none';
+  }
+  checkTokenName();
   window.loadComponents();
   loadReport();
 });

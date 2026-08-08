@@ -156,10 +156,10 @@
       <div class="pagination-left">
         <span class="pag-label">LIMIT PER PAGE</span>
         <select class="pag-select" id="limit-select" onchange="changeLimitPerPage(this.value)">
-          <option value="10">10</option>
-          <option value="15" selected>15</option>
+          <option value="10" selected>10</option>
           <option value="25">25</option>
           <option value="50">50</option>
+          <option value="100">100</option>
         </select>
       </div>
       <div class="pagination-right">
@@ -276,7 +276,7 @@ var shiftListData  = [];        // current page rows (mapped)
 var listPage       = 1;
 var listLastPage   = 1;
 var listTotal      = 0;
-var LIST_LIMIT     = 15;
+var LIST_LIMIT     = 10;
 var listFilters    = { start_date: '', end_date: '', team: '' };
 var selectedRowIdxSet = new Set();
 

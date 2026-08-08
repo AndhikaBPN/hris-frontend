@@ -13,9 +13,11 @@ async function fetchMasterShifts() {
 async function fetchShiftScheduleList(options) {
   options = options || {};
   var page  = options.page  || 1;
-  var limit = options.limit || 15;
+  var limit = options.limit || 10;
+  var sorting = options.sorting || 'desc';
+  var orderBy = options.orderBy || 'date';
 
-  var params = '?page=' + page + '&limit=' + limit;
+  var params = '?page=' + page + '&limit=' + limit + '&order_by=' + orderBy + '&sorting=' + sorting;
   if (options.name)       params += '&name='       + encodeURIComponent(options.name);
   if (options.team)       params += '&team='       + encodeURIComponent(options.team);
   if (options.date)       params += '&date='       + encodeURIComponent(options.date);

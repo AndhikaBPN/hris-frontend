@@ -156,6 +156,8 @@
 <script src="../../assets/js/sidebar.js"></script>
 <script src="../../assets/js/fetch/dashboard.js"></script>
 <script src="../../assets/js/render/dashboard.js"></script>
+<script src="../../assets/js/fetch/office.js"></script>
+<script src="../../assets/js/render/office.js"></script>
 <script src="../../assets/js/fetch/face-api.js"></script>
 <script src="../../assets/js/render/face-api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.14/dist/face-api.js" integrity="sha384-1hSisOX+umG254ClWaLauH3hLxdwhs8oUHLoKR5xELvquQSDfvu/wLAencDLUqFm" crossorigin="anonymous"></script>
@@ -166,6 +168,46 @@ guardRoute(['staff']);
 
 var BIO_MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
 var bioModelsLoaded = false;
+var _upcomingShift = null; /* cached from fetchUpcomingShift */
+
+/* ── Time-window helpers ── */
+function _toMins(t) {
+  /* "HH:MM" or "HH:MM:SS" → minutes since midnight */
+  var p = t.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]);
+}
+
+function _nowMins() {
+  var n = new Date(); return n.getHours() * 60 + n.getMinutes();
+}
+
+function getTimeWindowState(shift) {
+  /* Returns { btn1Open, btn2Open } based on current time vs shift windows.
+     Only meaningful for Pagi/Siang/Malam. */
+  var SHIFT_TYPES = ['Pagi', 'Siang', 'Malam'];
+  if (!shift || SHIFT_TYPES.indexOf(shift.shift_name) === -1) {
+    return { btn1Open: true, btn2Open: true }; /* no restriction */
+  }
+
+  var now = _nowMins();
+  var startM      = _toMins(shift.start_time);
+  var breakStartM = _toMins(shift.break_start);
+  var breakEndM   = _toMins(shift.break_end);
+  var endM        = _toMins(shift.end_time);
+
+  /* For overnight shifts (e.g. Malam 22:00–06:00):
+     normalize times after midnight by adding 1440 so comparison stays linear */
+  if (shift.is_overnight) {
+    if (breakStartM < startM) breakStartM += 1440;
+    if (breakEndM   < startM) breakEndM   += 1440;
+    if (endM        < startM) endM        += 1440;
+    /* if current time is in the "after midnight" portion, normalize it too */
+    if (now < startM) now += 1440;
+  }
+
+  var btn1Open = (now >= startM - 5) && (now < breakStartM);
+  var btn2Open = (now >= breakEndM - 5) && (now < endM);
+  return { btn1Open: btn1Open, btn2Open: btn2Open };
+}
 var bioStream = null;
 var bioDetectLoop = null;
 var bioFaceDetected = false;
@@ -187,32 +229,41 @@ window.addEventListener('load', function() {
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
   checkTodayAttendance();
+  setInterval(checkTodayAttendance, 60000); /* re-evaluate button state every minute */
 });
+
+function _setBtn(el, enabled) {
+  if (!el) return;
+  el.disabled = !enabled;
+  el.style.opacity = enabled ? '1' : '0.5';
+}
 
 async function checkTodayAttendance() {
   var res = await fetchMyTodayAttendance();
   var records = res.data || [];
-  var s1 = records.find(function(r) { return r.session === 1; });
-  var s2 = records.find(function(r) { return r.session === 2; });
+  var s1Done = !!records.find(function(r) { return r.session === 1; });
+  var s2Done = !!records.find(function(r) { return r.session === 2; });
 
-  var btn1 = document.getElementById('btn-session-1');
-  var btn2 = document.getElementById('btn-session-2');
-  var btnNow = document.getElementById('btn-clock-in-now');
+  var btn1    = document.getElementById('btn-session-1');
+  var btn2    = document.getElementById('btn-session-2');
+  var btnNow  = document.getElementById('btn-clock-in-now');
   var preStatus = document.querySelector('#state-pre .pre-status');
 
-  if (s1 && s2) {
+  /* time-window guard (only Pagi/Siang/Malam) */
+  var win = getTimeWindowState(_upcomingShift);
+
+  var can1 = !s1Done && win.btn1Open;
+  var can2 = !s2Done && win.btn2Open;
+
+  if (s1Done && s2Done) {
     if (preStatus) preStatus.textContent = 'SESSIONS COMPLETE';
     if (btnNow) { btnNow.disabled = true; btnNow.style.opacity = '0.5'; }
-    if (btn1) { btn1.disabled = true; btn1.style.opacity = '0.5'; }
-    if (btn2) { btn2.disabled = true; btn2.style.opacity = '0.5'; }
-  } else if (s1) {
-    if (preStatus) preStatus.textContent = 'SESSION 1 COMPLETE';
-    if (btn1) { btn1.disabled = true; btn1.style.opacity = '0.5'; }
-    if (btn2) { btn2.disabled = false; btn2.style.opacity = '1'; }
+    _setBtn(btn1, false);
+    _setBtn(btn2, false);
   } else {
-    if (preStatus) preStatus.textContent = 'READY TO START';
-    if (btn1) { btn1.disabled = false; btn1.style.opacity = '1'; }
-    if (btn2) { btn2.disabled = true; btn2.style.opacity = '0.5'; }
+    if (preStatus) preStatus.textContent = s1Done ? 'SESSION 1 COMPLETE' : (win.btn1Open ? 'READY TO START' : 'SHIFT NOT STARTED');
+    _setBtn(btn1, can1);
+    _setBtn(btn2, can2);
   }
 }
 
@@ -458,6 +509,7 @@ async function loadUpcomingShift() {
   var res = await fetchUpcomingShift();
   if (res.success && res.data) {
     var d = res.data;
+    _upcomingShift = d; /* cache for time-window guard */
     var timeEl = document.getElementById('shift-time');
     var locEl = document.getElementById('shift-loc');
     var labelEl = document.getElementById('progress-label');
