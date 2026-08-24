@@ -37,6 +37,11 @@ coverage/
 # Manual screenshots (contain employee PII, embedded in .docx)
 docs/manual/screenshots/
 
+# Playwright test screenshots (contain employee PII)
+*.png
+*.jpg
+*.jpeg
+
 # Claude Code local cache
 ruvector.db
 agentdb.rvf

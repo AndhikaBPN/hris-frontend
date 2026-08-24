@@ -34,9 +34,13 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="2" y1="9" x2="8" y2="9"/><path d="M12 9l8 6M20 9l-8 6"/></svg>
             Export XLSX
           </button>
-          <button class="btn-export" id="btn-pdf" onclick="doExport('pdf')" disabled>
+          <button class="btn-export" id="btn-pdf-staff" onclick="doExport('pdf','staff')" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Export PDF
+            Export Staff &amp; Team Lead
+          </button>
+          <button class="btn-export" id="btn-pdf-manager" onclick="doExport('pdf','manager')" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Export Manager
           </button>
         </div>
       </div>
@@ -55,7 +59,7 @@
       </div>
 
       <div style="overflow-x:auto;">
-        <table class="att-table emp-table" style="width:100%;min-width:920px;">
+        <table class="att-table emp-table" style="width:100%;min-width:1020px;">
           <thead>
             <tr>
               <th style="width:44px;text-align:center;">#</th>
@@ -68,10 +72,11 @@
               <th style="text-align:center;">Session 1</th>
               <th style="text-align:center;">Session 2</th>
               <th style="text-align:center;">Invalid</th>
+              <th style="text-align:center;">Action</th>
             </tr>
           </thead>
           <tbody id="rpt-tbody">
-            <tr><td colspan="10" class="emp-empty">Select filters above to load data.</td></tr>
+            <tr><td colspan="11" class="emp-empty">Select filters above to load data.</td></tr>
           </tbody>
           <tfoot id="rpt-tfoot"></tfoot>
         </table>
@@ -83,9 +88,28 @@
   </main>
 </div>
 
+<!-- ── Toast ── -->
 <div class="toast" id="app-toast">
   <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
   <span class="toast-text" id="toast-text"></span>
+</div>
+
+<!-- ── Attendance Detail Modal ── -->
+<div class="dm-overlay" id="dm-overlay" style="display:none;" onclick="closeDetailModal(event)">
+  <div class="dm-box" onclick="event.stopPropagation()">
+    <div class="dm-header">
+      <div>
+        <div class="dm-title" id="dm-title">Detail Absensi</div>
+        <div class="dm-sub" id="dm-sub"></div>
+      </div>
+      <button class="dm-close" onclick="closeDetailModal()" title="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="dm-body" id="dm-body">
+      <div class="dm-loading"><span class="rpt-spinner"></span> Memuat data...</div>
+    </div>
+  </div>
 </div>
 
 <script src="../../assets/js/env.js"></script>
@@ -97,16 +121,21 @@
 <script>
 guardRoute(['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']);
 
-var _role  = (JSON.parse(localStorage.getItem('hris_user') || '{}').role) || '';
-var _data  = [];
-var _page  = 1;
+var _role         = (JSON.parse(localStorage.getItem('hris_user') || '{}').role) || '';
+var _data         = [];
+var _currentRows  = [];
+var _page         = 1;
 var _totalPages   = 1;
 var _totalRecords = 0;
-var _limit = 25;
+var _limit        = 25;
 
 var MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 var ROLE_LABELS = { c_level:'C-Level', hrd_manager:'HRD Manager', technical_manager:'Tech Manager', team_leader:'Team Leader', staff:'Staff' };
 
+var ID_DAYS   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+var ID_MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+/* ── Year / Month selects ── */
 function buildYearOptions() {
   var now = new Date().getFullYear();
   var sel = document.getElementById('filter-year');
@@ -126,12 +155,18 @@ function buildMonthOptions() {
   }
 }
 
+/* ── Helpers ── */
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function completionBadge(val) {
   var p = parseFloat(val) || 0;
   var cls = p >= 80 ? 'rpt-badge-green' : p >= 50 ? 'rpt-badge-yellow' : 'rpt-badge-red';
   return '<span class="rpt-badge ' + cls + '">' + p.toFixed(0) + '%</span>';
 }
 
+/* ── Table Render ── */
 function renderFiltered() {
   var q = (document.getElementById('filter-name').value || '').toLowerCase().trim();
   var rows = q ? _data.filter(function(r) { return (r.name || '').toLowerCase().includes(q); }) : _data;
@@ -139,10 +174,11 @@ function renderFiltered() {
 }
 
 function renderTable(rows) {
+  _currentRows = rows;
   var tbody  = document.getElementById('rpt-tbody');
   var offset = (_page - 1) * _limit;
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="emp-empty">No data found for selected filters.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="emp-empty">No data found for selected filters.</td></tr>';
     renderFooter([]);
     return;
   }
@@ -158,6 +194,9 @@ function renderTable(rows) {
       '<td style="text-align:center;">' + completionBadge(r.session_1_completion) + '</td>' +
       '<td style="text-align:center;">' + completionBadge(r.session_2_completion) + '</td>' +
       '<td style="text-align:center;">' + (r.invalid_records || 0) + '</td>' +
+      '<td style="text-align:center;">' +
+        '<button class="btn-detail" onclick="openDetailModal(' + i + ')">Detail</button>' +
+      '</td>' +
     '</tr>';
   }).join('');
   renderFooter(rows);
@@ -180,9 +219,11 @@ function renderFooter(rows) {
     '<td style="text-align:center;">—</td>' +
     '<td colspan="2" style="text-align:center;">—</td>' +
     '<td style="text-align:center;">' + totalInvalid + '</td>' +
+    '<td></td>' +
   '</tr>';
 }
 
+/* ── Pagination ── */
 function renderPagination() {
   var el = document.getElementById('rpt-pagination');
   if (!el) return;
@@ -206,17 +247,13 @@ function renderPagination() {
     '</div>';
 }
 
-function onLimitChange(val) {
-  _limit = parseInt(val) || 25;
-  loadReport();
-}
-
+function onLimitChange(val) { _limit = parseInt(val) || 25; loadReport(); }
 function goToPage(n) {
   if (n < 1 || n > _totalPages || n === _page) return;
-  _page = n;
-  loadReport(false);
+  _page = n; loadReport(false);
 }
 
+/* ── Load Report ── */
 async function loadReport(resetPage) {
   if (resetPage !== false) _page = 1;
   var year  = document.getElementById('filter-year').value;
@@ -233,41 +270,46 @@ async function loadReport(resetPage) {
   document.getElementById('rpt-sub').textContent =
     _totalRecords + ' employee(s) · ' + MONTH_NAMES[parseInt(month)] + ' ' + year +
     (_totalPages > 1 ? ' · Page ' + _page + '/' + _totalPages : '');
-  document.getElementById('btn-xlsx').disabled = false;
-  document.getElementById('btn-pdf').disabled  = false;
+  document.getElementById('btn-xlsx').disabled        = false;
+  document.getElementById('btn-pdf-staff').disabled   = false;
+  document.getElementById('btn-pdf-manager').disabled = false;
   renderFiltered();
   renderPagination();
 }
 
 function setLoading(on) {
   if (on) {
-    document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="10" class="emp-empty"><span class="rpt-spinner"></span>Loading...</td></tr>';
-    document.getElementById('btn-xlsx').disabled = true;
-    document.getElementById('btn-pdf').disabled  = true;
+    document.getElementById('rpt-tbody').innerHTML =
+      '<tr><td colspan="11" class="emp-empty"><span class="rpt-spinner"></span>Loading...</td></tr>';
+    document.getElementById('btn-xlsx').disabled        = true;
+    document.getElementById('btn-pdf-staff').disabled   = true;
+    document.getElementById('btn-pdf-manager').disabled = true;
     var pg = document.getElementById('rpt-pagination');
     if (pg) pg.innerHTML = '';
   }
 }
 
 function showError(msg) {
-  document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="10" class="emp-empty" style="color:#c0392b;">' +
+  document.getElementById('rpt-tbody').innerHTML =
+    '<tr><td colspan="11" class="emp-empty" style="color:#c0392b;">' +
     escHtml(msg) + ' <button onclick="loadReport()" style="margin-left:8px;padding:4px 10px;border:1px solid #c0392b;border-radius:6px;color:#c0392b;background:none;cursor:pointer;font-size:12px;">Retry</button></td></tr>';
 }
 
-async function doExport(format) {
+/* ── Export (T1 + T3) ── */
+async function doExport(format, role) {
   var year  = document.getElementById('filter-year').value;
   var month = document.getElementById('filter-month').value;
-  var btn   = document.getElementById('btn-' + format);
+  var btnId = format === 'pdf' ? 'btn-pdf-' + role : 'btn-' + format;
+  var btn   = document.getElementById(btnId);
   if (btn) btn.disabled = true;
-  var res = await exportReportFile('attendance', { format: format, year: year, month: month });
+  var params = { format: format, year: year, month: month };
+  if (role) params.role = role;
+  var res = await exportReportFile('attendance', params);
   if (!res.success) showToast('Export failed: ' + (res.error || ''), 'error');
   if (btn) btn.disabled = false;
 }
 
-function escHtml(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
+/* ── Toast ── */
 var _toastTimer = null;
 function showToast(message, type) {
   var toast = document.getElementById('app-toast');
@@ -284,6 +326,175 @@ function showToast(message, type) {
   _toastTimer = setTimeout(function() { toast.classList.remove('show'); _toastTimer = null; }, 3500);
 }
 
+/* ══════════════════════════════════════════════
+   T2 — ATTENDANCE DETAIL MODAL
+══════════════════════════════════════════════ */
+
+function openDetailModal(idx) {
+  var r = _currentRows[idx];
+  if (!r || !r.user_id) return;
+  var year  = document.getElementById('filter-year').value;
+  var month = document.getElementById('filter-month').value;
+  document.getElementById('dm-title').textContent = 'Detail Absensi — ' + (r.name || '');
+  document.getElementById('dm-sub').textContent   = MONTH_NAMES[parseInt(month)] + ' ' + year;
+  document.getElementById('dm-body').innerHTML    =
+    '<div class="dm-loading"><span class="rpt-spinner"></span> Memuat data...</div>';
+  document.getElementById('dm-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  loadDetailModal(r.user_id, year, month);
+}
+
+function closeDetailModal(e) {
+  if (e && e.currentTarget === document.getElementById('dm-overlay') && e.target !== document.getElementById('dm-overlay')) return;
+  document.getElementById('dm-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+async function loadDetailModal(userId, year, month) {
+  var res = await fetchUserAttendanceMonth(userId, year, month);
+  if (!res.success) {
+    document.getElementById('dm-body').innerHTML =
+      '<div class="dm-loading" style="color:#c0392b;">Gagal memuat data: ' + escHtml(res.error || '') + '</div>';
+    return;
+  }
+  renderDetailModal(res.data);
+}
+
+function renderDetailModal(records) {
+  var body = document.getElementById('dm-body');
+
+  if (!records || !records.length) {
+    body.innerHTML = '<div class="dm-loading">Tidak ada data absensi untuk periode ini.</div>';
+    return;
+  }
+
+  // Data-based layout detection (Section 7 spec):
+  // - Any session === 2 exists → Staff/TL layout (2 clock-in cards)
+  // - Only session === 1 records → Manager layout (clock-in + clock-out)
+  var hasAnySession2 = records.some(function(r) { return parseInt(r.session) === 2; });
+
+  // Group by shift_date (string key, sort ascending)
+  var grouped = {};
+  records.forEach(function(rec) {
+    var key = rec.shift_date;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(rec);
+  });
+  var sortedDates = Object.keys(grouped).sort();
+
+  var html = sortedDates.map(function(date) {
+    var sessions  = grouped[date];
+    var dateLabel = fmtDate(date);
+
+    var cardsHtml;
+    if (!hasAnySession2) {
+      // Manager layout: Clock In + Clock Out from session 1
+      var s = sessions.find(function(x) { return parseInt(x.session) === 1; }) || sessions[0] || {};
+      var lat = s.latitude  ? parseFloat(s.latitude)  : null;
+      var lng = s.longitude ? parseFloat(s.longitude) : null;
+      cardsHtml =
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+          buildSessionCard('Clock In',  s.face_image,          s.check_in_time,  s.status, lat, lng, false) +
+          buildSessionCard('Clock Out', s.checkout_face_image, s.check_out_time, null,     null, null, true) +
+        '</div>';
+    } else {
+      // Staff / TL layout: Sesi 1 + Sesi 2
+      var s1 = sessions.find(function(x) { return parseInt(x.session) === 1; });
+      var s2 = sessions.find(function(x) { return parseInt(x.session) === 2; });
+      var lat1 = s1 && s1.latitude  ? parseFloat(s1.latitude)  : null;
+      var lng1 = s1 && s1.longitude ? parseFloat(s1.longitude) : null;
+      var lat2 = s2 && s2.latitude  ? parseFloat(s2.latitude)  : null;
+      var lng2 = s2 && s2.longitude ? parseFloat(s2.longitude) : null;
+      var c1 = s1
+        ? buildSessionCard('Clock In Sesi 1', s1.face_image, s1.check_in_time, s1.status, lat1, lng1, false)
+        : '<div class="dm-no-session">Belum absen Sesi 1</div>';
+      var c2 = s2
+        ? buildSessionCard('Clock In Sesi 2', s2.face_image, s2.check_in_time, s2.status, lat2, lng2, false)
+        : '<div class="dm-no-session">Belum Absen Sesi 2</div>';
+      cardsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' + c1 + c2 + '</div>';
+    }
+
+    return '<div class="dm-day-entry">' +
+      '<div class="dm-day-label">' + escHtml(dateLabel) + '</div>' +
+      cardsHtml +
+    '</div>';
+  }).join('');
+
+  body.innerHTML = html;
+}
+
+function buildSessionCard(label, faceImg, timeStr, status, lat, lng, isClockOut) {
+  var noDataLabel = isClockOut ? 'Belum Clock Out' : 'No photo';
+
+  // Face image — add data URI prefix if missing
+  var photoHtml;
+  if (faceImg) {
+    var imgSrc = faceImg.startsWith('data:') ? faceImg : 'data:image/jpeg;base64,' + faceImg;
+    photoHtml = '<div class="dm-face-wrap"><img src="' + imgSrc + '" alt="Foto absensi" /></div>';
+  } else {
+    photoHtml = '<div class="dm-face-wrap"><div class="dm-no-photo">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;opacity:0.35;">' +
+        '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' +
+      '</svg>' +
+      '<span>' + escHtml(noDataLabel) + '</span>' +
+    '</div></div>';
+  }
+
+  // Status badge
+  var statusHtml = '';
+  if (status) {
+    var cls = status === 'valid' ? 'dm-status-valid' : 'dm-status-invalid';
+    statusHtml = '<span class="' + cls + '">' + (status === 'valid' ? '✅ Valid' : '❌ Invalid') + '</span>';
+  } else if (isClockOut && !timeStr) {
+    statusHtml = '<span class="dm-status-empty">—</span>';
+  }
+
+  // Time
+  var timeHtml = '<span class="dm-time">' + escHtml(fmtTime(timeStr)) + '</span>';
+
+  // Coordinates + map
+  var mapsHtml = '';
+  if (!isClockOut) {
+    if (lat != null && lng != null) {
+      var q = lat + ',' + lng;
+      mapsHtml =
+        '<div style="font-size:11px;color:#7a8fa0;margin-top:2px;">📍 ' + lat.toFixed(5) + ', ' + lng.toFixed(5) + '</div>' +
+        '<div class="dm-map-wrap" style="margin-top:6px;">' +
+          '<iframe width="100%" height="170" frameborder="0" ' +
+            'src="https://maps.google.com/maps?q=' + q + '&z=16&output=embed" ' +
+            'allowfullscreen style="border-radius:8px;display:block;"></iframe>' +
+        '</div>' +
+        '<a href="https://maps.google.com/?q=' + q + '" target="_blank" class="dm-open-maps">Open in Maps ↗</a>';
+    } else {
+      mapsHtml = '<div class="dm-no-location">📍 Lokasi tidak tersedia</div>';
+    }
+  }
+
+  return '<div class="dm-session-card">' +
+    '<div class="dm-session-label">' + escHtml(label) + '</div>' +
+    '<div class="dm-time-row">' + timeHtml + statusHtml + '</div>' +
+    photoHtml +
+    mapsHtml +
+  '</div>';
+}
+
+/* ── Date / Time helpers ── */
+function fmtDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    var d = new Date(dateStr + 'T00:00:00');
+    return ID_DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + ID_MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  } catch(e) { return dateStr; }
+}
+
+function fmtTime(dt) {
+  if (!dt) return '—';
+  var parts = dt.split(' ');
+  var t = parts[1] || parts[0] || '';
+  return t.substring(0, 5) || '—';
+}
+
+/* ── Init ── */
 window.addEventListener('load', function() {
   buildYearOptions();
   buildMonthOptions();
@@ -292,6 +503,10 @@ window.addEventListener('load', function() {
     var exportRow = document.querySelector('.rpt-export-row');
     if (exportRow) exportRow.style.display = 'none';
   }
+  // Keyboard: Esc closes modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDetailModal();
+  });
   checkTokenName();
   window.loadComponents();
   loadReport();

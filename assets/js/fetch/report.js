@@ -68,6 +68,33 @@ async function fetchManagersForFilter() {
   });
 }
 
+async function fetchAttendanceDetail(shiftScheduleId) {
+  var result = await apiRequest('/attendance/' + shiftScheduleId + '/detail');
+  if (!result.success) return { success: false, data: null, error: result.error };
+  var d = (result.data && result.data.data) ? result.data.data : result.data;
+  return { success: true, data: d };
+}
+
+async function fetchUserAttendanceMonth(userId, year, month) {
+  var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+  var m   = parseInt(month);
+  var y   = parseInt(year);
+  var lastDay = new Date(y, m, 0).getDate();
+  var dateFrom = y + '-' + pad(m) + '-01';
+  var dateTo   = y + '-' + pad(m) + '-' + pad(lastDay);
+  var result = await apiRequest(
+    '/attendance?user_id=' + userId +
+    '&date_from=' + dateFrom +
+    '&date_to='   + dateTo +
+    '&limit=100&order_by=check_in_time&sorting=ASC'
+  );
+  if (!result.success) return { success: false, data: [], error: result.error };
+  var rows = result.data;
+  if (rows && rows.data) rows = Array.isArray(rows.data) ? rows.data : rows.data.data || [];
+  if (!Array.isArray(rows)) rows = [];
+  return { success: true, data: rows };
+}
+
 async function exportReportFile(type, params) {
   var qparts = [];
   Object.keys(params).forEach(function(k) {
