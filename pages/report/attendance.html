@@ -99,10 +99,10 @@
   <div class="dm-box" onclick="event.stopPropagation()">
     <div class="dm-header">
       <div>
-        <div class="dm-title" id="dm-title">Detail Absensi</div>
+        <div class="dm-title" id="dm-title">Attendance Detail</div>
         <div class="dm-sub" id="dm-sub"></div>
       </div>
-      <button class="dm-close" onclick="closeDetailModal()" title="Tutup">
+      <button class="dm-close" onclick="closeDetailModal()" title="Close">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
@@ -132,8 +132,8 @@ var _limit        = 25;
 var MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 var ROLE_LABELS = { c_level:'C-Level', hrd_manager:'HRD Manager', technical_manager:'Tech Manager', team_leader:'Team Leader', staff:'Staff' };
 
-var ID_DAYS   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-var ID_MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+var ID_DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var ID_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 /* ── Year / Month selects ── */
 function buildYearOptions() {
@@ -335,10 +335,10 @@ function openDetailModal(idx) {
   if (!r || !r.user_id) return;
   var year  = document.getElementById('filter-year').value;
   var month = document.getElementById('filter-month').value;
-  document.getElementById('dm-title').textContent = 'Detail Absensi — ' + (r.name || '');
+  document.getElementById('dm-title').textContent = 'Attendance Detail — ' + (r.name || '');
   document.getElementById('dm-sub').textContent   = MONTH_NAMES[parseInt(month)] + ' ' + year;
   document.getElementById('dm-body').innerHTML    =
-    '<div class="dm-loading"><span class="rpt-spinner"></span> Memuat data...</div>';
+    '<div class="dm-loading"><span class="rpt-spinner"></span> Loading data...</div>';
   document.getElementById('dm-overlay').style.display = 'flex';
   document.body.style.overflow = 'hidden';
   loadDetailModal(r.user_id, year, month);
@@ -354,7 +354,7 @@ async function loadDetailModal(userId, year, month) {
   var res = await fetchUserAttendanceMonth(userId, year, month);
   if (!res.success) {
     document.getElementById('dm-body').innerHTML =
-      '<div class="dm-loading" style="color:#c0392b;">Gagal memuat data: ' + escHtml(res.error || '') + '</div>';
+      '<div class="dm-loading" style="color:#c0392b;">Failed to load data: ' + escHtml(res.error || '') + '</div>';
     return;
   }
   renderDetailModal(res.data);
@@ -364,7 +364,7 @@ function renderDetailModal(records) {
   var body = document.getElementById('dm-body');
 
   if (!records || !records.length) {
-    body.innerHTML = '<div class="dm-loading">Tidak ada data absensi untuk periode ini.</div>';
+    body.innerHTML = '<div class="dm-loading">No attendance data for this period.</div>';
     return;
   }
 
@@ -406,11 +406,11 @@ function renderDetailModal(records) {
       var lat2 = s2 && s2.latitude  ? parseFloat(s2.latitude)  : null;
       var lng2 = s2 && s2.longitude ? parseFloat(s2.longitude) : null;
       var c1 = s1
-        ? buildSessionCard('Clock In Sesi 1', s1.face_image, s1.check_in_time, s1.status, lat1, lng1, false)
-        : '<div class="dm-no-session">Belum absen Sesi 1</div>';
+        ? buildSessionCard('Clock In Session 1', s1.face_image, s1.check_in_time, s1.status, lat1, lng1, false)
+        : '<div class="dm-no-session">Not clocked in (Session 1)</div>';
       var c2 = s2
-        ? buildSessionCard('Clock In Sesi 2', s2.face_image, s2.check_in_time, s2.status, lat2, lng2, false)
-        : '<div class="dm-no-session">Belum Absen Sesi 2</div>';
+        ? buildSessionCard('Clock In Session 2', s2.face_image, s2.check_in_time, s2.status, lat2, lng2, false)
+        : '<div class="dm-no-session">Not clocked in (Session 2)</div>';
       cardsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' + c1 + c2 + '</div>';
     }
 
@@ -424,7 +424,7 @@ function renderDetailModal(records) {
 }
 
 function buildSessionCard(label, faceImg, timeStr, status, lat, lng, isClockOut) {
-  var noDataLabel = isClockOut ? 'Belum Clock Out' : 'No photo';
+  var noDataLabel = isClockOut ? 'Not clocked out' : 'No photo';
 
   // Face image — add data URI prefix if missing
   var photoHtml;
@@ -466,7 +466,7 @@ function buildSessionCard(label, faceImg, timeStr, status, lat, lng, isClockOut)
         '</div>' +
         '<a href="https://maps.google.com/?q=' + q + '" target="_blank" class="dm-open-maps">Open in Maps ↗</a>';
     } else {
-      mapsHtml = '<div class="dm-no-location">📍 Lokasi tidak tersedia</div>';
+      mapsHtml = '<div class="dm-no-location">📍 Location unavailable</div>';
     }
   }
 
@@ -483,7 +483,7 @@ function fmtDate(dateStr) {
   if (!dateStr) return '';
   try {
     var d = new Date(dateStr + 'T00:00:00');
-    return ID_DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + ID_MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+    return ID_DAYS[d.getDay()] + ', ' + ID_MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
   } catch(e) { return dateStr; }
 }
 
